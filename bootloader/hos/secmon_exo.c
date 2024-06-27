@@ -208,7 +208,7 @@ void config_exosphere(launch_ctxt_t *ctxt, u32 warmboot_base)
 	if (!ctxt->stock)
 	{
 		LIST_INIT(ini_sections);
-		if (ini_parse(&ini_sections, "exosphere.ini", false))
+		if (ini_parse(&ini_sections, "atmosphere/config/exosphere.ini", false))
 		{
 			LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_sections, link)
 			{
@@ -398,13 +398,13 @@ void secmon_exo_check_panic()
 	gfx_clear_grey(0x1B);
 	gfx_con_setpos(0, 0);
 
-	WPRINTF("Panic occurred while running Atmosphere.\n\n");
+	WPRINTF("Panic occurred while running Asanosphere.\n\n");
 	WPRINTFARGS("Title ID: %08X%08X", (u32)((u64)rpt->title_id >> 32), (u32)rpt->title_id);
 	WPRINTFARGS("Error:    %s (0x%x)\n", get_error_desc(rpt->error_desc), rpt->error_desc);
 
 	// Check if mixed atmosphere sysmodules.
 	if ((u32)rpt->title_id == HOS_PID_BOOT2)
-		WPRINTF("Mismatched Atmosphere files?\n");
+		WPRINTF("Mismatched Asanosphere files?\n");
 
 	// Save context to the SD card.
 	char filepath[0x40];

@@ -185,7 +185,7 @@ static void _save_log_to_bmp(char *fname)
 	bmp->rsvd2    = 0;
 
 	char path[0x80];
-	strcpy(path, "bootloader/screenshots");
+	strcpy(path, "backup/screenshots");
 	s_printf(path + strlen(path), "/nyx%s_log.bmp", fname);
 	sd_save_to_file(bitmap, file_size, path);
 
@@ -222,7 +222,7 @@ static void _save_fb_to_bmp()
 	// Create notification box.
 	lv_obj_t * mbox = lv_mbox_create(lv_layer_top(), NULL);
 	lv_mbox_set_recolor_text(mbox, true);
-	lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #FFDD00 Saving screenshot...#");
+	lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #FFDD00 스크린샷 저장 중...#");
 	lv_obj_set_width(mbox, LV_DPI * 4);
 	lv_obj_set_top(mbox, true);
 	lv_obj_align(mbox, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
@@ -275,7 +275,7 @@ static void _save_fb_to_bmp()
 
 	char path[0x80];
 
-	strcpy(path, "bootloader");
+	strcpy(path, "backup");
 	f_mkdir(path);
 	strcat(path, "/screenshots");
 	f_mkdir(path);
@@ -285,7 +285,7 @@ static void _save_fb_to_bmp()
 	rtc_time_t time;
 	max77620_rtc_get_time_adjusted(&time);
 	s_printf(fname, "%04d%02d%02d_%02d%02d%02d", time.year, time.month, time.day, time.hour, time.min, time.sec);
-	s_printf(path + strlen(path), "/nyx%s.bmp", fname);
+	s_printf(path + strlen(path), "/screenshot_%s.bmp", fname);
 
 	// Save screenshot and log.
 	int res = sd_save_to_file(bitmap, file_size, path);
@@ -298,9 +298,9 @@ static void _save_fb_to_bmp()
 	free(fb);
 
 	if (!res)
-		lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #96FF00 Screenshot saved!#");
+		lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #96FF00 저장 완료!#");
 	else
-		lv_mbox_set_text(mbox, SYMBOL_WARNING"  #FFDD00 Screenshot failed!#");
+		lv_mbox_set_text(mbox, SYMBOL_WARNING"  #FFDD00 저장 실패!#");
 	manual_system_maintenance(true);
 	lv_mbox_start_auto_close(mbox, 4000);
 
@@ -468,7 +468,7 @@ static bool _jc_virt_mouse_read(lv_indev_data_t *data)
 				console_enabled = true;
 				gfx_con_getpos(&gfx_con.savedx, &gfx_con.savedy, &gfx_con.savedcol);
 				gfx_con_setpos(964, 630, GFX_COL_AUTO);
-				gfx_printf("Press -/+ to close");
+				gfx_printf("-/+ 버튼으로 닫기");
 				gfx_con_setpos(gfx_con.savedx, gfx_con.savedy, gfx_con.savedcol);
 			}
 			else
@@ -794,15 +794,15 @@ bool nyx_emmc_check_battery_enough()
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+		static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 
 		lv_mbox_set_text(mbox,
-			"#FF8000 Battery Check#\n\n"
-			"#FFDD00 Battery is not enough to carry on#\n"
-			"#FFDD00 with selected operation!#\n\n"
-			"Charge to at least #C7EA46 3650 mV#, and try again!");
+			"#FF8000 배터리 확인#\n\n"
+			"#FFDD00 배터리가 부족하여 선택한 작업을#\n"
+			"#FFDD00 계속하여 수행할 수 없습니다!#\n\n"
+			"최소 #C7EA46 3650 mV#이상 충전 후, 다시 시도하세요!");
 
 		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -821,15 +821,15 @@ static void _nyx_sd_card_issues(void *param)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	lv_mbox_set_text(mbox,
-		"#FF8000 SD Card Issues Check#\n\n"
-		"#FFDD00 The SD Card is initialized in 1-bit mode!#\n"
-		"#FFDD00 This might mean detached or broken connector!#\n\n"
-		"You might want to check\n#C7EA46 Console Info# -> #C7EA46 microSD#");
+		"#FF8000 SD 카드 이슈 확인#\n\n"
+		"#FFDD00 SD 카드가 1-bit 모드로 연결 초기화 되었습니다!#\n"
+		"#FFDD00 커넥터가 분리 혹은 손상되었을 수 있습니다!#\n\n"
+		"#C7EA46 콘솔 정보# -> #C7EA46 microSD#를 확인하세요.");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -886,7 +886,7 @@ lv_obj_t *nyx_create_standard_window(const char *win_title)
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", lv_win_close_action_custom);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", lv_win_close_action_custom);
 
 	return win;
 }
@@ -904,7 +904,7 @@ lv_obj_t *nyx_create_window_custom_close_btn(const char *win_title, lv_action_t 
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", rel_action);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", rel_action);
 
 	return win;
 }
@@ -944,12 +944,18 @@ void reload_nyx()
 	(*main_ptr)();
 }
 
-static lv_res_t reload_action(lv_obj_t *btns, const char *txt)
+/*static lv_res_t reload_action(lv_obj_t *btns, const char *txt)
 {
 	if (!lv_btnm_get_pressed(btns))
 		reload_nyx();
 
 	return mbox_action(btns, txt);
+}*/
+
+static lv_res_t reload_nyx_action(lv_obj_t *btn)
+{
+    reload_nyx();
+    return LV_RES_OK;
 }
 
 static lv_res_t _removed_sd_action(lv_obj_t *btns, const char *txt)
@@ -987,13 +993,13 @@ static void _check_sd_card_removed(void *params)
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\221Reboot (RCM)", "\221Power Off", "\221Do not reload", "" };
-		static const char * mbox_btn_map_rcm_patched[] = { "\221Reboot", "\221Power Off", "\221Do not reload", "" };
+		static const char * mbox_btn_map[] = { "\221재부팅 (RCM)", "\221전원 종료", "\221로드 안함", "" };
+		static const char * mbox_btn_map_rcm_patched[] = { "\221재부팅", "\221전원 종료", "\221로드 안함", "" };
 		lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 		lv_obj_set_width(mbox, LV_HOR_RES * 6 / 9);
 
-		lv_mbox_set_text(mbox, "\n#FF8000 SD card was removed!#\n\n#96FF00 Nyx will reload after inserting it.#\n\nReminder that you can use UMS instead of removing it.\n");
+		lv_mbox_set_text(mbox, "\n#FF8000 SD 카드가 제거되었습니다!#\n\n#96FF00 재삽입 후 Nyx가 다시 로드됩니다.#\n\nUMS 제거 후 사용가능 여부 알림.\n");
 		lv_mbox_add_btns(mbox, h_cfg.rcm_patched ? mbox_btn_map_rcm_patched : mbox_btn_map, _removed_sd_action);
 
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -1019,15 +1025,15 @@ static void _nyx_emmc_issues(void *params)
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+		static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 
 		lv_mbox_set_text(mbox,
-			"#FF8000 eMMC Issues Check#\n\n"
-			"#FFDD00 Your eMMC is initialized in slower mode!#\n"
-			"#FFDD00 This might mean hardware issues!#\n\n"
-			"You might want to check\n#C7EA46 Console Info# -> #C7EA46 eMMC#");
+			"#FF8000 eMMC 이슈 확인#\n\n"
+			"#FFDD00 eMMC가 슬로우 모드로 연결 초기화 되었습니다!#\n"
+			"#FFDD00 하드웨어에 문제가 있을 수 있습니다!#\n\n"
+			"#C7EA46 콘솔 정보# -> #C7EA46 eMMC#를 확인하세요.");
 
 		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -1064,19 +1070,19 @@ static lv_res_t _poweroff_action(lv_obj_t *btns, const char *txt)
 	return mbox_action(btns, txt);
 }
 
-static lv_res_t _create_mbox_reload(lv_obj_t *btn)
+/*static lv_res_t _create_mbox_reload(lv_obj_t *btn)
 {
 	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\221Reload", "\221Cancel", "" };
+	static const char * mbox_btn_map[] = { "\221새로고침", "\221취소", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES * 4 / 10);
 
-	lv_mbox_set_text(mbox, "#FF8000 Do you really want#\n#FF8000 to reload hekate & Nyx?#\n\n"
-		"This also checks\n#96FF00 bootloader/update.bin#\nfor hekate updates");
+	lv_mbox_set_text(mbox, "#FF8000 Hekate & Nyx를#\n#FF8000 새로고치시겠습니까?#\n\n"
+		"새로고침 버튼을 입력 시\n#96FF00 ASAP-assist#를 통해\n 새로고칩니다.");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, reload_action);
 
@@ -1084,7 +1090,7 @@ static lv_res_t _create_mbox_reload(lv_obj_t *btn)
 	lv_obj_set_top(mbox, true);
 
 	return LV_RES_OK;
-}
+}*/
 
 static lv_res_t _create_mbox_reboot(lv_obj_t *btn)
 {
@@ -1092,14 +1098,14 @@ static lv_res_t _create_mbox_reboot(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\221OFW", "\221RCM", "\221Cancel", "" };
-	static const char * mbox_btn_map_autorcm[] = { "\261OFW", "\221RCM", "\221Cancel", "" };
-	static const char * mbox_btn_map_patched[] = { "\221OFW", "\221Normal", "\221Cancel", "" };
+	static const char * mbox_btn_map[] = { "\221정펌", "\221RCM", "\221취소", "" };
+	static const char * mbox_btn_map_autorcm[] = { "\261정펌", "\221RCM", "\221취소", "" };
+	static const char * mbox_btn_map_patched[] = { "\221정펌", "\221지정부팅", "\221취소", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 2);
 
-	lv_mbox_set_text(mbox, "#FF8000 Choose where to reboot:#");
+	lv_mbox_set_text(mbox, "#FF8000 재부팅 유형 선택:#");
 
 	if (h_cfg.rcm_patched)
 		lv_mbox_add_btns(mbox, mbox_btn_map_patched, _reboot_action);
@@ -1118,12 +1124,12 @@ static lv_res_t _create_mbox_poweroff(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\221Power Off", "\221Cancel", "" };
+	static const char * mbox_btn_map[] = { "\221전원 종료", "\221취소", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES * 4 / 10);
 
-	lv_mbox_set_text(mbox, "#FF8000 Do you really want#\n#FF8000 to power off?#");
+	lv_mbox_set_text(mbox, "#FF8000 정말 전원을#\n#FF8000 종료하시겠습니까?#");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, _poweroff_action);
 
@@ -1231,30 +1237,27 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 	lv_label_set_style(lbl_credits, &monospace_text);
 	lv_label_set_recolor(lbl_credits, true);
 	lv_label_set_static_text(lbl_credits,
-		"#C7EA46 hekate# (c) 2018,      #C7EA46 naehrwert#, #C7EA46 st4rk#\n"
-		"       (c) 2018-2024, #C7EA46 CTCaer#\n"
-		"\n"
-		"#C7EA46 Nyx#    (c) 2019-2024, #C7EA46 CTCaer#\n"
-		"\n"
-		"Thanks to: #00CCFF derrek, nedwill, plutoo, #\n"
-		"           #00CCFF shuffle2, smea, thexyz, yellows8 #\n"
-		"\n"
-		"Greetings to: fincs, hexkyz, SciresM,\n"
-		"              Shiny Quagsire, WinterMute\n"
-		"\n"
+		"\n#00FFCC ASAP# & #00FFCC ATLAS# (c) 2020-2024, #00FFCC Asa#\n"
+		"#C7EA46 Hekate#       (c) 2018, #C7EA46 naehrwert#, #C7EA46 st4rk#\n"
+		"#C7EA46 Hekate# & #C7EA46 Nyx# (c) 2018-2024, #FF0012 CTC##FFFFFF aer#\n"
+		"#C7EA46 Atmosphère#   (c) 2018-2024, #FFFFFF Atmosphère-NX#\n\n"
+		"Thanks to: #00CCFF derrek#, #00CCFF nedwill#, #00e4ff plutoo#,\n"
+		"           #00CCFF shuffle2#, #00CCFF smea#, #00e4ff thexyz#, #00e4ff yellows8#\n\n"
+		"Greetings to: #FFFFFF fincs#, #FFFFFF hexkyz#, #FFFFFF SciresM#,\n"
+		"              #FFFFFF Shiny Quagsire#, #FFFFFF WinterMute#\n\n"
 		"Open source and free packages used:                    \n" // Label width alignment padding.
-		" - Littlev Graphics Library,\n"
-		"   Copyright (c) 2016-2018, Gabor Kiss-Vamosi\n\n"
 		" - FatFs R0.13c,\n"
-		"   Copyright (c) 2006-2018, ChaN\n"
-		"   Copyright (c) 2018-2022, CTCaer\n\n"
-		" - bcl-1.2.0,\n"
-		"   Copyright (c) 2003-2006, Marcus Geelnard\n\n"
+		"   Copyright (c) 2006-2018, #FFFFFF ChaN#\n"
+		"   Copyright (c) 2018-2022, #FF0012 CTC##FFFFFF aer#\n\n"
 		" - blz,\n"
-		"   Copyright (c) 2018, SciresM\n\n"
+		"   Copyright (c) 2018, #FFFFFF SciresM#\n\n"
 		" - elfload,\n"
-		"   Copyright (c) 2014, Owen Shepherd\n"
-		"   Copyright (c) 2018, M4xw"
+		"   Copyright (c) 2014, #FFFFFF Owen Shepherd#\n"
+		"   Copyright (c) 2018, #FFFFFF M4xw#\n\n"
+		" - bcl-1.2.0,\n"
+		"   Copyright (c) 2003-2006, #FFFFFF Marcus Geelnard#\n\n"
+		" - Littlev Graphics Library,\n"
+		"   Copyright (c) 2016-2018, #FFFFFF Gabor Kiss-Vamosi#"
 	);
 
 	lv_obj_t * lbl_octopus = lv_label_create(parent, NULL);
@@ -1263,39 +1266,52 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 	lv_label_set_recolor(lbl_octopus, true);
 
 	lv_label_set_static_text(lbl_octopus,
-		"\n#00CCFF                          ___#\n"
-		"#00CCFF                       .-'   `'.#\n"
-		"#00CCFF                      /         \\#\n"
-		"#00CCFF                      |         ;#\n"
-		"#00CCFF                      |         |           ___.--,#\n"
-		"#00CCFF             _.._     |0) = (0) |    _.---'`__.-( (_.#\n"
-		"#00CCFF      __.--'`_.. '.__.\\    '--. \\_.-' ,.--'`     `\"\"`#\n"
-		"#00CCFF     ( ,.--'`   ',__ /./;   ;, '.__.'`    __#\n"
-		"#00CCFF     _`) )  .---.__.' / |   |\\   \\__..--\"\"  \"\"\"--.,_#\n"
-		"#00CCFF    `---' .'.''-._.-'`_./  /\\ '.  \\ _.--''````'''--._`-.__.'#\n"
-		"#00CCFF          | |  .' _.-' |  |  \\  \\  '.               `----`#\n"
-		"#00CCFF           \\ \\/ .'     \\  \\   '. '-._)#\n"
-		"#00CCFF            \\/ /        \\  \\    `=.__`'-.#\n"
-		"#00CCFF            / /\\         `) )    / / `\"\".`\\#\n"
-		"#00CCFF      , _.-'.'\\ \\        / /    ( (     / /#\n"
-		"#00CCFF       `--'`   ) )    .-'.'      '.'.  | (#\n"
-		"#00CCFF              (/`    ( (`          ) )  '-;    ##00FFCC [switchbrew]#\n"
-		"#00CCFF               `      '-;         (-'#"
+		// "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+		"                             "
+	);
+
+	lv_obj_t * asap_credits = lv_label_create(parent, NULL);
+	lv_obj_align(asap_credits, lbl_octopus, LV_ALIGN_OUT_RIGHT_TOP, -LV_DPI / 10, 0);
+	lv_label_set_style(asap_credits, &monospace_text);
+	lv_label_set_recolor(asap_credits, true);
+	lv_label_set_static_text(asap_credits,
+		/* "\n#C7EA46 ATLAS# (c) 2024, #00FFCC Asa#\n"
+		" - #C7EA46 A# : #FFFFFF ASAP Install Supporter#\n"
+		" - #C7EA46 T# : #FFFFFF TegraExplorer#, #FFFFFF Toolboxes#\n"
+		" - #C7EA46 L# : #FFFFFF Lockpick RCM#\n"
+		" - #C7EA46 A# : #FFFFFF ASAP-Cleaner#\n"
+		" - #C7EA46 S# : #FFFFFF Scripts#\n\n"
+		"#FFFFFF Credits#\n"
+		" #00CCFF shchmue#, #00CCFF SuchMemeManySkill#,\n"
+		" #00CCFF hwfly-nx#, #00CCFF sthetix#, #00CCFF rehius#\n\n"
+		"#00FFCC A##FFFFFF sa's# #00FFCC S##FFFFFF witch# #00FFCC A##FFFFFF ll-in-one# #00FFCC P##FFFFFF ackage#\n\n"
+		"- #C7EA46 Bootloader# : #FFFFFF Hekate & Nyx#, #FFFFFF ATLAS#\n"
+		"- #C7EA46 Custom Firmware# : #FFFFFF Asanosphère#\n"
+		"- #C7EA46 System modules# : #FFFFFF MissionControl#,\n"
+		"  #FFFFFF SaltyNX#, #FFFFFF sys-con#, #FFFFFF sys-patch#\n"
+		"- #C7EA46 Overlays# : #FFFFFF Sysmodule#, #FFFFFF EdiZon#, #FFFFFF emuiibo#,\n"
+		"  #FFFFFF FPSLocker#, #FFFFFF ReverseNX-RT#, #FFFFFF Status Monitor#,\n"
+		"  #FFFFFF Sys-clk#, #FFFFFF EOS#, #FFFFFF Ultrahand#\n"
+		"- #C7EA46 Homebrews# : #FFFFFF ASAP-Updater#, #FFFFFF Daybreak#, #FFFFFF DBI#,\n"
+		"  #FFFFFF Haze#, #FFFFFF sys-clk-manager#, #FFFFFF Tinfoil#, #FFFFFF R2P#" */
+		"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+		"                                   \n"
 	);
 
 	lv_obj_t *hekate_img = lv_img_create(parent, NULL);
 	lv_img_set_src(hekate_img, &hekate_logo);
-	lv_obj_align(hekate_img, lbl_octopus, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 2 / 3);
+	lv_obj_align(hekate_img, asap_credits, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
 	lv_obj_t *ctcaer_img = lv_img_create(parent, NULL);
 	lv_img_set_src(ctcaer_img, &ctcaer_logo);
-	lv_obj_align(ctcaer_img, lbl_octopus, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, LV_DPI * 2 / 3);
+	lv_obj_align(ctcaer_img, asap_credits, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, LV_DPI / 4);
 
 	char version[32];
-	s_printf(version, "Nyx v%d.%d.%d", NYX_VER_MJ, NYX_VER_MN, NYX_VER_HF);
+	s_printf(version, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n#7B8AA8 Nyx v%d.%d.%d#", NYX_VER_MJ, NYX_VER_MN, NYX_VER_HF);
 	lv_obj_t * lbl_ver = lv_label_create(parent, NULL);
-	lv_obj_align(lbl_ver, ctcaer_img, LV_ALIGN_OUT_BOTTOM_RIGHT, -LV_DPI / 20, LV_DPI / 4);
+	lv_obj_align(lbl_ver, lbl_octopus, LV_ALIGN_OUT_BOTTOM_LEFT, -LV_DPI / 20, LV_DPI / 4);
 	lv_label_set_style(lbl_ver, &monospace_text);
+	lv_label_set_recolor(lbl_ver, true);
 	lv_label_set_text(lbl_ver, version);
 }
 
@@ -1318,7 +1334,7 @@ static void _update_status_bar(void *params)
 	max17050_get_property(MAX17050_VCELL, &batt_volt);
 	max17050_get_property(MAX17050_Current, &batt_curr);
 
-	// Enable fan if more than 41 oC.
+	// Enable fan if more than 41 °C.
 	u32 soc_temp_dec = soc_temp >> 8;
 	fan_set_from_temp(soc_temp_dec);
 
@@ -1373,12 +1389,12 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\251", "\222Cancel", "\251", "" };
+	static const char * mbox_btn_map[] = { "\251", "\222취소", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES * 5 / 9);
 
-	lv_mbox_set_text(mbox, "Select a payload to launch:");
+	lv_mbox_set_text(mbox, "부팅할 페이로드를 선택:");
 
 	// Create a list with all found payloads.
 	//! TODO: SHould that be tabs with buttons? + Icon support?
@@ -1389,7 +1405,7 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 
 	if (!sd_mount())
 	{
-		lv_mbox_set_text(mbox, "#FFDD00 Failed to init SD!#");
+		lv_mbox_set_text(mbox, "#FFDD00 SD 카드 초기화 실패!#");
 
 		goto out_end;
 	}
@@ -1508,7 +1524,7 @@ static lv_obj_t *create_window_launch(const char *win_title)
 
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", _win_launch_close_action);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", _win_launch_close_action);
 
 	return win;
 }
@@ -1616,7 +1632,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	bool combined_cfg = false;
 	if (btn)
 	{
-		if (strcmp(lv_label_get_text(lv_obj_get_child(btn, NULL)) + 8,"Launch#"))
+		if (strcmp(lv_label_get_text(lv_obj_get_child(btn, NULL)) + 8,"런처#"))
 			more_cfg = true;
 	}
 	else
@@ -1633,13 +1649,13 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	}
 
 	if (!btn)
-		win = create_window_launch(SYMBOL_GPS" hekate - Launch");
+		win = create_window_launch(SYMBOL_GPS" Hekate - 런처");
 	else if (!more_cfg)
-		win = create_window_launch(SYMBOL_GPS" Launch");
+		win = create_window_launch(SYMBOL_GPS" Atmosphеre 런처");
 	else
-		win = create_window_launch(SYMBOL_GPS" More Configurations");
+		win = create_window_launch(SYMBOL_GPS" L4T 런처");
 
-	lv_win_add_btn(win, NULL, SYMBOL_LIST" Logs #D0D0D0 OFF#", logs_onoff_toggle);
+	lv_win_add_btn(win, NULL, SYMBOL_LIST" 로그 #D0D0D0 OFF#", logs_onoff_toggle);
 	launch_logs_enable = false;
 
 	lv_cont_set_fit(lv_page_get_scrl(lv_win_get_content(win)), false, false);
@@ -1907,16 +1923,16 @@ failed_sd_mount:
 		if (!more_cfg)
 		{
 			lv_label_set_static_text(label_error,
-				"#FFDD00 No main boot entries found...#\n"
-				"Check that #96FF00 bootloader/hekate_ipl.ini# has boot entries\n"
-				"or use #C7EA46 More configs# button for more boot entries.");
+				"#FFDD00 Atmosphеre 엔트리를 찾을 수 없습니다...#\n"
+				"#96FF00 SD:/bootloader/hekate_ipl.ini# 파일을 확인하세요.\n"
+				"#C7EA46 ASAP.exe#, #C7EA46 ASAP-Updater#로 재설치하세요.");
 		}
 		else
 		{
 			lv_label_set_static_text(label_error,
-				"#FFDD00 No .ini or boot entries found...#\n"
-				"Check that a .ini file exists in #96FF00 bootloader/ini/#\n"
-				"and that it contains at least one entry.");
+				"#FFDD00 .ini 파일이 없거나 L4T 엔트리를 찾을 수 없습니다...#\n"
+				"#96FF00 SD:/bootloader/ini/# 경로를 확인하세요.\n"
+				"#C7EA46 ASAP.exe#, #C7EA46 ASAP-Updater#로 재설치하세요.");
 		}
 
 		lv_obj_set_pos(label_error, 19, 0);
@@ -1936,14 +1952,14 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	// Set brand label.
 	lv_obj_t *label_brand = lv_label_create(parent, NULL);
 	lv_label_set_recolor(label_brand, true);
-	s_printf(btn_colored_text, "%s%s", text_color, " hekate#");
+	s_printf(btn_colored_text, "%s%s", text_color, " 헤카테 × 갊갋갊갌#");
 	lv_label_set_text(label_brand, btn_colored_text);
 	lv_obj_set_pos(label_brand, 50, 48);
 
 	// Set tagline label.
 	lv_obj_t *label_tagline = lv_label_create(parent, NULL);
 	lv_obj_set_style(label_tagline, &hint_small_style_white);
-	lv_label_set_static_text(label_tagline, "THE ALL IN ONE BOOTLOADER FOR ALL YOUR NEEDS");
+	lv_label_set_static_text(label_tagline, "ATLAS & 올인원 부트로더");
 	lv_obj_set_pos(label_tagline, 50, 82);
 
 	static lv_style_t icons;
@@ -1969,7 +1985,7 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	lv_obj_align(label_btn, NULL, LV_ALIGN_CENTER, 0, -28);
 	lv_obj_t *label_btn2 = lv_label_create(btn_launch, NULL);
 	lv_label_set_recolor(label_btn2, true);
-	s_printf(btn_colored_text, "%s%s", text_color, " Launch#");
+	s_printf(btn_colored_text, "%s%s", text_color, " 런처#");
 	lv_label_set_text(label_btn2, btn_colored_text);
 	lv_obj_align(label_btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 174);
 
@@ -1982,7 +1998,7 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	lv_btn_set_layout(btn_more_cfg, LV_LAYOUT_OFF);
 	lv_obj_align(label_btn, NULL, LV_ALIGN_CENTER, 0, -28);
 	label_btn2 = lv_label_create(btn_more_cfg, label_btn2);
-	s_printf(btn_colored_text, "%s%s", text_color, " More Configs#");
+	s_printf(btn_colored_text, "%s%s", text_color, " 기타런처#");
 	lv_label_set_text(label_btn2, btn_colored_text);
 	lv_obj_set_pos(btn_more_cfg, 341, 160);
 	lv_obj_align(label_btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 174);
@@ -1996,7 +2012,7 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	// lv_btn_set_action(btn_quick_launch, LV_BTN_ACTION_CLICK, NULL);
 
 	lv_obj_t *btn_nyx_options = lv_btn_create(parent, NULL);
-	_create_text_button(th, NULL, btn_nyx_options, SYMBOL_SETTINGS" Nyx Settings", NULL);
+	_create_text_button(th, NULL, btn_nyx_options, SYMBOL_SETTINGS" Nyx 설정", NULL);
 	//lv_obj_set_width(btn_nyx_options, 256);
 	lv_btn_set_action(btn_nyx_options, LV_BTN_ACTION_CLICK, create_win_nyx_options);
 	lv_obj_align(btn_nyx_options, NULL, LV_ALIGN_IN_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 12);
@@ -2010,7 +2026,7 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	lv_btn_set_layout(btn_payloads, LV_LAYOUT_OFF);
 	lv_obj_align(label_btn, NULL, LV_ALIGN_CENTER, 0, -28);
 	label_btn2 = lv_label_create(btn_payloads, label_btn2);
-	s_printf(btn_colored_text, "%s%s", text_color, " Payloads#");
+	s_printf(btn_colored_text, "%s%s", text_color, " 페이로드#");
 	lv_label_set_text(label_btn2, btn_colored_text);
 	lv_obj_set_pos(btn_payloads, 632, 160);
 	lv_obj_align(label_btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 174);
@@ -2031,7 +2047,7 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	lv_obj_align(label_btn, NULL, LV_ALIGN_CENTER, 0, -28);
 	lv_obj_set_pos(btn_emummc, 959, 160);
 	label_btn2 = lv_label_create(btn_emummc, label_btn2);
-	s_printf(btn_colored_text, "%s%s", text_color, " emuMMC#");
+	s_printf(btn_colored_text, "%s%s", text_color, " 에뮤낸드#");
 	lv_label_set_text(label_btn2, btn_colored_text);
 	lv_obj_align(label_btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 174);
 
@@ -2040,19 +2056,19 @@ static void _create_tab_home(lv_theme_t *th, lv_obj_t *parent)
 	lv_obj_t *btn_power_off = lv_btn_create(parent, NULL);
 	lv_obj_t *btn_reload = lv_btn_create(parent, NULL);
 
-	_create_text_button(th, NULL, btn_power_off, SYMBOL_POWER" Power Off", _create_mbox_poweroff);
+	_create_text_button(th, NULL, btn_power_off, SYMBOL_POWER" 전원", _create_mbox_poweroff);
 	lv_obj_align(btn_power_off, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -LV_DPI / 4, -LV_DPI / 12);
 
-	_create_text_button(th, NULL, btn_reboot, SYMBOL_REBOOT" Reboot", _create_mbox_reboot);
+	_create_text_button(th, NULL, btn_reboot, SYMBOL_REBOOT" 재부팅", _create_mbox_reboot);
 	lv_obj_align(btn_reboot, btn_power_off, LV_ALIGN_OUT_LEFT_MID, 0, 0);
 
-	_create_text_button(th, NULL, btn_reload, SYMBOL_REFRESH" Reload", _create_mbox_reload);
+	_create_text_button(th, NULL, btn_reload, SYMBOL_REFRESH" 새로고침", reload_nyx_action);
 	lv_obj_align(btn_reload, btn_reboot, LV_ALIGN_OUT_LEFT_MID, 0, 0);
 }
 
 static lv_res_t _save_options_action(lv_obj_t *btn)
 {
-	static const char * mbox_btn_map[] = {"\251", "\222OK!", "\251", ""};
+	static const char * mbox_btn_map[] = {"\251", "\222확인!", "\251", ""};
 	lv_obj_t * mbox = lv_mbox_create(lv_scr_act(), NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -2062,9 +2078,9 @@ static lv_res_t _save_options_action(lv_obj_t *btn)
 		res = !create_config_entry();
 
 	if (res)
-		lv_mbox_set_text(mbox, "#FF8000 hekate Configuration#\n\n#96FF00 The configuration was saved to sd card!#");
+		lv_mbox_set_text(mbox, "#FF8000 Hekate#\n\n#96FF00 SD 카드에 설정을 저장했습니다!#");
 	else
-		lv_mbox_set_text(mbox, "#FF8000 hekate Configuration#\n\n#FFDD00 Failed to save the configuration#\n#FFDD00 to sd card!#");
+		lv_mbox_set_text(mbox, "#FF8000 Hekate#\n\n#FFDD00 SD 카드에 설정 저장을 실패했습니다!#");
 	lv_mbox_add_btns(mbox, mbox_btn_map, NULL);
 	lv_obj_set_top(mbox, true);
 
@@ -2114,12 +2130,12 @@ static void _create_status_bar(lv_theme_t * th)
 	status_bar.time_temp = lbl_time_temp;
 
 	lbl_left = lv_label_create(status_bar_bg, NULL);
-	lv_label_set_text(lbl_left, " "SYMBOL_DOT);
+	lv_label_set_text(lbl_left, "");
 	lv_obj_align(lbl_left, lbl_time_temp, LV_ALIGN_OUT_RIGHT_MID, 0, -LV_DPI / 14);
 	status_bar.temp_symbol = lbl_left;
 
 	lv_obj_t *lbl_degrees = lv_label_create(status_bar_bg, NULL);
-	lv_label_set_text(lbl_degrees, "C");
+	lv_label_set_text(lbl_degrees, "°C");
 	lv_obj_align(lbl_degrees, lbl_left, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 50, LV_DPI / 14);
 	status_bar.temp_degrees = lbl_degrees;
 
@@ -2127,7 +2143,7 @@ static void _create_status_bar(lv_theme_t * th)
 	//! TODO: Utilize it for more.
 	lv_obj_t *btn_mid = lv_btn_create(status_bar_bg, NULL);
 	lv_obj_t *lbl_mid = lv_label_create(btn_mid, NULL);
-	lv_label_set_static_text(lbl_mid, "Save Options");
+	lv_label_set_static_text(lbl_mid, "설정 저장");
 	lv_obj_set_size(btn_mid, LV_DPI * 5 / 2, LV_DPI / 2);
 	lv_obj_align(btn_mid, NULL, LV_ALIGN_CENTER, 0, 0);
 	status_bar.mid = btn_mid;
@@ -2157,14 +2173,14 @@ void nyx_check_ini_changes()
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\222Save", "\222Cancel", "" };
+		static const char * mbox_btn_map[] = { "\222저장", "\222취소", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 
 		lv_mbox_set_text(mbox,
-			"#FF8000 Main configuration#\n\n"
-			"You changed the configuration!\n\n"
-			"Do you want to save it?");
+			"#FF8000 메인#\n\n"
+			"설정이 변경되었습니다!\n\n"
+			"저장하시겠습니까?");
 
 		lv_mbox_add_btns(mbox, mbox_btn_map, _create_mbox_save_changes_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -2317,20 +2333,20 @@ static void _nyx_main_menu(lv_theme_t * th)
 
 	// Add all tabs content.
 	char version[32];
-	s_printf(version, "hekate v%d.%d.%d", nyx_str->version & 0xFF, (nyx_str->version >> 8) & 0xFF, (nyx_str->version >> 16) & 0xFF);
+	s_printf(version, "Hekate v%d.%d.%d", nyx_str->version & 0xFF, (nyx_str->version >> 8) & 0xFF, (nyx_str->version >> 16) & 0xFF);
 	lv_obj_t *tab_about = lv_tabview_add_tab(tv, version);
 
-	lv_obj_t *tab_home = lv_tabview_add_tab(tv, SYMBOL_HOME" Home");
+	lv_obj_t *tab_home = lv_tabview_add_tab(tv, SYMBOL_HOME" 홈");
 
-	lv_obj_t *tab_tools = lv_tabview_add_tab(tv, SYMBOL_TOOLS" Tools");
+	lv_obj_t *tab_tools = lv_tabview_add_tab(tv, SYMBOL_TOOLS" 도구");
 	lv_page_set_style(tab_tools, LV_PAGE_STYLE_BG, &no_padding);
 	lv_page_set_style(tab_tools, LV_PAGE_STYLE_SCRL, &no_padding);
 
-	lv_obj_t *tab_info = lv_tabview_add_tab(tv, SYMBOL_INFO" Console Info");
+	lv_obj_t *tab_info = lv_tabview_add_tab(tv, SYMBOL_INFO" 콘솔 정보");
 	lv_page_set_style(tab_info, LV_PAGE_STYLE_BG, &no_padding);
 	lv_page_set_style(tab_info, LV_PAGE_STYLE_SCRL, &no_padding);
 
-	lv_obj_t *tab_options = lv_tabview_add_tab(tv, SYMBOL_SETTINGS" Options");
+	lv_obj_t *tab_options = lv_tabview_add_tab(tv, SYMBOL_SETTINGS" 설정");
 
 	_create_tab_about(th, tab_about);
 	_create_tab_home(th, tab_home);

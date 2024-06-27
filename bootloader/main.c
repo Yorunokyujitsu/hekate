@@ -629,7 +629,7 @@ static void _nyx_load_run()
 		h_cfg.errors |= ERR_SYSOLD_NYX;
 
 		gfx_con_setpos(0, 0);
-		WPRINTF("Old Nyx GUI found! There will be dragons!\n");
+		WPRINTF("Old Nyx GUI found!\n");
 		WPRINTF("\nUpdate bootloader folder!\n\n");
 		WPRINTF("Press any key...");
 
@@ -1347,8 +1347,8 @@ static void _ipl_reload()
 static void _about()
 {
 	static const char credits[] =
-		"\nhekate   (c) 2018,      naehrwert, st4rk\n\n"
-		"         (c) 2018-2024, CTCaer\n\n"
+		"\nHekate   (c) 2018,      naehrwert, st4rk\n\n"
+		"         (c) 2018-2024, CTCaer, Asa\n\n"
 		" ___________________________________________\n\n"
 		"Thanks to: %kderrek, nedwill, plutoo,\n"
 		"           shuffle2, smea, thexyz, yellows8%k\n"
@@ -1444,7 +1444,7 @@ ment_t ment_top[] = {
 	MDEF_END()
 };
 
-menu_t menu_top = { ment_top, "hekate v6.2.0", 0, 0 };
+menu_t menu_top = { ment_top, "Hekate v6.2.0-ASAP", 0, 0 };
 
 extern void pivot_stack(u32 stack_top);
 

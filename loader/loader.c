@@ -55,7 +55,7 @@ const char __attribute__((section ("._octopus"))) octopus[] =
 	"           / /\\         `) )    / / `\"\".`\\\n"
 	"     , _.-'.'\\ \\        / /    ( (     / /\n"
 	"      `--'`   ) )    .-'.'      '.'.  | (\n"
-	"             (/`    ( (`          ) )  '-;   [switchbrew]\n";
+	"             (/`    ( (`          ) )  '[switchbrew, Asa]\n";
 
 void loader_main()
 {
