@@ -201,6 +201,85 @@ out:
 	return LV_RES_OK;
 }
 
+lv_res_t launch_atlas(lv_obj_t *list)
+{
+	const char *filename = lv_list_get_btn_text(list);
+
+	if (!filename || !filename[0])
+		goto out;
+
+	char path[128];
+
+	strcpy(path,"bootloader/sys/");
+	strcat(path, filename);
+
+	if (!sd_mount())
+		goto out;
+
+	FIL fp;
+	if (f_open(&fp, path, FA_READ))
+	{
+		EPRINTFARGS("Payload file is missing!\n(%s)", path);
+
+		goto out;
+	}
+
+	// Read and copy the payload to our chosen address
+	void *buf;
+	u32 size = f_size(&fp);
+
+	if (size < 0x30000)
+		buf = (void *)RCM_PAYLOAD_ADDR;
+	else
+	{
+		coreboot_addr = (void *)(COREBOOT_END_ADDR - size);
+		buf = coreboot_addr;
+		if (h_cfg.t210b01)
+		{
+			f_close(&fp);
+
+			EPRINTF("Coreboot not allowed on Mariko!");
+
+			goto out;
+		}
+	}
+
+	if (f_read(&fp, buf, size, NULL))
+	{
+		f_close(&fp);
+
+		goto out;
+	}
+
+	f_close(&fp);
+
+	sd_end();
+
+	if (size < 0x30000)
+	{
+		reloc_patcher(PATCHED_RELOC_ENTRY, EXT_PAYLOAD_ADDR, ALIGN(size, 0x10));
+		hw_deinit(false, byte_swap_32(*(u32 *)(buf + size - sizeof(u32))));
+	}
+	else
+	{
+		reloc_patcher(PATCHED_RELOC_ENTRY, EXT_PAYLOAD_ADDR, 0x7000);
+		hw_deinit(true, 0);
+	}
+
+	void (*ext_payload_ptr)() = (void *)EXT_PAYLOAD_ADDR;
+
+	// Some cards (Sandisk U1), do not like a fast power cycle. Wait min 100ms.
+	sdmmc_storage_init_wait_sd();
+
+	// Launch our payload.
+	(*ext_payload_ptr)();
+
+out:
+	sd_unmount();
+
+	return LV_RES_OK;
+}
+
 static void _load_saved_configuration()
 {
 	LIST_INIT(ini_sections);
@@ -316,13 +395,13 @@ static void nyx_load_bg_icons()
 	if (!f_stat("bootloader/res/icon_switch_custom.bmp", NULL))
 		icon_switch = bmp_to_lvimg_obj("bootloader/res/icon_switch_custom.bmp");
 	else
-		icon_switch = bmp_to_lvimg_obj("bootloader/res/icon_switch.bmp");
+		icon_switch = bmp_to_lvimg_obj("bootloader/res/icon/ASAP.bmp");
 
 	// If no custom payload icon exists, load normal.
 	if (!f_stat("bootloader/res/icon_payload_custom.bmp", NULL))
 		icon_payload = bmp_to_lvimg_obj("bootloader/res/icon_payload_custom.bmp");
 	else
-		icon_payload = bmp_to_lvimg_obj("bootloader/res/icon_payload.bmp");
+		icon_payload = bmp_to_lvimg_obj("bootloader/res/icon/ASAP.bmp");
 
 	// Load background resource if any.
 	hekate_bg = bmp_to_lvimg_obj("bootloader/res/background.bmp");

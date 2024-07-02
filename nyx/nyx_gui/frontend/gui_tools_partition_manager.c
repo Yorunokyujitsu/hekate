@@ -234,7 +234,7 @@ static int _stat_and_copy_files(const char *src, const char *dst, char *path, u3
 		}
 		else // It's a directory.
 		{
-			if (!memcmp("System Volume Information", fno.fname, 25))
+			if (!memcmp("시스템 볼륨 정보", fno.fname, 25))
 				continue;
 
 			// Create folder to destination.
@@ -585,17 +585,17 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\223Delete Installation Files", "\221OK", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
+	static const char *mbox_btn_map2[] = { "\223설치 파일 삭제", "\221확인", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 10 * 5);
 
-	lv_mbox_set_text(mbox, "#FF8000 Linux Flasher#");
+	lv_mbox_set_text(mbox, "#FF8000 리눅스 플래셔#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
-	lv_label_set_text(lbl_status, "#C7EA46 Status:# Flashing Linux...");
+	lv_label_set_text(lbl_status, "#C7EA46 상태:# 리눅스 플래싱 중...");
 
 	// Create container to keep content inside.
 	lv_obj_t *h1 = lv_cont_create(mbox, NULL);
@@ -629,7 +629,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 	res = f_open(&fp, path, FA_READ);
 	if (res)
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Error:# Failed to open 1st part!");
+		lv_label_set_text(lbl_status, "#FFDD00 오류:# 첫번째 파티션을 열지 못했습니다!");
 
 		goto exit;
 	}
@@ -672,7 +672,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 			res = f_open(&fp, path, FA_READ);
 			if (res)
 			{
-				s_printf(txt_buf, "#FFDD00 Error:# Failed to open part %d#", currPartIdx);
+				s_printf(txt_buf, "#FFDD00 오류:# %d# 파티션을 열지 못했습니다.", currPartIdx);
 				lv_label_set_text(lbl_status, txt_buf);
 				manual_system_maintenance(true);
 
@@ -692,7 +692,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 
 		if (res)
 		{
-			lv_label_set_text(lbl_status, "#FFDD00 Error:# Reading from SD!");
+			lv_label_set_text(lbl_status, "#FFDD00 오류:# SD 카드에서 읽었습니다!");
 			manual_system_maintenance(true);
 
 			f_close(&fp);
@@ -713,7 +713,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 
 			if (retryCount >= 3)
 			{
-				lv_label_set_text(lbl_status, "#FFDD00 Error:# Writing to SD!");
+				lv_label_set_text(lbl_status, "#FFDD00 오류:# SD 카드에 작성했습니다!");
 				manual_system_maintenance(true);
 
 				f_close(&fp);
@@ -853,17 +853,17 @@ static lv_res_t _action_check_flash_linux(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\222Continue", "\222Cancel", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
+	static const char *mbox_btn_map2[] = { "\222계속", "\222취소", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "#FF8000 Linux Flasher#");
+	lv_mbox_set_text(mbox, "#FF8000 리눅스 플래셔#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
-	lv_label_set_text(lbl_status, "#C7EA46 Status:# Searching for files and partitions...");
+	lv_label_set_text(lbl_status, "#C7EA46 상태:# 파일 및 파티션 검색 중...");
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -876,7 +876,7 @@ static lv_res_t _action_check_flash_linux(lv_obj_t *btn)
 	strcpy(path, "switchroot/install/l4t.00");
 	if (f_stat(path, NULL))
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Error:# Installation files not found!");
+		lv_label_set_text(lbl_status, "#FFDD00 오류:# 설치 파일을 찾을 수 없습니다!");
 		goto error;
 	}
 
@@ -884,7 +884,7 @@ static lv_res_t _action_check_flash_linux(lv_obj_t *btn)
 	u32 size_sct = _get_available_l4t_partition();
 	if (!l4t_flash_ctxt.offset_sct || !size_sct || size_sct < 0x800000)
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Error:# No partition found!");
+		lv_label_set_text(lbl_status, "#FFDD00 오류:# 파티션을 찾을 수 없습니다!");
 		goto error;
 	}
 
@@ -922,7 +922,7 @@ static lv_res_t _action_check_flash_linux(lv_obj_t *btn)
 			// If it exists, unaligned size for current part is not permitted.
 			if (!f_stat(path, NULL)) // NULL: Don't override current part fs info.
 			{
-				lv_label_set_text(lbl_status, "#FFDD00 Error:# The image is not aligned to 4 MiB!");
+				lv_label_set_text(lbl_status, "#FFDD00 오류:# 이미지가 4 MiB에 정렬되지 않았습니다!");
 				goto error;
 			}
 
@@ -938,15 +938,15 @@ static lv_res_t _action_check_flash_linux(lv_obj_t *btn)
 	// Check if image size is bigger than the partition available.
 	if (l4t_flash_ctxt.image_size_sct > size_sct)
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Error:# The image is bigger than the partition!");
+		lv_label_set_text(lbl_status, "#FFDD00 오류:# 이미지가 파티션보다 큽니다!");
 		goto error;
 	}
 
 	char *txt_buf = malloc(SZ_4K);
 	s_printf(txt_buf,
-		"#C7EA46 Status:# Found installation files and partition.\n"
-		"#00DDFF Offset:# %08x, #00DDFF Size:# %X, #00DDFF Image size:# %d MiB\n"
-		"\nDo you want to continue?", l4t_flash_ctxt.offset_sct, size_sct, l4t_flash_ctxt.image_size_sct >> 11);
+		"#C7EA46 상태:# 설치 파일 및 파티션 발견.\n"
+		"#00DDFF 오프셋:# %08x, #00DDFF 크기:# %X, #00DDFF 이미지 크기:# %d MiB\n"
+		"\n계속하시겠습니까?", l4t_flash_ctxt.offset_sct, size_sct, l4t_flash_ctxt.image_size_sct >> 11);
 	lv_label_set_text(lbl_status, txt_buf);
 	free(txt_buf);
 	lv_mbox_add_btns(mbox, mbox_btn_map2, _action_flash_linux_data);
@@ -1014,17 +1014,17 @@ static lv_res_t _action_flash_android_data(lv_obj_t * btns, const char * txt)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\222Continue", "\222No", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
+	static const char *mbox_btn_map2[] = { "\222계속", "\222아니오", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "#FF8000 Android Flasher#");
+	lv_mbox_set_text(mbox, "#FF8000 안드로이드 플래셔#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
-	lv_label_set_text(lbl_status, "#C7EA46 Status:# Searching for files and partitions...");
+	lv_label_set_text(lbl_status, "#C7EA46 상태:# 파일 및 파티션 검색 중...");
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -1039,7 +1039,7 @@ static lv_res_t _action_flash_android_data(lv_obj_t * btns, const char * txt)
 	// Validate GPT header.
 	if (memcmp(&gpt->header.signature, "EFI PART", 8) || gpt->header.num_part_ents > 128)
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Error:# No Android GPT was found!");
+		lv_label_set_text(lbl_status, "#FFDD00 오류:# 안드로이드 GPT를 찾을 수 없습니다!");
 		goto error;
 	}
 
@@ -1050,7 +1050,7 @@ static lv_res_t _action_flash_android_data(lv_obj_t * btns, const char * txt)
 	strcpy(path, "switchroot/install/boot.img");
 	if (f_stat(path, NULL))
 	{
-		s_printf(txt_buf, "#FF8000 Warning:# Kernel image not found!\n");
+		s_printf(txt_buf, "#FF8000 주의:# 커널 이미지를 찾을 수 없습니다!\n");
 		goto boot_img_not_found;
 	}
 
@@ -1084,19 +1084,19 @@ static lv_res_t _action_flash_android_data(lv_obj_t * btns, const char * txt)
 		}
 
 		if ((file_size >> 9) > size_sct)
-			s_printf(txt_buf, "#FF8000 Warning:# Kernel image too big!\n");
+			s_printf(txt_buf, "#FF8000 주의:# 커널 이미지가 너무 큽니다!\n");
 		else
 		{
 			sdmmc_storage_write(&sd_storage, offset_sct, file_size >> 9, buf);
 
-			s_printf(txt_buf, "#C7EA46 Success:# Kernel image flashed!\n");
+			s_printf(txt_buf, "#C7EA46 완료:# 커널 이미지가 플래시 되었습니다!\n");
 			f_unlink(path);
 		}
 
 		free(buf);
 	}
 	else
-		s_printf(txt_buf, "#FF8000 Warning:# Kernel partition not found!\n");
+		s_printf(txt_buf, "#FF8000 주의:# 커널 파티션을 찾을 수 없습니다!\n");
 
 boot_img_not_found:
 	lv_label_set_text(lbl_status, txt_buf);
@@ -1110,7 +1110,7 @@ boot_img_not_found:
 		strcpy(path, "switchroot/install/twrp.img");
 		if (f_stat(path, NULL))
 		{
-			strcat(txt_buf, "#FF8000 Warning:# Recovery image not found!\n");
+			strcat(txt_buf, "#FF8000 주의:# 복구 이미지를 찾을 수 없습니다!\n");
 			goto recovery_not_found;
 		}
 	}
@@ -1148,18 +1148,18 @@ boot_img_not_found:
 		}
 
 		if ((file_size >> 9) > size_sct)
-			strcat(txt_buf, "#FF8000 Warning:# Recovery image too big!\n");
+			strcat(txt_buf, "#FF8000 주의:# 복구 이미지가 너무 큽니다!\n");
 		else
 		{
 			sdmmc_storage_write(&sd_storage, offset_sct, file_size >> 9, buf);
-			strcat(txt_buf, "#C7EA46 Success:# Recovery image flashed!\n");
+			strcat(txt_buf, "#C7EA46 완료:# 복구 이미지가 플래시 되었습니다!\n");
 			f_unlink(path);
 		}
 
 		free(buf);
 	}
 	else
-		strcat(txt_buf, "#FF8000 Warning:# Recovery partition not found!\n");
+		strcat(txt_buf, "#FF8000 주의:# 복구 파티션을 찾을 수 없습니다!\n");
 
 recovery_not_found:
 	lv_label_set_text(lbl_status, txt_buf);
@@ -1172,7 +1172,7 @@ recovery_not_found:
 		strcpy(path, "switchroot/install/tegra210-icosa.dtb");
 		if (f_stat(path, NULL))
 		{
-			strcat(txt_buf, "#FF8000 Warning:# DTB image not found!");
+			strcat(txt_buf, "#FF8000 주의:# DTB 이미지를 찾을 수 없습니다!");
 			goto dtb_not_found;
 		}
 	}
@@ -1210,18 +1210,18 @@ recovery_not_found:
 		}
 
 		if ((file_size >> 9) > size_sct)
-			strcat(txt_buf, "#FF8000 Warning:# DTB image too big!");
+			strcat(txt_buf, "#FF8000 주의:# DTB 이미지가 너무 큽니다!");
 		else
 		{
 			sdmmc_storage_write(&sd_storage, offset_sct, file_size >> 9, buf);
-			strcat(txt_buf, "#C7EA46 Success:# DTB image flashed!");
+			strcat(txt_buf, "#C7EA46 완료:# DTB 이미지가 플래시 되었습니다!");
 			f_unlink(path);
 		}
 
 		free(buf);
 	}
 	else
-		strcat(txt_buf, "#FF8000 Warning:# DTB partition not found!");
+		strcat(txt_buf, "#FF8000 주의:# DTB 파티션을 찾을 수 없습니다!");
 
 dtb_not_found:
 	lv_label_set_text(lbl_status, txt_buf);
@@ -1247,7 +1247,7 @@ error:
 	if (boot_recovery)
 	{
 		// If a Recovery partition was found, ask user if rebooting into it is wanted.
-		strcat(txt_buf,"\n\nDo you want to reboot into Recovery\nto finish Android installation?");
+		strcat(txt_buf,"\n\n복구 이미지로 재부팅 하여,\n안드로이드 설치를 종료하시겠습니까?");
 		lv_label_set_text(lbl_status, txt_buf);
 		lv_mbox_add_btns(mbox, mbox_btn_map2, _action_reboot_recovery);
 	}
@@ -1270,19 +1270,19 @@ static lv_res_t _action_flash_android(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\222Continue", "\222Cancel", "" };
+	static const char *mbox_btn_map[] = { "\222계속", "\222취소", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "#FF8000 Android Flasher#");
+	lv_mbox_set_text(mbox, "#FF8000 안드로이드 플래셔#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
 	lv_label_set_text(lbl_status,
-		"This will flash #C7EA46 Kernel#, #C7EA46 DTB# and #C7EA46 Recovery# if found.\n"
-		"These will be deleted after a successful flash.\n"
-		"Do you want to continue?");
+		"#C7EA46 Kernel#, #C7EA46 DTB# 및 #C7EA46 Recovery#를 찾으면 플래시됩니다.\n"
+		"플래시 성공 후 삭제됩니다.\n"
+		"계속하시겠습니까?");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map,  _action_flash_android_data);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -1373,6 +1373,7 @@ static int _backup_and_restore_files(bool backup, lv_obj_t **labels)
 	// Check if Mariko Warmboot Storage exists in source drive.
 	f_chdrive(src_drv);
 	bool backup_mws = !part_info.backup_possible && !f_stat("warmboot_mariko", NULL);
+	bool backup_imp = !part_info.backup_possible && !f_stat("backup", NULL);
 	bool backup_pld = !part_info.backup_possible && !f_stat("payload.bin", NULL);
 
 	if (!part_info.backup_possible)
@@ -1383,6 +1384,8 @@ static int _backup_and_restore_files(bool backup, lv_obj_t **labels)
 		// Create hekate/Nyx/MWS folders in destination drive.
 		f_chdrive(dst_drv);
 		f_mkdir("bootloader");
+		if (backup_imp)
+			f_mkdir("backup");
 		if (backup_mws)
 			f_mkdir("warmboot_mariko");
 	}
@@ -1393,6 +1396,12 @@ static int _backup_and_restore_files(bool backup, lv_obj_t **labels)
 	// If incomplete backup mode, copy MWS and payload.bin also.
 	if (!res)
 	{
+		if (backup_imp)
+		{
+			strcpy(path, "backup");
+			res = _stat_and_copy_files(src_drv, dst_drv, path, &total_files, &total_size, labels);
+		}
+
 		if (backup_mws)
 		{
 			strcpy(path, "warmboot_mariko");
@@ -1417,15 +1426,15 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] =  { "\251", "\222OK", "\251", "" };
-	static const char *mbox_btn_map1[] = { "\222SD UMS", "\222Flash Linux", "\222Flash Android", "\221OK", "" };
-	static const char *mbox_btn_map2[] = { "\222SD UMS", "\222Flash Linux", "\221OK", "" };
-	static const char *mbox_btn_map3[] = { "\222SD UMS", "\222Flash Android", "\221OK", "" };
+	static const char *mbox_btn_map[] =  { "\251", "\222확인", "\251", "" };
+	static const char *mbox_btn_map1[] = { "\222USB 백업", "\222리눅스 플래시", "\222안드로이드 플래시", "\221확인", "" };
+	static const char *mbox_btn_map2[] = { "\222USB 백업", "\222리눅스 플래시", "\221확인", "" };
+	static const char *mbox_btn_map3[] = { "\222USB 백업", "\222안드로이드 플래시", "\221확인", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "#FF8000 Partition Manager#");
+	lv_mbox_set_text(mbox, "#FF8000 파티션 매니저#");
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
 
@@ -1433,14 +1442,14 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 
 	// Use safety wait if backup is not possible.
 	char *txt_buf = malloc(SZ_4K);
-	strcpy(txt_buf, "#FF8000 Partition Manager#\n\nSafety wait ends in ");
+	strcpy(txt_buf, "#FF8000 파티션 매니저#\n\n시작까지 앞으로 ");
 	lv_mbox_set_text(mbox, txt_buf);
 
 	u32 seconds = 5;
 	u32 text_idx = strlen(txt_buf);
 	while (seconds)
 	{
-		s_printf(txt_buf + text_idx, "%d seconds...", seconds);
+		s_printf(txt_buf + text_idx, "%d초...", seconds);
 		lv_mbox_set_text(mbox, txt_buf);
 		manual_system_maintenance(true);
 		msleep(1000);
@@ -1448,9 +1457,9 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 	}
 
 	lv_mbox_set_text(mbox,
-		"#FF8000 Partition Manager#\n\n"
-		"#FFDD00 Warning: Do you really want to continue?!#\n\n"
-		"Press #FF8000 POWER# to Continue.\nPress #FF8000 VOL# to abort.");
+		"#FF8000 파티션 매니저#\n\n"
+		"#FFDD00 경고: 정말 계속하시겠습니까?!#\n\n"
+		"#FF8000 전원 버튼#으로 계속\n#FF8000 볼륨 버튼#으로 중단");
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	manual_system_maintenance(true);
 
@@ -1460,7 +1469,7 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 		goto exit;
 
 	// Start partitioning.
-	lv_mbox_set_text(mbox, "#FF8000 Partition Manager#");
+	lv_mbox_set_text(mbox, "#FF8000 파티션 매니저#");
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	manual_system_maintenance(true);
 
@@ -1490,36 +1499,36 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 	// Read current MBR.
 	sdmmc_storage_read(&sd_storage, 0, 1, &part_info.mbr_old);
 
-	lv_label_set_text(lbl_status, "#00DDFF Status:# Initializing Ramdisk...");
-	lv_label_set_text(lbl_paths[0], "Please wait...");
+	lv_label_set_text(lbl_status, "#00DDFF 상태:# Ramdisk 초기화 중...");
+	lv_label_set_text(lbl_paths[0], "잠시만 기다려주세요...");
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	manual_system_maintenance(true);
 
 	// Initialize RAM disk.
 	if (ram_disk_init(&ram_fs, RAM_DISK_SZ))
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Error:# Failed to initialize Ramdisk!");
+		lv_label_set_text(lbl_status, "#FFDD00 오류:# Ramdisk 초기화 실패!");
 		goto error;
 	}
 
-	lv_label_set_text(lbl_status, "#00DDFF Status:# Backing up files...");
+	lv_label_set_text(lbl_status, "#00DDFF 상태:# 파일 백업 중...");
 	manual_system_maintenance(true);
 
 	// Do full or hekate/Nyx backup.
 	if (_backup_and_restore_files(true, lbl_paths))
 	{
 		if (part_info.backup_possible)
-			lv_label_set_text(lbl_status, "#FFDD00 Error:# Failed to back up files!");
+			lv_label_set_text(lbl_status, "#FFDD00 오류:# 파일 백업 실패!");
 		else
-			lv_label_set_text(lbl_status, "#FFDD00 Error:# Failed to back up files!\nBootloader folder exceeds 1GB or corrupt!");
+			lv_label_set_text(lbl_status, "#FFDD00 오류:# 파일 백업 실패!\n1GB를 초과하거나 손상된 파일입니다!");
 
 		goto error;
 	}
 
 	f_mount(NULL, "sd:", 1); // Unmount SD card.
 
-	lv_label_set_text(lbl_status, "#00DDFF Status:# Formatting FAT32 partition...");
-	lv_label_set_text(lbl_paths[0], "Please wait...");
+	lv_label_set_text(lbl_status, "#00DDFF 상태:# FAT32 파티션으로 포맷 중...");
+	lv_label_set_text(lbl_paths[0], "잠시만 기다려주세요...");
 	lv_label_set_text(lbl_paths[1], " ");
 	manual_system_maintenance(true);
 
@@ -1549,8 +1558,8 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 	if (mkfs_error)
 	{
 		// Failed to format.
-		s_printf((char *)buf, "#FFDD00 Error:# Failed to format disk (%d)!\n\n"
-			"Remove the SD card and check that is OK.\nIf not, format it, reinsert it and\npress #FF8000 POWER#!", mkfs_error);
+		s_printf((char *)buf, "#FFDD00 오류:# (%d) 디스크 포맷 실패!\n\n"
+			"SD 카드 제거 후 정상인지 확인하세요.\n포맷하지 않은 경우 포맷, 재삽입 후\n#FF8000 전원 버튼#을 입력하세요!", mkfs_error);
 
 		lv_label_set_text(lbl_status, (char *)buf);
 		lv_label_set_text(lbl_paths[0], " ");
@@ -1562,7 +1571,7 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 
 		sd_mount();
 
-		lv_label_set_text(lbl_status, "#00DDFF Status:# Restoring files...");
+		lv_label_set_text(lbl_status, "#00DDFF 상태:# 파일 복원 중...");
 		manual_system_maintenance(true);
 
 		// Restore backed up files back to SD.
@@ -1571,13 +1580,13 @@ static lv_res_t _create_mbox_start_partitioning(lv_obj_t *btn)
 			// Failed to restore files. Try again once more.
 			if (_backup_and_restore_files(false, lbl_paths))
 			{
-				lv_label_set_text(lbl_status, "#FFDD00 Error:# Failed to restore files!");
+				lv_label_set_text(lbl_status, "#FFDD00 에러:# 파일 복원 실패!");
 				free(buf);
 				goto error;
 			}
 		}
 
-		lv_label_set_text(lbl_status, "#00DDFF Status:# Restored files but the operation failed!");
+		lv_label_set_text(lbl_status, "#00DDFF 상태:# 파일을 복원했지만 작업을 실패했습니다!");
 		f_mount(NULL, "ram:", 1); // Unmount ramdisk.
 		free(buf);
 		goto error;
@@ -1589,7 +1598,7 @@ mkfs_no_error:
 	// Remount sd card as it was unmounted from formatting it.
 	f_mount(&sd_fs, "sd:", 1); // Mount SD card.
 
-	lv_label_set_text(lbl_status, "#00DDFF Status:# Restoring files...");
+	lv_label_set_text(lbl_status, "#00DDFF 상태:# 파일 복원 중...");
 	manual_system_maintenance(true);
 
 	// Restore backed up files back to SD.
@@ -1598,7 +1607,7 @@ mkfs_no_error:
 		// Failed to restore files. Try again once more.
 		if (_backup_and_restore_files(false, lbl_paths))
 		{
-			lv_label_set_text(lbl_status, "#FFDD00 Error:# Failed to restore files!");
+			lv_label_set_text(lbl_status, "#FFDD00 에러:# 파일 복원 실패!");
 			goto error;
 		}
 	}
@@ -1609,8 +1618,8 @@ mkfs_no_error:
 	// Set Volume label.
 	f_setlabel("0:SWITCH SD");
 
-	lv_label_set_text(lbl_status, "#00DDFF Status:# Flashing partition table...");
-	lv_label_set_text(lbl_paths[0], "Please wait...");
+	lv_label_set_text(lbl_status, "#00DDFF 상태:# 파티션 테이블 플래시 중...");
+	lv_label_set_text(lbl_paths[0], "잠시만 기다려주세요...");
 	lv_label_set_text(lbl_paths[1], " ");
 	manual_system_maintenance(true);
 
@@ -1642,7 +1651,7 @@ mkfs_no_error:
 	}
 
 	sd_unmount();
-	lv_label_set_text(lbl_status, "#00DDFF Status:# Done!");
+	lv_label_set_text(lbl_status, "#00DDFF 상태:# 완료!");
 	manual_system_maintenance(true);
 
 	// Set buttons depending on what user chose to create.
@@ -1720,30 +1729,30 @@ static lv_res_t _create_mbox_partitioning_warn(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\222SD UMS", "\222Start", "\222Cancel", "" };
-	static const char *mbox_btn_map2[] = { "\222Start", "\222Cancel", "" };
+	static const char *mbox_btn_map[] = { "\222USB 백업", "\222시작", "\222취소", "" };
+	static const char *mbox_btn_map2[] = { "\222시작", "\222취소", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	char *txt_buf = malloc(SZ_4K);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
-	lv_mbox_set_text(mbox, "#FF8000 Partition Manager#");
+	lv_mbox_set_text(mbox, "#FF8000 파티션 매니저#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
 
-	s_printf(txt_buf, "#FFDD00 Warning: This will partition the SD Card!#\n\n");
+	s_printf(txt_buf, "#FFDD00 주의: SD 카드를 파티션 분할합니다!#\n\n");
 
 	if (part_info.backup_possible)
 	{
-		strcat(txt_buf, "#C7EA46 Your files will be backed up and restored!#\n"
-			"#FFDD00 Any other partition will be wiped!#");
+		strcat(txt_buf, "#C7EA46      파일이 백업 및 복원됩니다!#\n"
+			"#FFDD00      다른 파티션은 삭제됩니다!#");
 	}
 	else
 	{
-		strcat(txt_buf, "#FFDD00 Your files will be wiped!#\n"
-			"#FFDD00 Any other partition will be also wiped!#\n"
-			"#FFDD00 Use USB UMS to copy them over!#");
+		strcat(txt_buf, "#FFDD00       모든 파일이 제거됩니다!#\n"
+			"#FFDD00   다른 파티션을 모두 삭제합니다!#\n"
+			"#FFDD00  USB 백업을 사용하여 백업하세요!#");
 	}
 
 	lv_label_set_text(lbl_status, txt_buf);
@@ -1779,20 +1788,20 @@ static lv_res_t _create_mbox_partitioning_andr_part(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\222Dynamic", "\222Legacy", "" };
+	static const char *mbox_btn_map[] = { "\222다이나믹", "\222레거시", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	lv_obj_set_width(mbox, LV_HOR_RES / 10 * 5);
-	lv_mbox_set_text(mbox, "#FF8000 Android Partitioning#");
+	lv_mbox_set_text(mbox, "#FF8000 안드로이드 파티션 분할#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
 
 	lv_label_set_text(lbl_status,
-		"Please select a partition scheme:\n\n"
-		"#C7EA46 Dynamic:# Android 13+\n"
-		"#C7EA46 Legacy:# Android 10-11\n");
+		"파티션 구성을 선택하세요:\n\n"
+		"#C7EA46 다이나믹:# 안드로이드 13+\n"
+		"#C7EA46 레거시:# 안드로이드 10 | 11\n");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, _create_mbox_partitioning_android);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -1888,10 +1897,10 @@ static lv_res_t _action_slider_emu(lv_obj_t *slider)
 
 		if (!part_info.emu_double)
 		{
-			if (slide_val != 10)
+			if (slide_val != 9)
 				s_printf(lbl_text, "#FF3C28 %d GiB#", size >> 10);
 			else
-				s_printf(lbl_text, "#FF3C28 %d FULL#", size >> 10);
+				s_printf(lbl_text, "#FF3C28 %d 권장#", size >> 10);
 		}
 		else
 			s_printf(lbl_text, "#FFDD00 2x##FF3C28 %d#", size >> 11);
@@ -2074,13 +2083,13 @@ static void _create_mbox_check_files_total_size()
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\222Don't Backup", "\222OK", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
+	static const char *mbox_btn_map2[] = { "\222백업 안함", "\222확인", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "Analyzing SD card usage. This might take a while...");
+	lv_mbox_set_text(mbox, "SD 카드 사용량 분석 중, 시간이 걸릴 수 있습니다...");
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -2100,17 +2109,17 @@ static void _create_mbox_check_files_total_size()
 	if (part_info.backup_possible)
 	{
 		s_printf(txt_buf,
-			"#96FF00 The SD Card files will be backed up automatically!#\n"
-			"#FFDD00 Any other partition will be wiped!#\n"
-			"#00DDFF Total files:# %d, #00DDFF Total size:# %d MiB", total_files, total_size >> 20);
+			"#96FF00 SD 카드 파일이 자동으로 백업됩니다!#\n"
+			"#FFDD00 다른 파티션은 삭제됩니다!#\n"
+			"#00DDFF 총 파일:# %d, #00DDFF 총 크기:# %d MiB", total_files, total_size >> 20);
 		lv_mbox_set_text(mbox, txt_buf);
 	}
 	else
 	{
 		lv_mbox_set_text(mbox,
-			"#FFDD00 The SD Card cannot be backed up automatically!#\n"
-			"#FFDD00 Any other partition will be also wiped!#\n\n"
-			"You will be asked to back up your files later via UMS.");
+			"#FFDD00 SD 카드를 자동으로 백업할 수 없습니다!#\n"
+			"#FFDD00 다른 파티션은 삭제됩니다!#\n\n"
+			"UMS를 통한 파일 백업 안내 메시지가 표시됩니다.");
 	}
 
 	// Create container to keep content inside.
@@ -2121,7 +2130,7 @@ static void _create_mbox_check_files_total_size()
 
 	lv_obj_t *lbl_part = lv_label_create(h1, NULL);
 	lv_label_set_recolor(lbl_part, true);
-	lv_label_set_text(lbl_part, "#00DDFF Current MBR partition layout:#");
+	lv_label_set_text(lbl_part, "#00DDFF 현재 MBR 파티션 레이아웃:#");
 
 	// Read current MBR.
 	mbr_t mbr = { 0 };
@@ -2190,10 +2199,10 @@ static void _create_mbox_check_files_total_size()
 
 	// Print partition table info.
 	s_printf(txt_buf,
-		"Partition 0 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 1 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 2 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 3 - Type: %02x, Start: %08x, Size: %08x",
+		SYMBOL_DOT " 파 티 션 0 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 1 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 2 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 3 - 유 형: %02x, 시 작: %08x, 크 기: %08x",
 		mbr.partitions[0].type, mbr.partitions[0].start_sct, mbr.partitions[0].size_sct,
 		mbr.partitions[1].type, mbr.partitions[1].start_sct, mbr.partitions[1].size_sct,
 		mbr.partitions[2].type, mbr.partitions[2].start_sct, mbr.partitions[2].size_sct,
@@ -2221,12 +2230,12 @@ static lv_res_t _action_fix_mbr(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
-	lv_mbox_set_text(mbox, "#FF8000 Fix Hybrid MBR#");
+	lv_mbox_set_text(mbox, "#FF8000 하이브리드 MBR 수정#");
 
 	lv_obj_t *lbl_status = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_status, true);
@@ -2242,7 +2251,7 @@ static lv_res_t _action_fix_mbr(lv_obj_t *btn)
 	// Try to init sd card. No need for valid MBR.
 	if (!sd_mount() && !sd_get_card_initialized())
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Failed to init SD!#");
+		lv_label_set_text(lbl_status, "#FFDD00 SD 카드 연결 초기화 실패!#");
 		goto out;
 	}
 
@@ -2267,7 +2276,7 @@ static lv_res_t _action_fix_mbr(lv_obj_t *btn)
 	// Check if GPT is valid.
 	if (!gpt_partition_exists || memcmp(&gpt->header.signature, "EFI PART", 8) || gpt->header.num_part_ents > 128)
 	{
-		lv_label_set_text(lbl_status, "#FFDD00 Warning:# No valid GPT was found!");
+		lv_label_set_text(lbl_status, "#FFDD00 경고:# 유효한 GPT를 찾을 수 없습니다!");
 
 		gpt_partition_exists = false;
 
@@ -2358,31 +2367,31 @@ static lv_res_t _action_fix_mbr(lv_obj_t *btn)
 check_changes:
 	if (!hybrid_mbr_changed && !has_mbr_attributes)
 	{
-		lv_label_set_text(lbl_status, "#96FF00 Warning:# The Hybrid MBR needs no change!#");
+		lv_label_set_text(lbl_status, "#96FF00 경고:# 하이브리드 MBR은 변경할 필요가 없습니다!#");
 		goto out;
 	}
 
 	char *txt_buf = malloc(SZ_16K);
 
 	// Current MBR info.
-	s_printf(txt_buf, "#00DDFF Current MBR Layout:#\n");
+	s_printf(txt_buf, "#00DDFF 현재 MBR 레이아웃:#\n");
 	s_printf(txt_buf + strlen(txt_buf),
-		"Partition 0 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 1 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 2 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 3 - Type: %02x, Start: %08x, Size: %08x\n\n",
+		SYMBOL_DOT " 파 티 션 0 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 1 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 2 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 3 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n\n",
 		mbr[0].partitions[0].type, mbr[0].partitions[0].start_sct, mbr[0].partitions[0].size_sct,
 		mbr[0].partitions[1].type, mbr[0].partitions[1].start_sct, mbr[0].partitions[1].size_sct,
 		mbr[0].partitions[2].type, mbr[0].partitions[2].start_sct, mbr[0].partitions[2].size_sct,
 		mbr[0].partitions[3].type, mbr[0].partitions[3].start_sct, mbr[0].partitions[3].size_sct);
 
 	// New MBR info.
-	s_printf(txt_buf + strlen(txt_buf), "#00DDFF New MBR Layout:#\n");
+	s_printf(txt_buf + strlen(txt_buf), "#00DDFF 새 MBR 레이아웃:#\n");
 	s_printf(txt_buf + strlen(txt_buf),
-		"Partition 0 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 1 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 2 - Type: %02x, Start: %08x, Size: %08x\n"
-		"Partition 3 - Type: %02x, Start: %08x, Size: %08x",
+		SYMBOL_DOT " 파 티 션 0 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 1 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 2 - 유 형: %02x, 시 작: %08x, 크 기: %08x\n"
+		SYMBOL_DOT " 파 티 션 3 - 유 형: %02x, 시 작: %08x, 크 기: %08x",
 		mbr[1].partitions[0].type, mbr[1].partitions[0].start_sct, mbr[1].partitions[0].size_sct,
 		mbr[1].partitions[1].type, mbr[1].partitions[1].start_sct, mbr[1].partitions[1].size_sct,
 		mbr[1].partitions[2].type, mbr[1].partitions[2].start_sct, mbr[1].partitions[2].size_sct,
@@ -2398,8 +2407,8 @@ check_changes:
 	lv_label_set_align(lbl_status, LV_LABEL_ALIGN_CENTER);
 
 	lv_label_set_text(lbl_status,
-		"#FF8000 Warning: Do you really want to continue?!#\n\n"
-		"Press #FF8000 POWER# to Continue.\nPress #FF8000 VOL# to abort.");
+		"#FF8000 경고: 정말 계속하시겠습니까?!#\n\n"
+		"#FF8000 전원 버튼#으로 계속\n#FF8000 볼륨 버튼#으로 중단");
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -2451,10 +2460,10 @@ check_changes:
 
 		sd_unmount();
 
-		lv_label_set_text(lbl_status, "#96FF00 The new Hybrid MBR was written successfully!#");
+		lv_label_set_text(lbl_status, "#96FF00 새 하이브리드 MBR 작성 완료!#");
 	}
 	else
-		lv_label_set_text(lbl_status, "#FFDD00 Warning: The Hybrid MBR Fix was canceled!#");
+		lv_label_set_text(lbl_status, "#FFDD00 주의: 하이브리드 MBR 수정 취소 됨!#");
 
 out:
 	free(gpt);
@@ -2469,9 +2478,9 @@ out:
 
 lv_res_t create_window_partition_manager(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_SD" Partition Manager");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_SD" 파티션 매니저");
 
-	lv_win_add_btn(win, NULL, SYMBOL_MODULES_ALT" Fix Hybrid MBR", _action_fix_mbr);
+	lv_win_add_btn(win, NULL, SYMBOL_MODULES_ALT" 하이브리드 MBR 수정", _action_fix_mbr);
 
 	static lv_style_t bar_hos_bg, bar_emu_bg, bar_l4t_bg, bar_and_bg;
 	static lv_style_t bar_hos_ind, bar_emu_ind, bar_l4t_ind, bar_and_ind;
@@ -2544,7 +2553,7 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	{
 		lv_obj_t *lbl = lv_label_create(h1, NULL);
 		lv_label_set_recolor(lbl, true);
-		lv_label_set_text(lbl, "#FFDD00 Failed to init SD!#");
+		lv_label_set_text(lbl, "#FFDD00 SD 카드 초기화 실패!#");
 		return LV_RES_OK;
 	}
 
@@ -2578,7 +2587,7 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 
 	lv_obj_t *lbl = lv_label_create(h1, NULL);
 	lv_label_set_recolor(lbl, true);
-	lv_label_set_text(lbl, "Choose #FFDD00 new# partition layout:");
+	lv_label_set_text(lbl, "#FFDD00 새로운# 파티션 레이아웃 선택:");
 
 	// Create disk layout blocks.
 	// HOS partition block.
@@ -2637,15 +2646,15 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	lv_obj_align(lbl_hos, bar_hos, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2);
 
 	lv_obj_t *lbl_emu = lv_label_create(h1, lbl_hos);
-	lv_label_set_static_text(lbl_emu, "#FF3C28 "SYMBOL_DOT" emuMMC (RAW):#");
+	lv_label_set_static_text(lbl_emu, "#FF3C28 "SYMBOL_DOT" 에뮤낸드 (RAW):#");
 	lv_obj_align(lbl_emu, lbl_hos, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 
 	lv_obj_t *lbl_l4t = lv_label_create(h1, lbl_hos);
-	lv_label_set_static_text(lbl_l4t, "#00DDFF "SYMBOL_DOT" Linux (EXT4):#");
+	lv_label_set_static_text(lbl_l4t, "#00DDFF "SYMBOL_DOT" 리눅스 (EXT4):#");
 	lv_obj_align(lbl_l4t, lbl_emu, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 
 	lv_obj_t *lbl_and = lv_label_create(h1, lbl_hos);
-	lv_label_set_static_text(lbl_and, "#FF8000 "SYMBOL_DOT" Android (USER):#");
+	lv_label_set_static_text(lbl_and, "#FF8000 "SYMBOL_DOT" 안드로이드 (USER):#");
 	lv_obj_align(lbl_and, lbl_l4t, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 
 	// Create HOS size slider. Non-interactive.
@@ -2724,9 +2733,10 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	lv_obj_t *lbl_notes = lv_label_create(h1, NULL);
 	lv_label_set_recolor(lbl_notes, true);
 	lv_label_set_static_text(lbl_notes,
-		"Note 1: Only up to #C7EA46 1GB# can be backed up. If more, you will be asked to back them manually at the next step.\n"
-		"Note 2: Resized emuMMC formats the USER partition. A save data manager can be used to move them over.\n"
-		"Note 3: The #C7EA46 Flash Linux# and #C7EA46 Flash Android# will flash files if suitable partitions and installer files are found.\n");
+		"\n· 포맷 및 분할 등 파티션 리사이징 시 최대 #C7EA46 1GB#까지 자동으로 파일을 백업 및 복원합니다.\n"
+		"· #C7EA46 백업 안 함# 선택 혹은 백업 용량을 초과하는 경우, Hekate를 제외한 모든 파일을 제거합니다.\n"
+		"· PC 연결 후, #C7EA46 USB 백업#을 통해 수동으로 백업할 수 있습니다.\n"
+		"· #C7EA46 리눅스 플래시# 및 #C7EA46 안드로이드 플래시#는 적절한 파티션과 설치 프로그램 파일 발견 시 플래시됩니다.");
 	lv_label_set_style(lbl_notes, &hint_small_style);
 	lv_obj_align(lbl_notes, lbl_and, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
 
@@ -2734,7 +2744,7 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	lv_obj_t *btn1 = lv_btn_create(h1, NULL);
 	lv_obj_t *label_btn = lv_label_create(btn1, NULL);
 	lv_btn_set_fit(btn1, true, true);
-	lv_label_set_static_text(label_btn, SYMBOL_USB"  SD UMS");
+	lv_label_set_static_text(label_btn, SYMBOL_USB"  USB 백업");
 	lv_obj_align(btn1, h1, LV_ALIGN_IN_TOP_LEFT, 0, LV_DPI * 5);
 	lv_btn_set_action(btn1, LV_BTN_ACTION_CLICK, _action_part_manager_ums_sd);
 
@@ -2742,7 +2752,7 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	btn_flash_l4t = lv_btn_create(h1, NULL);
 	lv_obj_t *label_btn2 = lv_label_create(btn_flash_l4t, NULL);
 	lv_btn_set_fit(btn_flash_l4t, true, true);
-	lv_label_set_static_text(label_btn2, SYMBOL_DOWNLOAD"  Flash Linux");
+	lv_label_set_static_text(label_btn2, SYMBOL_DOWNLOAD"  리눅스 플래시");
 	lv_obj_align(btn_flash_l4t, btn1, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 3, 0);
 	lv_btn_set_action(btn_flash_l4t, LV_BTN_ACTION_CLICK, _action_check_flash_linux);
 
@@ -2758,7 +2768,7 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	btn_flash_android = lv_btn_create(h1, NULL);
 	label_btn = lv_label_create(btn_flash_android, NULL);
 	lv_btn_set_fit(btn_flash_android, true, true);
-	lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD"  Flash Android");
+	lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD"  안드로이드 플래시");
 	lv_obj_align(btn_flash_android, btn_flash_l4t, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 3, 0);
 	lv_btn_set_action(btn_flash_android, LV_BTN_ACTION_CLICK, _action_flash_android);
 
@@ -2773,7 +2783,7 @@ lv_res_t create_window_partition_manager(lv_obj_t *btn)
 	btn1 = lv_btn_create(h1, NULL);
 	label_btn = lv_label_create(btn1, NULL);
 	lv_btn_set_fit(btn1, true, true);
-	lv_label_set_static_text(label_btn, SYMBOL_SD"  Next Step");
+	lv_label_set_static_text(label_btn, SYMBOL_SD"  포맷 및 분할 계속");
 	lv_obj_align(btn1, h1, LV_ALIGN_IN_TOP_RIGHT, 0, LV_DPI * 5);
 	lv_btn_set_action(btn1, LV_BTN_ACTION_CLICK, _create_mbox_partitioning_next);
 

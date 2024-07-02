@@ -26,7 +26,7 @@
 
 #define CLOCK_MIN_YEAR 2024
 #define CLOCK_MAX_YEAR (CLOCK_MIN_YEAR + 10)
-#define CLOCK_YEARLIST "2024\n2025\n2026\n2027\n2028\n2029\n2030\n2031\n2032\n2033\n2034"
+#define CLOCK_YEARLIST "2024년\n2025년\n2026년\n2027년\n2028년\n2029년\n2030년\n2031년\n2032년\n2033년\n2034년"
 
 extern hekate_config h_cfg;
 extern nyx_config n_cfg;
@@ -123,7 +123,7 @@ lv_obj_t *create_window_autoboot(const char *win_title)
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", _win_autoboot_close_action);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", _win_autoboot_close_action);
 
 	return win;
 }
@@ -188,8 +188,8 @@ static lv_res_t _autoboot_enable_more_action(lv_obj_t *btn)
 
 static void _create_autoboot_window()
 {
-	lv_obj_t *win = create_window_autoboot(SYMBOL_GPS" Auto Boot");
-	lv_win_add_btn(win, NULL, SYMBOL_POWER" Disable", _autoboot_disable_action);
+	lv_obj_t *win = create_window_autoboot(SYMBOL_GPS" 자동 부팅");
+	lv_win_add_btn(win, NULL, SYMBOL_POWER" 비활성화", _autoboot_disable_action);
 
 	static lv_style_t h_style;
 	lv_style_copy(&h_style, &lv_style_transp);
@@ -209,7 +209,7 @@ static void _create_autoboot_window()
 	lv_label_set_static_text(label_sep, "");
 
 	lv_obj_t *label_txt = lv_label_create(h1, NULL);
-	lv_label_set_static_text(label_txt, "Main configurations");
+	lv_label_set_static_text(label_txt, "메인");
 	lv_obj_set_style(label_txt, lv_theme_get_current()->label.prim);
 	lv_obj_align(label_txt, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -(LV_DPI / 4));
 
@@ -257,7 +257,7 @@ static void _create_autoboot_window()
 	lv_label_set_static_text(label_sep, "");
 
 	lv_obj_t *label_txt3 = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_txt3, "Ini folder configurations");
+	lv_label_set_static_text(label_txt3, "ini 폴더 구성");
 	lv_obj_set_style(label_txt3, lv_theme_get_current()->label.prim);
 	lv_obj_align(label_txt3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 11);
 
@@ -357,7 +357,7 @@ static lv_res_t _entries_columns_action(lv_obj_t *btn)
 
 static lv_res_t _save_nyx_options_action(lv_obj_t *btn)
 {
-	static const char * mbox_btn_map[] = {"\251", "\222OK!", "\251", ""};
+	static const char * mbox_btn_map[] = {"\251", "\222확인!", "\251", ""};
 	lv_obj_t * mbox = lv_mbox_create(lv_scr_act(), NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -366,9 +366,9 @@ static lv_res_t _save_nyx_options_action(lv_obj_t *btn)
 	nyx_changes_made = false;
 
 	if (res)
-		lv_mbox_set_text(mbox, "#FF8000 Nyx Configuration#\n\n#96FF00 The configuration was saved to sd card!#");
+		lv_mbox_set_text(mbox, "#FF8000 Nyx#\n\n#96FF00 설정이 SD 카드에 저장되었습니다!#");
 	else
-		lv_mbox_set_text(mbox, "#FF8000 Nyx Configuration#\n\n#FFDD00 Failed to save the configuration#\n#FFDD00 to sd card!#");
+		lv_mbox_set_text(mbox, "#FF8000 Nyx#\n\n#FFDD00 #\n#FFDD00 SD 카드#에 설정을 저장하지 못했습니다#");
 	lv_mbox_add_btns(mbox, mbox_btn_map, NULL);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -551,9 +551,9 @@ static const u16 theme_colors[17] = {
 
 static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_COPY" Nyx Color Theme");
-	lv_win_add_btn(win, NULL, SYMBOL_HINT" Toggle Background", _preset_bg_action);
-	lv_win_add_btn(win, NULL, SYMBOL_SAVE" Save & Reload", _save_theme_color_action);
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_COPY" Nyx 색상 테마");
+	lv_win_add_btn(win, NULL, SYMBOL_HINT" 배경 전환", _preset_bg_action);
+	lv_win_add_btn(win, NULL, SYMBOL_SAVE" 저장 & 새로고침", _save_theme_color_action);
 	color_test.window = win;
 
 	// Set current theme colors.
@@ -613,15 +613,14 @@ static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 	color_test.header2 = h2;
 
 	lv_obj_t *lbl_sample = lv_label_create(h2, NULL);
-	lv_label_set_static_text(lbl_sample, "Sample:");
+	lv_label_set_static_text(lbl_sample, "샘플:");
 
 	lv_obj_t *lbl_test = lv_label_create(h2, NULL);
 	lv_label_set_long_mode(lbl_test, LV_LABEL_LONG_BREAK);
 	lv_label_set_static_text(lbl_test,
-		"Lorem ipsum dolor sit amet, consectetur adipisicing elit, "
-		"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
-		"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris "
-		"nisi ut aliquip ex ea commodo consequat.");
+		"CTCaer 팀의 Hekate & Nyx 에서 분기하여 ASAP 전용으로 한글화 되었습니다.\n"
+		"시스템 내부 구조를 변경하였으며, ASAP 이외의 순정·올인원을 혼합 사용하지 마세요.\n"
+		"치명적인 충돌이 발생할 수 있으며, 이로 인한 문제는 책임지지 않습니다.");
 	lv_obj_set_width(lbl_test, lv_obj_get_width(h2) - LV_DPI * 6 / 10);
 	lv_obj_align(lbl_test, lbl_sample, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
 	color_test.label = lbl_test;
@@ -740,12 +739,12 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222Done", "\222Cancel", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222완료", "\222취소", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "Enter #C7EA46 Date# and #C7EA46 Time# for Nyx\nThis will not alter the actual HW clock!");
+	lv_mbox_set_text(mbox, "Nyx #C7EA46 날짜# 및 #C7EA46 시간# 입력\nHorizon OS의 시간과 동기화되지 않습니다!");
 
 	// Get current time.
 	rtc_time_t time;
@@ -772,18 +771,18 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	// Create month roller.
 	lv_obj_t *roller_month = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_month,
-		"January\n"
-		"February\n"
-		"March\n"
-		"April\n"
-		"May\n"
-		"June\n"
-		"July\n"
-		"August\n"
-		"September\n"
-		"October\n"
-		"November\n"
-		"December");
+		"1월\n"
+		"2월\n"
+		"3월\n"
+		"4월\n"
+		"5월\n"
+		"6월\n"
+		"7월\n"
+		"8월\n"
+		"9월\n"
+		"10월\n"
+		"11월\n"
+		"12월");
 	lv_roller_set_selected(roller_month, time.month - 1, false);
 	lv_obj_align(roller_month, roller_year, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 	clock_ctxt.month = roller_month;
@@ -792,7 +791,7 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	static char days[256];
 	days[0] = 0;
 	for (u32 i = 1; i < 32; i++)
-		s_printf(days + strlen(days), " %d \n", i);
+		s_printf(days + strlen(days), " %d일 \n", i);
 	days[strlen(days) - 1] = 0;
 	lv_obj_t *roller_day = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_day, days);
@@ -804,7 +803,7 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	static char hours[256];
 	hours[0] = 0;
 	for (u32 i = 0; i < 24; i++)
-		s_printf(hours + strlen(hours), " %d \n", i);
+		s_printf(hours + strlen(hours), " %d시 \n", i);
 	hours[strlen(hours) - 1] = 0;
 	lv_obj_t *roller_hour = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_hour, hours);
@@ -816,7 +815,7 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	static char minutes[512];
 	minutes[0] = 0;
 	for (u32 i = 0; i < 60; i++)
-		s_printf(minutes + strlen(minutes), " %02d \n", i);
+		s_printf(minutes + strlen(minutes), " %02d분 \n", i);
 	minutes[strlen(minutes) - 1] = 0;
 	lv_obj_t *roller_minute = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_minute, minutes);
@@ -1032,7 +1031,7 @@ disabled_or_cal0_issue:;
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -1042,61 +1041,61 @@ disabled_or_cal0_issue:;
 		if (!nx_hoag)
 		{
 			s_printf(txt_buf,
-				"Dumping to SD card finished!\n"
-				"Saved to: #C7EA46 switchroot/joycon_mac.[bin/ini]#\n\n");
+				"SD 카드 덤프 완료!\n"
+				"저장 경로: #C7EA46 switchroot/joycon_mac.[bin/ini]#\n\n");
 
 			bool success = true;
 
 			// Check if pairing info was found.
 			if (joycon_found == 2)
-				strcat(txt_buf, "#C7EA46 Success!#\n#C7EA46 Found 2 out of 2 Joy-Con pairing data!#\n");
+				strcat(txt_buf, "#C7EA46 완료!#\n#C7EA46 조이콘 페어링 데이터를 찾았습니다!#\n");
 			else
 			{
-				s_printf(txt_buf + strlen(txt_buf), "#FF8000 Failed!#\n#FF8000 Warning:# Found #FFDD00 %d out of 2# pairing data!\n", joycon_found);
+				s_printf(txt_buf + strlen(txt_buf), "#FF8000 실패!#\n#FF8000 주의:# 2개 중 #FFDD00 %d#개의 페어링 데이터를 찾았습니다!\n", joycon_found);
 				success = false;
 			}
 
 			// Check if pairing was done in HOS.
 			if (is_l_hos && is_r_hos)
-				strcat(txt_buf, "#C7EA46 Both pairing data are HOS based!#");
+				strcat(txt_buf, "#C7EA46 모든 데이터는 Horizon OS 기반입니다!#");
 			else if (!is_l_hos && is_r_hos)
 			{
-				strcat(txt_buf, "#FF8000 Warning:# #FFDD00 Left# pairing data is not HOS based!");
+				strcat(txt_buf, "#FF8000 주의:# #FFDD00 왼쪽# 조이콘이 HOS 기반 데이터가 아닙니다!");
 				success = false;
 			}
 			else if (is_l_hos && !is_r_hos)
 			{
-				strcat(txt_buf, "#FF8000 Warning:# #FFDD00 Right# pairing data is not HOS based!");
+				strcat(txt_buf, "#FF8000 주의:# #FFDD00 오른쪽# 조이콘이 HOS 기반 데이터가 아닙니다!");
 				success = false;
 			}
 			else
 			{
-				strcat(txt_buf, "#FF8000 Warning:# #FFDD00 No# pairing data is HOS based!");
+				strcat(txt_buf, "#FF8000 주의:# #FFDD00 없음# HOS 기반 데이터입니다!");
 				success = false;
 			}
 
 			if (!success)
 				strcat(txt_buf,
-					"\n\n#FFDD00 Make sure that both Joy-Con are connected,#\n"
-					"#FFDD00 and that you paired them in HOS!#");
+					"\n\n#FFDD00 조이콘이 모두 연결되어 있으며 HOS 에서,#\n"
+					"#FFDD00 한 쌍으로 구성되어 있는지 확인합니다!#");
 
 			if (cal_error)
-				s_printf(txt_buf + strlen(txt_buf), "\n\n#FF8000 Warning: Failed (%d) to get IMU calibration!#", cal_error);
+				s_printf(txt_buf + strlen(txt_buf), "\n\n#FF8000 경고: IMU 보정 값을 가져오지 못했습니다. (%d)#", cal_error);
 		}
 		else
 		{
 			s_printf(txt_buf,
-				"Dumping to SD card finished!\n"
-				"Saved to: #C7EA46 switchroot/switch.cal#\n\n");
-			strcat(txt_buf, "#C7EA46 Success!#\n#C7EA46 Found Lite Gamepad data!#\n");
+				"SD 카드 덤프 완료!\n"
+				"저장 경로: #C7EA46 switchroot/switch.cal#\n\n");
+			strcat(txt_buf, "#C7EA46 완료!#\n#C7EA46 라이트 컨트롤러 정보를 취득하였습니다!#\n");
 		}
 	}
 	else
 	{
 		if (!nx_hoag)
-			s_printf(txt_buf, "#FFDD00 Failed to dump Joy-Con pairing info!#\n#FFDD00 Error: %d#", error);
+			s_printf(txt_buf, "#FFDD00 조이콘 페어링 데이터를 덤프하지 못했습니다!#\n#FFDD00 오류: %d#", error);
 		else
-			s_printf(txt_buf, "#FFDD00 Failed to get Lite Gamepad info!#\n#FFDD00 Error: %d#", error);
+			s_printf(txt_buf, "#FFDD00 라이트 컨트롤러 정보를 얻지 못했습니다!#\n#FFDD00 오류: %d#", error);
 	}
 
 	lv_mbox_set_text(mbox, txt_buf);
@@ -1144,14 +1143,14 @@ static void _check_nyx_changes()
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\222Save", "\222Cancel", "" };
+		static const char * mbox_btn_map[] = { "\222저장", "\222취소", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 
 		lv_mbox_set_text(mbox,
-			"#FF8000 Nyx configuration#\n\n"
-			"You changed the configuration!\n\n"
-			"Do you want to save it?");
+			"#FF8000 Nyx#\n\n"
+			"설정이 변경되었습니다!\n\n"
+			"저장하시겠습니까?");
 
 		lv_mbox_add_btns(mbox, mbox_btn_map, _action_nyx_options_save);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -1181,7 +1180,7 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 {
 	lv_theme_t *th = lv_theme_get_current();
 
-	lv_obj_t *win = nyx_create_window_custom_close_btn(SYMBOL_HOME" Nyx Settings", _action_win_nyx_options_close);
+	lv_obj_t *win = nyx_create_window_custom_close_btn(SYMBOL_HOME" Nyx 설정", _action_win_nyx_options_close);
 
 	static lv_style_t h_style;
 	lv_style_copy(&h_style, &lv_style_transp);
@@ -1219,13 +1218,13 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	lv_obj_t *btn = lv_btn_create(sw_h2, NULL);
 	lv_obj_t *label_btn = lv_label_create(btn, NULL);
 	lv_btn_set_fit(btn, true, true);
-	lv_label_set_static_text(label_btn, SYMBOL_COPY" Color Theme");
+	lv_label_set_static_text(label_btn, SYMBOL_COPY" 색상 테마");
 	lv_obj_align(btn, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 5 + 3);
 	lv_btn_set_action(btn, LV_BTN_ACTION_CLICK, _create_window_nyx_colors);
 
 	lv_obj_t *label_txt2 = lv_label_create(sw_h2, NULL);
 	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2, "Select a color for all #00FFC8 highlights# in Nyx.\n");
+	lv_label_set_static_text(label_txt2, "#00F2FF 하이라이트# 색상을 변경할 수 있습니다.\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3 - 8);
 
@@ -1237,7 +1236,7 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
 
 	lv_obj_t *label_txt = lv_label_create(l_cont, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_HOME" Home Screen");
+	lv_label_set_static_text(label_txt, SYMBOL_HOME" 홈 화면");
 	lv_obj_set_style(label_txt, th->label.prim);
 	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 
@@ -1245,10 +1244,10 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	lv_obj_set_top(ddlist, true);
 	lv_ddlist_set_draw_arrow(ddlist, true);
 	lv_ddlist_set_options(ddlist,
-		"Main menu       \n"
-		"All Configs\n"
-		"Launch\n"
-		"More Configs");
+		"홈 메뉴       \n"
+		"모든 런처\n"
+		"메인 런처\n"
+		"기타 런처");
 	lv_ddlist_set_selected(ddlist, n_cfg.home_screen);
 	lv_ddlist_set_action(ddlist, _home_screen_action);
 	lv_obj_align(ddlist, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 2 / 3, 0);
@@ -1256,9 +1255,9 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	label_txt2 = lv_label_create(l_cont, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"Select what screen to show on Nyx boot.\n"
-		"#FF8000 All Configs:# #C7EA46 Combines More configs into Launch empty slots.#\n"
-		"#FF8000 Launch / More Configs:# #C7EA46 Uses the classic divided view.#");
+		"부팅 시 표시할 화면 선택.\n"
+		"#FF8000 모든 런처:# #C7EA46 메인 및 기타 런처를 모두 표시.#\n"
+		"#FF8000 메인/기타 런처:# #C7EA46 선택한 런처 페이지를 표시.#");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
@@ -1267,7 +1266,7 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 
 	// Create entries per line button.
 	lv_obj_t *btn2 = lv_btn_create(sw_h2, NULL);
-	nyx_create_onoff_button(th, sw_h2, btn2, SYMBOL_GPS" Extended Boot Entries", _entries_columns_action, true);
+	nyx_create_onoff_button(th, sw_h2, btn2, SYMBOL_GPS" 엔트리 런처 수 변경", _entries_columns_action, true);
 	lv_obj_align(btn2, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
 	if (n_cfg.entries_5_col)
 		lv_btn_set_state(btn2, LV_BTN_STATE_TGL_REL);
@@ -1276,9 +1275,9 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	label_txt2 = lv_label_create(sw_h2, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"Sets the boot entries per line to 5. (Default is 4)\n"
-		"#C7EA46 This allows a total of 10 boot entries to be shown in Launch#\n"
-		"#C7EA46 and More Configs sections.#\n\n\n");
+		"라인당 부팅 런처를 5개로 설정합니다. (기본 4개)\n"
+		"#C7EA46 설정 시 런처 화면에 #\n"
+		"#C7EA46 총 10개의 부팅 런처를 표시할 수 있습니다.#\n\n\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn2, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
 
@@ -1290,15 +1289,15 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	lv_obj_t *btn3 = lv_btn_create(sw_h3, NULL);
 	lv_obj_t *label_btn3 = lv_label_create(btn3, NULL);
 	lv_btn_set_fit(btn3, true, true);
-	lv_label_set_static_text(label_btn3, SYMBOL_DOWNLOAD" Dump Joy-Con BT");
+	lv_label_set_static_text(label_btn3, SYMBOL_DOWNLOAD" 조이콘 BT 덤프");
 	lv_obj_align(btn3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 3);
 	lv_btn_set_action(btn3, LV_BTN_ACTION_CLICK, _joycon_info_dump_action);
 
 	label_txt2 = lv_label_create(sw_h3, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"Allows you to save the Switch and Joy-Con MAC addresses\n"
-		"and the LTKs associated with them. For #C7EA46 Android# and #C7EA46 Linux#.");
+		"스위치 및 조이콘 MAC 주소와 관련된 LTK를 저장할 수 있습니다\n"
+		"이는 #C7EA46 안드로이드#, #C7EA46 리눅스#에서 사용할 수 있습니다.");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn3, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
@@ -1307,7 +1306,7 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 
 	// Create Backup/Restore Verification list.
 	label_txt = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_MODULES_ALT" Data Verification");
+	lv_label_set_static_text(label_txt, SYMBOL_MODULES_ALT" 데이터 검사");
 	lv_obj_set_style(label_txt, th->label.prim);
 	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 
@@ -1315,17 +1314,17 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	lv_obj_set_top(ddlist2, true);
 	lv_ddlist_set_draw_arrow(ddlist2, true);
 	lv_ddlist_set_options(ddlist2,
-		"Off (Fastest)\n"
-		"Sparse (Fast)    \n"
-		"Full (Slow)\n"
-		"Full (Hashes)");
+		"OFF (고속)\n"
+		"간단 (빠름)    \n"
+		"세부 (보통)\n"
+		"세부 (느림)");
 	lv_ddlist_set_selected(ddlist2, n_cfg.verification);
 	lv_obj_align(ddlist2, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 3 / 8, 0);
 	lv_ddlist_set_action(ddlist2, _data_verification_action);
 
 	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt2, "Set the type of data verification done for backup and restore.\n"
-		"Can be canceled without losing the backup/restore.\n");
+	lv_label_set_static_text(label_txt2, "백업 및 복원에 수행되는 데이터 검사 유형 설정.\n"
+		"백업/복원의 손실 없이 취소 가능.\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
@@ -1336,16 +1335,16 @@ lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
 	lv_obj_t *btn5 = lv_btn_create(sw_h3, NULL);
 	lv_obj_t *label_btn5 = lv_label_create(btn5, NULL);
 	lv_btn_set_fit(btn5, true, true);
-	lv_label_set_static_text(label_btn5, SYMBOL_CLOCK" Clock (Offset)");
+	lv_label_set_static_text(label_btn5, SYMBOL_CLOCK" 시간 (오프셋)");
 	lv_obj_align(btn5, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 	lv_btn_set_action(btn5, LV_BTN_ACTION_CLICK, _create_mbox_clock_edit);
 
 	label_txt2 = lv_label_create(sw_h3, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"Change clock offset manually.\n"
-		"#C7EA46 The entered Date and Time will be converted to an offset#\n"
-		"#C7EA46 automatically. This will be also used for FatFS operations.#");
+		"수동으로 시간을 변경합니다.\n"
+		"#C7EA46 입력한 시간 및 날짜가 오프셋으로 변환됩니다.#\n"
+		"#C7EA46 이 설정은 FatFS 작업에도 적용됩니다.#");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn5, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
@@ -1411,14 +1410,14 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 	lv_label_set_recolor(label_btn, true);
 	lv_btn_set_fit(btn, true, true);
 	lv_btn_set_toggle(btn, true);
-	lv_label_set_static_text(label_btn, SYMBOL_GPS" Auto Boot #00FFC9   ON #");
+	lv_label_set_static_text(label_btn, SYMBOL_GPS" 자동 부팅 #00FFC9   ON #");
 	lv_btn_set_action(btn, LV_BTN_ACTION_CLICK, _autoboot_hide_delay_action);
 	lv_obj_align(btn, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 18 + 6);
 	lv_btn_set_fit(btn, false, false);
 	autoboot_btn = btn;
 
 	lv_obj_t *label_txt2 = lv_label_create(sw_h2, NULL);
-	lv_label_set_static_text(label_txt2, "Choose which boot entry or payload to automatically boot\nwhen injecting.");
+	lv_label_set_static_text(label_txt2, "전원 입력 시 자동으로 부팅할 런처 또는 페이로드 선택.\n비활성화 시 Hekate로 진입합니다.");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3 - 4);
 
@@ -1430,7 +1429,7 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 
 	// Create Boot time delay list.
 	lv_obj_t *label_txt = lv_label_create(l_cont, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_CLOCK" Boot Time Delay  ");
+	lv_label_set_static_text(label_txt, SYMBOL_CLOCK" 부팅 대기 시간  ");
 	lv_obj_set_style(label_txt, th->label.prim);
 	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 
@@ -1438,13 +1437,13 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 	lv_obj_set_top(ddlist, true);
 	lv_ddlist_set_draw_arrow(ddlist, true);
 	lv_ddlist_set_options(ddlist,
-		"No bootlogo    \n"
-		"1 second\n"
-		"2 seconds\n"
-		"3 seconds\n"
-		"4 seconds\n"
-		"5 seconds\n"
-		"6 seconds");
+		"화면 스킵    \n"
+		"1초\n"
+		"2초\n"
+		"3초\n"
+		"4초\n"
+		"5초\n"
+		"6초");
 	lv_ddlist_set_selected(ddlist, 3);
 	lv_obj_align(ddlist, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 4, 0);
 	lv_ddlist_set_action(ddlist, _autoboot_delay_action);
@@ -1461,8 +1460,8 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 	label_txt2 = lv_label_create(l_cont, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"Set how long to show bootlogo when autoboot is enabled.\n"
-		"#C7EA46 You can press# #FF8000 VOL-# #C7EA46 during that time to enter hekate's menu.#\n");
+		"부팅 화면 표시 시간을 설정합니다.\n"
+		"#C7EA46 설정한 시간 내,# #FF8000 - 볼륨 버튼# #C7EA46 입력 시# #FF8000 Hekate##C7EA46 로 진입합니다.#\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
@@ -1471,15 +1470,15 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 
 	// Create Auto NoGC button.
 	lv_obj_t *btn2 = lv_btn_create(sw_h2, NULL);
-	nyx_create_onoff_button(th, sw_h2, btn2, SYMBOL_CHIP" Auto NoGC", auto_nogc_toggle, true);
+	nyx_create_onoff_button(th, sw_h2, btn2, SYMBOL_CHIP" NOGC 설정", auto_nogc_toggle, true);
 	lv_obj_align(btn2, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
 
 	label_txt2 = lv_label_create(sw_h2, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"It checks fuses and applies the patch automatically\n"
-		"if higher firmware. It is now a global config and set\n"
-		"at auto by default. (ON: Auto)\n\n\n");
+		"퓨즈 카운트시 펌웨어에 할당된 연소 퓨즈 갯수와 일치하지 않는 경우,\n"
+		"자동으로 #C7EA46 nogc# 패치를 적용합니다.\n"
+		"낸드 구분 없이 적용되며 #C7EA46 OFF#를 권장합니다. (#FF8000 ON: 자동#)\n\n\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn2, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
 
@@ -1488,13 +1487,13 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 
 	// Create Auto HOS Power Off button.
 	lv_obj_t *btn3 = lv_btn_create(sw_h3, NULL);
-	nyx_create_onoff_button(th, sw_h3, btn3, SYMBOL_POWER" Auto HOS Power Off", auto_hos_poweroff_toggle, true);
+	nyx_create_onoff_button(th, sw_h3, btn3, SYMBOL_POWER" HOS 자동 종료", auto_hos_poweroff_toggle, true);
 	lv_obj_align(btn3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
 
 	label_txt2 = lv_label_create(sw_h3, NULL);
 	lv_label_set_static_text(label_txt2,
-		"When Shutdown is used from HOS, the device wakes up after\n"
-		"15s. Enable this to automatically power off on the next\npayload injection.");
+		"HOS에서 전원 OFF를 사용하여 종료하면, 15초 후 재기동 됩니다.\n"
+		"Erista 기기의 경우 페이로드 자동 재주입 후 완전 종료되며,\nMariko 및 모드칩 기기는 기본 설정을 변경하지 마십시오.");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn3, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
 
@@ -1503,7 +1502,7 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 
 	// Create Backlight slider.
 	label_txt = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" Backlight");
+	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" 백라이트");
 	lv_obj_set_style(label_txt, th->label.prim);
 	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 
@@ -1516,7 +1515,7 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 	lv_obj_align(slider, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 20 / 15, 0);
 
 	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt2, "Set backlight brightness.\n\n");
+	lv_label_set_static_text(label_txt2, "화면 밝기를 조정합니다.\n\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
 
@@ -1525,14 +1524,14 @@ void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
 
 	// Create Update r2p button.
 	lv_obj_t *btn4 = lv_btn_create(sw_h3, NULL);
-	nyx_create_onoff_button(th, sw_h3, btn4, SYMBOL_REFRESH" Update Reboot 2 Payload", _update_r2p_action, true);
+	nyx_create_onoff_button(th, sw_h3, btn4, SYMBOL_REFRESH" Reboot 2 Payload 변경", _update_r2p_action, true);
 	lv_obj_align(btn4, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
 
 	label_txt2 = lv_label_create(sw_h3, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"If #FF8000 FSS0# is used in the selected boot entry, the reboot 2 payload\n"
-		"binary will be checked and forced to be updated to hekate.\n\n\n\n");
+		"#FF8000 FSS0 & PKG3#로 체인로드 된 런처를 사용하는 경우,\n"
+		"#C7EA46 reboot_payload.bin#을 #C7EA46 update.bin#의 기능으로 변경합니다.\n\n\n\n");
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn4, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
 

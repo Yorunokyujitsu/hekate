@@ -137,7 +137,7 @@ int parse_fss(launch_ctxt_t *ctxt, const char *path)
 	// Check if valid FSS0 and parse it.
 	if (fss_meta->magic == FSS0_MAGIC)
 	{
-		gfx_printf("Atmosphere %d.%d.%d-%08x via FSS0/PKG3\n"
+		gfx_printf("Asanosphere %d.%d.%d-%08x via FSS0/PKG3\n"
 			"Max HOS: %d.%d.%d\n"
 			"Unpacking..  ",
 			fss_meta->version >> 24, (fss_meta->version >> 16) & 0xFF, (fss_meta->version >> 8) & 0xFF, fss_meta->git_rev,

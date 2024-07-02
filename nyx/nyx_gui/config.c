@@ -50,8 +50,8 @@ void set_default_configuration()
 
 void set_nyx_default_configuration()
 {
-	n_cfg.theme_bg       = 0x2D2D2D;
-	n_cfg.theme_color    = 167;
+	n_cfg.theme_bg       = 0x2C3C49;
+	n_cfg.theme_color    = 183;
 	n_cfg.entries_5_col  = 0;
 	n_cfg.timeoff        = 0;
 	n_cfg.home_screen    = 0;
