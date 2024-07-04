@@ -1923,16 +1923,23 @@ failed_sd_mount:
 		if (!more_cfg)
 		{
 			lv_label_set_static_text(label_error,
-				"#FFDD00 Atmosphеre 엔트리를 찾을 수 없습니다...#\n"
-				"#96FF00 SD:/bootloader/hekate_ipl.ini# 파일을 확인하세요.\n"
-				"#C7EA46 ASAP.exe#, #C7EA46 ASAP-Updater#로 재설치하세요.");
+				"\n#FFDD00 Atmosphеre# 엔트리를 찾을 수 없습니다...\n"
+				"#96FF00 SD:/bootloader/hekate_ipl.ini# 파일을 확인하세요.\n\n\n"
+				"#00FFCC ASAP-lite#\n\n- #C7EA46 ASAP.exe# 를 이용하여 #00FFCC ASAP# 재설치.\n"
+				"- #C7EA46 페이로드# > #C7EA46 fusee.bin# > #C7EA46 ASAP-Updater# 를 이용하여 #00FFCC ASAP# 재설치.\n\n\n"
+				"#00FFCC ASAP-normal#\n\n- #C7EA46 페이로드# > #C7EA46 fusee.bin# 선택하여 부팅.\n"
+				"- #C7EA46 Ultrahand# > #C7EA46 Extra Setting+# > #C7EA46 추가 설정# > #C7EA46 런처 추가/제거# 진입.\n"
+				"- #C7EA46 메인 런처# 항목에서 사용할 런처 추가.");
 		}
 		else
 		{
 			lv_label_set_static_text(label_error,
-				"#FFDD00 .ini 파일이 없거나 L4T 엔트리를 찾을 수 없습니다...#\n"
-				"#96FF00 SD:/bootloader/ini/# 경로를 확인하세요.\n"
-				"#C7EA46 ASAP.exe#, #C7EA46 ASAP-Updater#로 재설치하세요.");
+				"\n#FFDD00 L4T# 엔트리를 찾을 수 없습니다...\n"
+				"#96FF00 SD:/bootloader/ini/# 경로를 확인하세요.\n\n\n"
+				"#00FFCC Android, Linux, Emulator#\n\n- #C7EA46 ASAP.exe#, #C7EA46 ASAP-Updater# 를 이용하여 프로그램 설치 시 생성.\n\n\n"
+				"#00FFCC 이미 설치하였으나 런처가 제거된 경우#\n\n- #96FF00 런처# > #96FF00 커펌 (eMMC/SD Card)# 선택하여 부팅.\n"
+				"- #C7EA46 Ultrahand# > #C7EA46 Extra Setting+# > #C7EA46 추가 설정# > #C7EA46 런처 추가/제거# 진입.\n"
+				"- #C7EA46 L4T 런처# 항목에서 사용할 런처 추가.");
 		}
 
 		lv_obj_set_pos(label_error, 19, 0);

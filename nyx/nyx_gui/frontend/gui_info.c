@@ -587,7 +587,7 @@ static lv_res_t _create_window_fuses_info_status(lv_obj_t *btn)
 		strcpy(fuses_hos_version, "16.0.0 - 16.1.0");
 		break;
 	case 19:
-		strcpy(fuses_hos_version, "17.0.0 - 18.1.0+");
+		strcpy(fuses_hos_version, "17.0.0 - 18.1.0");
 		break;
 	case 255:
 		strcpy(fuses_hos_version, "#FFD000 초 과  연 소 #");
@@ -612,7 +612,7 @@ static lv_res_t _create_window_fuses_info_status(lv_obj_t *btn)
 	// Parse fuses and display them.
 	s_printf(txt_buf,
 		"%02X - %s - M%d A%02d\n"
-		"%X - %s - %s\n%02d - %s\n%d |%d - Horizon OS: %s\n%08X %08X %08X\n%08X%08X%08X%08X\n%08X\n%08X%08X%08X%08X\n%08X%08X%08X%08X\n%d\n"
+		"%X - %s - %s\n%02d - %s\n%d | %d - Horizon OS: %s\n%08X %08X %08X\n%08X%08X%08X%08X\n%08X\n%08X%08X%08X%08X\n%08X%08X%08X%08X\n%d\n"
 		"%s\n%d.%02d (0x%X)\n%d.%02d (0x%X)\n%d\n%d\n%d\n%d\n0x%X\n%d\n%d (%d)\n%d (%d)\n%d (%d)\n"
 		"%d\n%d\n%d (0x%X)\n%d\n%d\n%d",
 		(chip_id >> 8) & 0xFF,
