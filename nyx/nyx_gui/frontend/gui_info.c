@@ -612,7 +612,7 @@ static lv_res_t _create_window_fuses_info_status(lv_obj_t *btn)
 	// Parse fuses and display them.
 	s_printf(txt_buf,
 		"%02X - %s - M%d A%02d\n"
-		"%X - %s - %s\n%02d - %s\n%d|%d - Horizon OS: %s\n%08X %08X %08X\n%08X%08X%08X%08X\n%08X\n%08X%08X%08X%08X\n%08X%08X%08X%08X\n%d\n"
+		"%X - %s - %s\n%02d - %s\n%d |%d - Horizon OS: %s\n%08X %08X %08X\n%08X%08X%08X%08X\n%08X\n%08X%08X%08X%08X\n%08X%08X%08X%08X\n%d\n"
 		"%s\n%d.%02d (0x%X)\n%d.%02d (0x%X)\n%d\n%d\n%d\n%d\n0x%X\n%d\n%d (%d)\n%d (%d)\n%d (%d)\n"
 		"%d\n%d\n%d (0x%X)\n%d\n%d\n%d",
 		(chip_id >> 8) & 0xFF,
