@@ -2,7 +2,7 @@
  * Touch driver for Nintendo Switch's STM FingerTip S (FTM4CD60DA1BE/FTM4CD50TA1BE) touch controller
  *
  * Copyright (c) 2018 langerhans
- * Copyright (c) 2018-2023 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -39,7 +39,7 @@ static touch_panel_info_t _panels[] =
 	{  1,  0, 1, 1,  "GiS GGM6 B2X"    },// 1.
 	{  2,  0, 0, 0,  "NISSHA NBF-K9A"  },// 3.
 	{  3,  1, 0, 0,  "GiS 5.5\""       },// 4.
-	{  4,  0, 0, 1,  "Samsung TSP"     },// 5?
+	{  4,  0, 0, 1,  "SAMSUNG TSP"     },// 5?
 	{ -1,  1, 0, 1,  "GiS VA 6.2\""    } // 2.
 };
 

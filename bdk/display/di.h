@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018 naehrwert
- * Copyright (c) 2018-2025 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -808,6 +808,11 @@
  * [30] 97 [0F]: AUO A062TAN02 (59.06A33.002) [From photo of assumed same panel]
  * [30] 98 [0F]: AUO A062TAN0? [UNCONFIRMED MODEL]
  * [30] XX [0F]: AUO A062TAN03 (59.06A33.003) [UNCONFIRMED ID]
+ // Retro Super7 panels.
+ * [E0] 01 [0F]: Retro Remake SUPER7 IPS (Rev 01)
+ * [E1] 01 [0F]: Retro Remake SUPER7 IPS HD (Rev 01)
+ * [E0] 11 [0F]: Retro Remake SUPER7 OLED (Rev 01)
+ * [E1] 11 [0F]: Retro Remake SUPER7 OLED HD (Rev 01)
  *
  *
  * 5.5" panels for Hoag SKU:
@@ -818,10 +823,16 @@
  * [30] 94 [10]: AUO A055TAN02 (59.05A30.002)
  * [30] 95 [10]: AUO A055TAN03 (59.05A30.003)
  * [40] 94 [10]: Sharp LQ055T1SW10 (Rev P)
+ // Retro Super5 panels.
+ * [E0] 01 [10]: Retro Remake SUPER5 OLED (Rev 01)
+ * [E1] 01 [10]: Retro Remake SUPER5 OLED HD (Rev 01)
  *
  *
  * 7.0" OLED panels for Aula SKU:
  * [50] 9B [20]: Samsung AMS699VC01-0 (Rev 2.5)
+ // Retro Super7 panels.
+ * [E0] 01 [20]: Retro Remake SUPER7 OLED (Rev 01)
+ * [E1] 01 [20]: Retro Remake SUPER7 OLED HD (Rev 01)
  */
 
 /* Display ID Decoding:
@@ -854,6 +865,14 @@ enum
 	PANEL_AUO_A055TAN01   = 0x1030,
 	PANEL_SHP_LQ055T1SW10 = 0x1040,
 	PANEL_SAM_AMS699VC01  = 0x2050,
+	PANEL_RR_SUPER5_OLED_V1     = 0x10E0,
+	PANEL_RR_SUPER5_OLED_HD_V1  = 0x10E1,
+	PANEL_RR_SUPER7_IPS_V1      = 0x0FE0,
+	PANEL_RR_SUPER7_IPS_HD_V1   = 0x0FE1,
+	//PANEL_RR_SUPER7_OLED_V1     = 
+	//PANEL_RR_SUPER7_OLED_HD_V1  =
+	PANEL_RR_SUPER7_OLED_7V1    = 0x20E0,
+	PANEL_RR_SUPER7_OLED_HD_7V1 = 0x20E1,
 
 	// Found on 6/2" clones. Unknown markings. Clone of AUO A062TAN01.
 	// Quality seems JDI like. Has bad low backlight scaling. ID: [83] 94 [0F]. Sometimes reports [30] 94 [0F]. Both IDs have correct CRC16.

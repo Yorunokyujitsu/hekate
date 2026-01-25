@@ -2,7 +2,7 @@
  * Copyright (c) 2018 naehrwert
  * Copyright (c) 2018 shuffle2
  * Copyright (c) 2018 balika011
- * Copyright (c) 2019-2025 CTCaer
+ * Copyright (c) 2019-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -184,8 +184,7 @@ int fuse_set_sbk()
 
 void fuse_wait_idle()
 {
-	while (((FUSE(FUSE_CTRL) >> 16) & 0x1F) != FUSE_STATUS_IDLE)
-		;
+	while (((FUSE(FUSE_CTRL) >> 16) & 0x1F) != FUSE_STATUS_IDLE);
 }
 
 void fuse_sense()
@@ -200,11 +199,9 @@ void fuse_sense()
 	FUSE(FUSE_PRIV2INTFC) = FUSE_PRIV2INTFC_SKIP_RECORDS | FUSE_PRIV2INTFC_START_DATA;
 	usleep(1);
 
-	while (!(FUSE(FUSE_CTRL) & BIT(30)) || ((FUSE(FUSE_CTRL) >> 16) & 0x1F) != FUSE_STATUS_IDLE)
-		;
+	while (!(FUSE(FUSE_CTRL) & BIT(30)) || ((FUSE(FUSE_CTRL) >> 16) & 0x1F) != FUSE_STATUS_IDLE);
 
-
-  	clock_enable_fuse(true);
+	clock_enable_fuse(true);
 }
 
 u32 fuse_read(u32 addr)
