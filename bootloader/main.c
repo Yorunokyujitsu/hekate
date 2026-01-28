@@ -596,7 +596,7 @@ static void _nyx_load_run()
 		h_cfg.errors |= ERR_SYSOLD_NYX;
 
 		gfx_con_setpos(0, 0);
-		WPRINTF("Old Nyx GUI found! There will be dragons!\n");
+		WPRINTF("Old Nyx GUI found!\n");
 		WPRINTF("\nUpdate bootloader folder!\n\n");
 		WPRINTF("Press any key...");
 
@@ -881,7 +881,7 @@ skip_list:
 	// Check if entry is payload or l4t special case.
 	char *special_path = ini_check_special_section(cfg_sec);
 
-	if ((!(b_cfg.boot_cfg & BOOT_CFG_FROM_LAUNCH) && boot_wait) || // Conditional for HOS/Payload.
+	if ((boot_wait) || // Conditional for HOS/Payload.
 		(special_path && special_path == (char *)-1))              // Always show for L4T.
 	{
 		u32 fsize;
@@ -1328,7 +1328,7 @@ static void _ipl_reload()
 static void _about()
 {
 	static const char credits[] =
-		"\nhekate   (c) 2018,      naehrwert, st4rk\n\n"
+		"\nHekate   (c) 2018,      naehrwert, st4rk\n\n"
 		"         (c) 2018-2026, CTCaer\n\n"
 		" ___________________________________________\n\n"
 		"Thanks to: %kderrek, nedwill, plutoo,\n"
@@ -1426,7 +1426,7 @@ ment_t ment_top[] = {
 	MDEF_END()
 };
 
-menu_t menu_top = { ment_top, "hekate v6.5.1", 0, 0 };
+menu_t menu_top = { ment_top, "Hekate v6.5.1", 0, 0 };
 
 extern void pivot_stack(u32 stack_top);
 

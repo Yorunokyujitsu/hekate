@@ -29,10 +29,10 @@ void set_default_configuration()
 
 	h_cfg.autoboot      = 0;
 	h_cfg.autoboot_list = 0;
-	h_cfg.bootwait      = 3;
+	h_cfg.bootwait      = 1;
 	h_cfg.noticker      = 0; //! TODO: Add GUI option.
-	h_cfg.backlight     = 100;
-	h_cfg.autohosoff    = h_cfg.t210b01 ? 1 : 0;
+	h_cfg.backlight     = 80;
+	h_cfg.autohosoff    = h_cfg.t210b01 ? 2 : 0;
 	h_cfg.autonogc      = 1;
 	h_cfg.updater2p     = 0;
 	h_cfg.bootprotect   = 0;

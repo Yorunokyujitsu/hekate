@@ -711,6 +711,23 @@ void hos_launch(ini_sec_t *cfg)
 
 	ctxt.cfg = cfg;
 
+	// ===============================================================
+	//  ASAP: Quiet boot only stock.
+	// ===============================================================
+	bool early_stock = false;
+
+	if (cfg) {
+		LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg->kvs, link) {
+			if (!strcmp(kv->key, "stock") && atoi(kv->val) == 1) {
+				early_stock = true;
+				break;
+			}
+		}
+	}
+	if (early_stock)
+		gfx_con.mute = false;
+	// ===============================================================
+
 	if (!gfx_con.mute)
 		gfx_clear_grey(0x1B);
 	gfx_con_setpos(0, 0);
