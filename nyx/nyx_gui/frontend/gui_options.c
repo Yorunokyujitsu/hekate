@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -23,23 +23,45 @@
 #include "../config.h"
 #include <libs/lvgl/lv_themes/lv_theme_hekate.h>
 #include <libs/lvgl/lvgl.h>
+//====================================
+//  ASAP: NAND config lock pin math.
+//====================================
+#include <libs/lvgl/lv_misc/lv_math.h>
+//====================================
 
-#define CLOCK_MIN_YEAR 2025
+#define CLOCK_MIN_YEAR 2026
 #define CLOCK_MAX_YEAR (CLOCK_MIN_YEAR + 10)
-#define CLOCK_YEARLIST "2025\n2026\n2027\n2028\n2029\n2030\n2031\n2032\n2033\n2034\n2035"
+#define CLOCK_YEARLIST "2026\n2027\n2028\n2029\n2030\n2031\n2032\n2033\n2034\n2035\n2036"
 
 static lv_obj_t *autoboot_btn;
-static bool autoboot_first_time = true;
 
 static bool ini_changes_made = false;
 static bool nyx_changes_made = false;
+
+static s32 timeoffset_backup = 0;
+static bool timeoffset_backup_valid = false;
 
 void nyx_options_clear_ini_changes_made()
 {
 	ini_changes_made = false;
 }
 
-bool nyx_options_get_ini_changes_made()
+//==========================
+//  ASAP: Direct nyx save.
+//==========================
+static lv_res_t _save_options_action(lv_obj_t *btn)
+{
+	if (sd_mount()) {
+		create_config_entry();
+	}
+	nyx_options_clear_ini_changes_made();
+	sd_unmount();
+
+	return LV_RES_OK;
+}
+//==========================
+
+/* bool nyx_options_get_ini_changes_made()
 {
 	return ini_changes_made;
 }
@@ -87,7 +109,7 @@ static lv_res_t _update_r2p_action(lv_obj_t *btn)
 	nyx_generic_onoff_toggle(btn);
 
 	return LV_RES_OK;
-}
+} */
 
 static lv_res_t _win_autoboot_close_action(lv_obj_t * btn)
 {
@@ -125,250 +147,75 @@ lv_obj_t *create_window_autoboot(const char *win_title)
 	return win;
 }
 
-static lv_res_t _autoboot_disable_action(lv_obj_t *btn)
+//========================================
+//  ASAP: Autoboot dropdown list config.
+//========================================
+lv_res_t _autoboot_list_action(lv_obj_t *ddlist)
 {
-	h_cfg.autoboot = 0;
-	h_cfg.autoboot_list = 0;
+	u32 new_selection = lv_ddlist_get_selected(ddlist);
+	if (new_selection == 0)
+	{
+		h_cfg.autoboot = 0;
+		h_cfg.autoboot_list = 0;
+	} else {
+		h_cfg.autoboot = new_selection;
+		h_cfg.autoboot_list = 1;
+	}
 	ini_changes_made = true;
-
-	lv_btn_set_state(autoboot_btn, LV_BTN_STATE_REL);
-	nyx_generic_onoff_toggle(autoboot_btn);
-
-	lv_obj_t * win = lv_win_get_from_btn(btn);
-
-	lv_obj_del(win);
-
-	close_btn = NULL;
+	_save_options_action(ddlist);
 
 	return LV_RES_OK;
 }
 
-lv_obj_t *auto_main_list;
-lv_obj_t *auto_more_list;
-static lv_res_t _autoboot_enable_main_action(lv_obj_t *btn)
-{
-	h_cfg.autoboot = lv_list_get_btn_index(auto_main_list, btn) + 1;
-	h_cfg.autoboot_list = 0;
-	ini_changes_made = true;
-
-	lv_btn_set_state(autoboot_btn, LV_BTN_STATE_TGL_REL);
-	nyx_generic_onoff_toggle(autoboot_btn);
-
-	lv_obj_t *obj = lv_obj_get_parent(btn);
-	for (int i = 0; i < 5; i++)
-		obj = lv_obj_get_parent(obj);
-	lv_obj_del(obj);
-
-	close_btn = NULL;
-
-	return LV_RES_INV;
-}
-
-static lv_res_t _autoboot_enable_more_action(lv_obj_t *btn)
-{
-	h_cfg.autoboot = lv_list_get_btn_index(auto_more_list, btn) + 1;
-	h_cfg.autoboot_list = 1;
-	ini_changes_made = true;
-
-	lv_btn_set_state(autoboot_btn, LV_BTN_STATE_TGL_REL);
-	nyx_generic_onoff_toggle(autoboot_btn);
-
-	lv_obj_t *obj = lv_obj_get_parent(btn);
-	for (int i = 0; i < 5; i++)
-		obj = lv_obj_get_parent(obj);
-	lv_obj_del(obj);
-
-	close_btn = NULL;
-
-	return LV_RES_INV;
-}
-
-static void _create_autoboot_window()
-{
-	lv_obj_t *win = create_window_autoboot(SYMBOL_GPS" Auto Boot");
-	lv_win_add_btn(win, NULL, SYMBOL_POWER" Disable", _autoboot_disable_action);
-
-	static lv_style_t h_style;
-	lv_style_copy(&h_style, &lv_style_transp);
-	h_style.body.padding.inner = 0;
-	h_style.body.padding.hor = LV_DPI - (LV_DPI / 4);
-	h_style.body.padding.ver = LV_DPI / 6;
-
-	// Main configurations container.
-	lv_obj_t *h1 = lv_cont_create(win, NULL);
-	lv_cont_set_style(h1, &h_style);
-	lv_cont_set_fit(h1, false, true);
-	lv_obj_set_width(h1, (LV_HOR_RES / 9) * 4);
-	lv_obj_set_click(h1, false);
-	lv_cont_set_layout(h1, LV_LAYOUT_OFF);
-
-	lv_obj_t *label_sep = lv_label_create(h1, NULL);
-	lv_label_set_static_text(label_sep, "");
-
-	lv_obj_t *label_txt = lv_label_create(h1, NULL);
-	lv_label_set_static_text(label_txt, "Main configurations");
-	lv_obj_set_style(label_txt, lv_theme_get_current()->label.prim);
-	lv_obj_align(label_txt, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -(LV_DPI / 4));
-
-	lv_obj_t *line_sep = lv_line_create(h1, NULL);
-	static const lv_point_t line_pp[] = { {0, 0}, { LV_HOR_RES - (LV_DPI - (LV_DPI / 4)) * 2, 0} };
-	lv_line_set_points(line_sep, line_pp, 2);
-	lv_line_set_style(line_sep, lv_theme_get_current()->line.decor);
-	lv_obj_align(line_sep, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 8);
-
-	// Create list and populate it with Main boot entries.
-	lv_obj_t *list_main = lv_list_create(h1, NULL);
-	auto_main_list = list_main;
-	lv_obj_align(list_main, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-
-	lv_obj_set_size(list_main, LV_HOR_RES * 4 / 10, LV_VER_RES * 4 / 7);
-	lv_list_set_single_mode(list_main, true);
-
-	sd_mount();
-
-	// Parse hekate main configuration.
-	LIST_INIT(ini_sections);
-	if (ini_parse(&ini_sections, "bootloader/hekate_ipl.ini", false))
-	{
-		LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_sections, link)
-		{
-			if (!strcmp(ini_sec->name, "config") || (ini_sec->type != INI_CHOICE))
-				continue;
-
-			lv_list_add(list_main, NULL, ini_sec->name, _autoboot_enable_main_action);
-		}
-
-		ini_free(&ini_sections);
-	}
-
-	// More configuration container.
-	lv_obj_t *h2 = lv_cont_create(win, NULL);
-	lv_cont_set_style(h2, &h_style);
-	lv_cont_set_fit(h2, false, true);
-	lv_obj_set_width(h2, (LV_HOR_RES / 9) * 4);
-	lv_obj_set_click(h2, false);
-	lv_cont_set_layout(h2, LV_LAYOUT_OFF);
-	lv_obj_align(h2, h1, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI * 17 / 29, 0);
-
-	label_sep = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_sep, "");
-
-	lv_obj_t *label_txt3 = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_txt3, "Ini folder configurations");
-	lv_obj_set_style(label_txt3, lv_theme_get_current()->label.prim);
-	lv_obj_align(label_txt3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 11);
-
-	line_sep = lv_line_create(h2, line_sep);
-	lv_obj_align(line_sep, label_txt3, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 2), LV_DPI / 8);
-	lv_line_set_style(line_sep, lv_theme_get_current()->line.decor);
-
-	// Create list and populate it with more cfg boot entries.
-	lv_obj_t *list_more_cfg = lv_list_create(h2, NULL);
-	auto_more_list = list_more_cfg;
-	lv_obj_align(list_more_cfg, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 2, LV_DPI / 4);
-
-	lv_obj_set_size(list_more_cfg, LV_HOR_RES * 4 / 10, LV_VER_RES * 4 / 7);
-	lv_list_set_single_mode(list_more_cfg, true);
-
-	// Parse all .ini files in ini folder.
-	LIST_INIT(ini_list_sections);
-	if (ini_parse(&ini_list_sections, "bootloader/ini", true))
-	{
-		LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_list_sections, link)
-		{
-			if (!strcmp(ini_sec->name, "config") || (ini_sec->type != INI_CHOICE))
-				continue;
-
-			lv_list_add(list_more_cfg, NULL, ini_sec->name, _autoboot_enable_more_action);
-		}
-
-		ini_free(&ini_list_sections);
-	}
-
-	sd_unmount();
-}
-
-static lv_res_t _autoboot_hide_delay_action(lv_obj_t *btn)
-{
-	if (!autoboot_first_time)
-		_create_autoboot_window();
-
-	if (!h_cfg.autoboot && autoboot_first_time)
-		lv_btn_set_state(btn, LV_BTN_STATE_REL);
-	else
-		lv_btn_set_state(btn, LV_BTN_STATE_TGL_REL);
-	autoboot_first_time = false;
-
-	nyx_generic_onoff_toggle(btn);
-
-	return LV_RES_INV;
-}
-
-static lv_res_t _autoboot_delay_action(lv_obj_t *ddlist)
+//===========================================
+//  ASAP: Autoboot launching delay seconds.
+//===========================================
+lv_res_t _autoboot_delay_action(lv_obj_t *ddlist)
 {
 	u32 new_selection = lv_ddlist_get_selected(ddlist);
 	if (h_cfg.bootwait != new_selection)
 	{
 		h_cfg.bootwait = new_selection;
 		ini_changes_made = true;
+		_save_options_action(ddlist);
 	}
-
-	return LV_RES_OK;
-}
-
-static lv_res_t _slider_brightness_action(lv_obj_t * slider)
-{
-	display_backlight_brightness(lv_slider_get_value(slider) - 20, 0);
-	h_cfg.backlight = lv_slider_get_value(slider);
-	ini_changes_made = true;
-
-	return LV_RES_OK;
-}
-
-static lv_res_t _data_verification_action(lv_obj_t *ddlist)
-{
-	u32 new_selection = lv_ddlist_get_selected(ddlist);
-	if (n_cfg.verification != new_selection)
-	{
-		n_cfg.verification = new_selection;
-		nyx_changes_made = true;
-	}
-
-	return LV_RES_OK;
-}
-
-static lv_res_t _entries_columns_action(lv_obj_t *btn)
-{
-	n_cfg.entries_5_col = !n_cfg.entries_5_col;
-	nyx_changes_made = true;
-
-	if (!n_cfg.entries_5_col)
-		lv_btn_set_state(btn, LV_BTN_STATE_REL);
-	else
-		lv_btn_set_state(btn, LV_BTN_STATE_TGL_REL);
-
-	nyx_generic_onoff_toggle(btn);
 
 	return LV_RES_OK;
 }
 
 static lv_res_t _save_nyx_options_action(lv_obj_t *btn)
 {
-	static const char * mbox_btn_map[] = {"\251", "\222OK!", "\251", ""};
-	lv_obj_t * mbox = lv_mbox_create(lv_scr_act(), NULL);
-	lv_mbox_set_recolor_text(mbox, true);
-
-	int res = !create_nyx_config_entry(true);
-
+	create_nyx_config_entry(true);
 	nyx_changes_made = false;
 
-	if (res)
-		lv_mbox_set_text(mbox, "#FF8000 Nyx Configuration#\n\n#96FF00 The configuration was saved to sd card!#");
-	else
-		lv_mbox_set_text(mbox, "#FF8000 Nyx Configuration#\n\n#FFDD00 Failed to save the configuration#\n#FFDD00 to sd card!#");
-	lv_mbox_add_btns(mbox, mbox_btn_map, NULL);
-	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
-	lv_obj_set_top(mbox, true);
+	return LV_RES_OK;
+}
+
+static lv_res_t _slider_brightness_action(lv_obj_t * slider)
+{
+	u32 new_value = lv_slider_get_value(slider);
+
+	if (h_cfg.backlight != new_value)
+	{
+		display_backlight_brightness(new_value - 20, 0);
+		h_cfg.backlight = new_value;
+		ini_changes_made = true;
+
+		_save_options_action(slider);
+	}
+
+	return LV_RES_OK;
+}
+
+lv_res_t _data_verification_action(lv_obj_t *ddlist)
+{
+	u32 new_selection = lv_ddlist_get_selected(ddlist);
+	if (n_cfg.verification != new_selection)
+	{
+		n_cfg.verification = new_selection;
+		nyx_changes_made = true;
+		_save_nyx_options_action(NULL);
+	}
 
 	return LV_RES_OK;
 }
@@ -406,7 +253,6 @@ void create_flat_button(lv_obj_t *parent, lv_obj_t *btn, lv_color_t color, lv_ac
 
 typedef struct _color_test_ctxt
 {
-	u32 bg;
 	u16 hue;
 	lv_obj_t *window;
 	lv_obj_t *header1;
@@ -423,7 +269,6 @@ color_test_ctxt color_test;
 
 static lv_res_t _save_theme_color_action(lv_obj_t *btn)
 {
-	n_cfg.theme_bg    = color_test.bg;
 	n_cfg.theme_color = color_test.hue;
 
 	// Save nyx config.
@@ -434,62 +279,29 @@ static lv_res_t _save_theme_color_action(lv_obj_t *btn)
 	return LV_RES_OK;
 }
 
-static void _show_new_nyx_color(u32 bg, u16 hue, bool update_bg)
+static void _show_new_nyx_color(u16 hue)
 {
-	lv_color_t bgc        = LV_COLOR_HEX(bg);
-	lv_color_t bgc_light  = LV_COLOR_HEX(bg ? (bg + 0x101010) : 0x2D2D2D);
-	lv_color_t bg_border  = LV_COLOR_HEX(bg ? (bg + 0x202020) : 0x3D3D3D);
-	lv_color_t color      = lv_color_hsv_to_rgb(hue, 100, 100);
+	lv_color_t color = lv_color_hsv_to_rgb(hue, 100, 100);
 
-	if (update_bg)
-	{
-		static lv_style_t win_bg_test;
-		lv_style_copy(&win_bg_test, lv_win_get_style(color_test.window, LV_WIN_STYLE_BG));
-		win_bg_test.body.main_color = bgc;
-		win_bg_test.body.grad_color = win_bg_test.body.main_color;
-		lv_win_set_style(color_test.window, LV_WIN_STYLE_BG, &win_bg_test);
-
-		static lv_style_t win_hdr_test;
-		lv_style_copy(&win_hdr_test, lv_win_get_style(color_test.window, LV_WIN_STYLE_HEADER));
-		win_hdr_test.body.main_color = bgc;
-		win_hdr_test.body.grad_color = win_hdr_test.body.main_color;
-		lv_win_set_style(color_test.window, LV_WIN_STYLE_HEADER, &win_hdr_test);
-
-		static lv_style_t hdr1_bg_test;
-		lv_style_copy(&hdr1_bg_test, lv_cont_get_style(color_test.header1));
-		hdr1_bg_test.body.main_color = bgc;
-		hdr1_bg_test.body.grad_color = hdr1_bg_test.body.main_color;
-		lv_cont_set_style(color_test.header1, &hdr1_bg_test);
-
-		static lv_style_t hdr2_bg_test;
-		lv_style_copy(&hdr2_bg_test, lv_cont_get_style(color_test.header2));
-		hdr2_bg_test.body.main_color = bgc;
-		hdr2_bg_test.body.grad_color = hdr2_bg_test.body.main_color;
-		lv_cont_set_style(color_test.header2, &hdr2_bg_test);
-	}
-	else
-	{
-		static lv_style_t txt_test;
-		lv_style_copy(&txt_test, lv_label_get_style(color_test.label));
-		txt_test.text.color = color;
-		lv_obj_set_style(color_test.label, &txt_test);
-		lv_obj_set_style(color_test.icons, &txt_test);
-	}
-
+	// Text, icons
+	static lv_style_t txt_test;
+	lv_style_copy(&txt_test, lv_label_get_style(color_test.label));
+	txt_test.text.color = color;
+	lv_obj_set_style(color_test.label, &txt_test);
+	lv_obj_set_style(color_test.icons, &txt_test);
+	
+	// Buttons
 	static lv_style_t btn_tgl_pr_test;
 	lv_style_copy(&btn_tgl_pr_test, lv_btn_get_style(color_test.button, LV_BTN_STATE_TGL_PR));
-	btn_tgl_pr_test.body.main_color = bgc_light;
-	btn_tgl_pr_test.body.grad_color = btn_tgl_pr_test.body.main_color;
 	btn_tgl_pr_test.body.border.color = color;
 	btn_tgl_pr_test.text.color = color;
 	lv_btn_set_style(color_test.button, LV_BTN_STATE_TGL_PR, &btn_tgl_pr_test);
 
+	// Slider
 	static lv_style_t slider_bg, slider_test, slider_ind;
 	lv_style_copy(&slider_bg, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_BG));
 	lv_style_copy(&slider_test, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_KNOB));
 	lv_style_copy(&slider_ind, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_INDIC));
-	slider_bg.body.main_color = bg_border;
-	slider_bg.body.grad_color = slider_bg.body.main_color;
 	slider_test.body.main_color = color;
 	slider_test.body.grad_color = slider_test.body.main_color;
 	slider_ind.body.main_color = lv_color_hsv_to_rgb(hue, 100, 72);
@@ -497,6 +309,18 @@ static void _show_new_nyx_color(u32 bg, u16 hue, bool update_bg)
 	lv_slider_set_style(color_test.slider, LV_SLIDER_STYLE_BG, &slider_bg);
 	lv_slider_set_style(color_test.slider, LV_SLIDER_STYLE_KNOB, &slider_test);
 	lv_slider_set_style(color_test.slider, LV_SLIDER_STYLE_INDIC, &slider_ind);
+
+	static lv_style_t hue_bg, hue_knob, hue_ind;
+	lv_style_copy(&hue_bg, lv_slider_get_style(color_test.hue_slider, LV_SLIDER_STYLE_BG));
+	lv_style_copy(&hue_knob, lv_slider_get_style(color_test.hue_slider, LV_SLIDER_STYLE_KNOB));
+	lv_style_copy(&hue_ind, lv_slider_get_style(color_test.hue_slider, LV_SLIDER_STYLE_INDIC));
+	hue_knob.body.main_color = color;
+	hue_knob.body.grad_color = color;
+	hue_ind.body.main_color = lv_color_hsv_to_rgb(hue, 100, 72);
+	hue_ind.body.grad_color = hue_ind.body.main_color;
+	lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_BG, &hue_bg);
+	lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_KNOB, &hue_knob);
+	lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_INDIC, &hue_ind);
 }
 
 static lv_res_t _slider_hue_action(lv_obj_t *slider)
@@ -504,23 +328,11 @@ static lv_res_t _slider_hue_action(lv_obj_t *slider)
 	if (color_test.hue != lv_slider_get_value(slider))
 	{
 		color_test.hue = lv_slider_get_value(slider);
-		_show_new_nyx_color(color_test.bg, color_test.hue, false);
+		_show_new_nyx_color(color_test.hue);
 		char hue[8];
 		s_printf(hue, "%03d", color_test.hue);
 		lv_label_set_text(color_test.hue_label, hue);
 	}
-
-	return LV_RES_OK;
-}
-
-static lv_res_t _preset_bg_action(lv_obj_t *btn)
-{
-	//! TODO: Support a range?
-	if (color_test.bg)
-		color_test.bg = 0;
-	else
-		color_test.bg = COLOR_HOS_BG;
-	_show_new_nyx_color(color_test.bg, color_test.hue, true);
 
 	return LV_RES_OK;
 }
@@ -532,7 +344,7 @@ static lv_res_t _preset_hue_action(lv_obj_t *btn)
 	if (color_test.hue != ext->idx)
 	{
 		color_test.hue = ext->idx;
-		_show_new_nyx_color(color_test.bg, color_test.hue, false);
+		_show_new_nyx_color(color_test.hue);
 		char hue[8];
 		s_printf(hue, "%03d", color_test.hue);
 		lv_label_set_text(color_test.hue_label, hue);
@@ -546,15 +358,18 @@ static const u16 theme_colors[17] = {
 	4, 13, 23, 33, 43, 54, 66, 89, 124, 167, 187, 200, 208, 231, 261, 291, 341
 };
 
-static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
+lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_COPY" Nyx Color Theme");
-	lv_win_add_btn(win, NULL, SYMBOL_HINT" Toggle Background", _preset_bg_action);
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_HINT" Color Theme & Backlight");
+	if (close_btn)
+	{
+		lv_obj_del(close_btn);
+		close_btn = NULL;
+	}
 	lv_win_add_btn(win, NULL, SYMBOL_SAVE" Save & Reload", _save_theme_color_action);
 	color_test.window = win;
 
 	// Set current theme colors.
-	color_test.bg  = n_cfg.theme_bg;
 	color_test.hue = n_cfg.theme_color;
 
 	lv_obj_t *sep = lv_label_create(win, NULL);
@@ -605,8 +420,8 @@ static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 
 	// Create sample text.
 	lv_obj_t *h2 = lv_cont_create(win, NULL);
-	lv_obj_set_size(h2, LV_HOR_RES - (LV_DPI * 8 / 10), LV_VER_RES / 3);
-	lv_obj_align(h2, slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI);
+	lv_obj_set_size(h2, LV_HOR_RES - (LV_DPI * 8 / 10), LV_VER_RES / 2);
+	lv_obj_align(h2, slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2);
 	color_test.header2 = h2;
 
 	lv_obj_t *lbl_sample = lv_label_create(h2, NULL);
@@ -615,10 +430,11 @@ static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 	lv_obj_t *lbl_test = lv_label_create(h2, NULL);
 	lv_label_set_long_mode(lbl_test, LV_LABEL_LONG_BREAK);
 	lv_label_set_static_text(lbl_test,
-		"Lorem ipsum dolor sit amet, consectetur adipisicing elit, "
-		"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
-		"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris "
-		"nisi ut aliquip ex ea commodo consequat.");
+		"This build is a fork of Asa's project, designed for Mariko only.\n"
+		"It is intended for personal use.\n"
+		"No responsibility is assumed for misuse.\n\n"
+		"Hold for 3 seconds to access the hidden menu.\n"
+		"Partition:  eMMC Partition  |   Ｘ:  RAM Mode   |   Ｅ:  Payloads   |   Ｕ:  HID");
 	lv_obj_set_width(lbl_test, lv_obj_get_width(h2) - LV_DPI * 6 / 10);
 	lv_obj_align(lbl_test, lbl_sample, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
 	color_test.label = lbl_test;
@@ -631,12 +447,18 @@ static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 	lv_obj_align(lbl_icons, lbl_test, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 2 / 5);
 	color_test.icons = lbl_icons;
 
+	// Create Backlight slider.
+	lv_obj_t *label_txt = lv_label_create(h2, NULL);
+	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" Brightness:");
+	lv_obj_align(label_txt, lbl_icons, LV_ALIGN_OUT_RIGHT_MID, 100, 0);
+
 	// Create sample slider.
-	lv_obj_t *slider_test = lv_slider_create(h2, NULL);
-	lv_obj_align(slider_test, lbl_test, LV_ALIGN_OUT_BOTTOM_MID, 0, LV_DPI * 2 / 5);
-	lv_obj_set_click(slider_test, false);
-	lv_bar_set_value(slider_test, 60);
-	color_test.slider = slider_test;
+	lv_obj_t *slider_bl = lv_slider_create(h2, NULL);
+	lv_bar_set_range(slider_bl, 30, 220);
+	lv_bar_set_value(slider_bl, h_cfg.backlight);
+	lv_slider_set_action(slider_bl, _slider_brightness_action);
+	lv_obj_align(slider_bl, label_txt, LV_ALIGN_OUT_RIGHT_MID, 30, 0);
+	color_test.slider = slider_bl;
 
 	// Create sample button.
 	lv_obj_t *btn_test = lv_btn_create(h2, NULL);
@@ -646,7 +468,7 @@ static lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 	lv_obj_set_click(btn_test, false);
 	color_test.button = btn_test;
 
-	_show_new_nyx_color(color_test.bg, color_test.hue, false);
+	_show_new_nyx_color(color_test.hue);
 
 	return LV_RES_OK;
 }
@@ -720,7 +542,12 @@ static lv_res_t _action_clock_edit(lv_obj_t *btns, const char * txt)
 		}
 
 		nyx_changes_made = true;
+	} else if (btn_idx == 2 && timeoffset_backup_valid) {
+		n_cfg.timeoffset = timeoffset_backup;
+		max77620_rtc_set_epoch_offset((int)n_cfg.timeoffset);
 	}
+
+	timeoffset_backup_valid = false;
 
 	mbox_action(btns, txt);
 
@@ -772,8 +599,11 @@ static lv_res_t _action_date_validation(lv_obj_t *roller)
 	return LV_RES_OK;
 }
 
-static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
+lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 {
+	timeoffset_backup = n_cfg.timeoffset;
+	timeoffset_backup_valid = true;
+
 	static lv_style_t mbox_style;
 	lv_theme_t *th = lv_theme_get_current();
 	lv_style_copy(&mbox_style, th->mbox.bg);
@@ -789,9 +619,10 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
-	lv_mbox_set_text(mbox, "Enter #C7EA46 Date# and #C7EA46 Time# for Nyx\n"
-						   "Used in all file operations and menu.\n"
-						   "This doesn't alter the actual HW clock!");
+	lv_mbox_set_text(mbox,
+		"#008EED Ｃ Date and Time#\n\n"
+		"#FFBA00 Info#: Ｈ Clock setting.\n"
+		"This doesn't alter the actual HW clock!");
 
 	lv_obj_t *padding = lv_cont_create(mbox, NULL);
 	lv_cont_set_fit(padding, true, false);
@@ -886,7 +717,7 @@ static lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	nyx_generic_onoff_toggle(btn_dst);
 
 	// If btn is empty, save options also because it was launched from boot.
-	lv_mbox_add_btns(mbox, mbox_btn_map, btn ? _action_clock_edit : _action_clock_edit_save);
+	lv_mbox_add_btns(mbox, mbox_btn_map, _action_clock_edit_save);
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -899,7 +730,7 @@ void first_time_clock_edit(void *param)
 	_create_mbox_clock_edit(NULL);
 }
 
-static lv_res_t _joycon_info_dump_action(lv_obj_t * btn)
+lv_res_t _joycon_info_dump_action(lv_obj_t * btn)
 {
 	FIL fp;
 	int error = 0;
@@ -1097,62 +928,70 @@ disabled_or_cal0_issue:;
 	{
 		if (!nx_hoag)
 		{
-			s_printf(txt_buf,
-				"Dumping to SD card finished!\n"
-				"Saved to: #C7EA46 switchroot/joycon_mac.[bin/ini]#\n\n");
+			s_printf(txt_buf, "#008EED Ｊ BT Dump#\n\n");
 
 			bool success = true;
 
 			// Check if pairing info was found.
 			if (joycon_found == 2)
-				strcat(txt_buf, "#C7EA46 Success!#\n#C7EA46 Found 2 out of 2 Joy-Con pairing data!#\n");
+				strcat(txt_buf,
+					"#FFBA00 Info#: Saved to the following path.\n\n"
+					"#C7EA46 sdmc:/switchroot/#\n"
+					"#C7EA46 joycon_mac.bin, joycon_mac.ini, switch.cal#");
 			else
 			{
-				s_printf(txt_buf + strlen(txt_buf), "#FF8000 Failed!#\n#FF8000 Warning:# Found #FFDD00 %d out of 2# pairing data!\n", joycon_found);
+				s_printf(txt_buf + strlen(txt_buf),
+						"#FFBA00 Info#: Found #008EED %d# out of 2# pairing data!\n\n"
+						"#C7EA46 sdmc:/switchroot/#\n"
+						"#C7EA46 joycon_mac.bin, joycon_mac.ini, switch.cal#\n\n", joycon_found);
 				success = false;
 			}
 
 			// Check if pairing was done in HOS.
 			if (is_l_hos && is_r_hos)
-				strcat(txt_buf, "#C7EA46 Both pairing data are HOS based!#");
+				strcat(txt_buf, "");
 			else if (!is_l_hos && is_r_hos)
 			{
-				strcat(txt_buf, "#FF8000 Warning:# #FFDD00 Left# pairing data is not HOS based!");
+				strcat(txt_buf, "#FF8000 Warning#: #FFBA00 Left# pairing data is not HOS based!");
 				success = false;
 			}
 			else if (is_l_hos && !is_r_hos)
 			{
-				strcat(txt_buf, "#FF8000 Warning:# #FFDD00 Right# pairing data is not HOS based!");
+				strcat(txt_buf, "#FF8000 Warning#: #FFBA00 Right# pairing data is not HOS based!");
 				success = false;
 			}
 			else
 			{
-				strcat(txt_buf, "#FF8000 Warning:# #FFDD00 No# pairing data is HOS based!");
+				strcat(txt_buf, "#FF8000 Warning#: #FFBA00 No# pairing data is HOS based!");
 				success = false;
 			}
 
 			if (!success)
 				strcat(txt_buf,
-					"\n\n#FFDD00 Make sure that both Joy-Con are connected,#\n"
-					"#FFDD00 and that you paired them in HOS!#");
+					"\n#FFBA00 Make sure that both Joy-Con are connected,#\n"
+					"#FFBA00 and that you paired them in HOS!#");
 
 			if (cal_error)
-				s_printf(txt_buf + strlen(txt_buf), "\n\n#FF8000 Warning: Failed (%d) to get IMU calibration!#", cal_error);
+				s_printf(txt_buf + strlen(txt_buf), "\n\n#FF8000 Warning#: Failed (%d) to get IMU calibration!", cal_error);
 		}
 		else
 		{
 			s_printf(txt_buf,
-				"Dumping to SD card finished!\n"
-				"Saved to: #C7EA46 switchroot/switch.cal#\n\n");
-			strcat(txt_buf, "#C7EA46 Success!#\n#C7EA46 Found Lite Gamepad data!#\n");
+				"#008EED Lite Gamepad data#\n\n"
+				"#FFBA00 Info#: Saved to the following path.\n\n"
+				"#C7EA46 sdmc:/switchroot/switch.cal#\n");
 		}
 	}
 	else
 	{
 		if (!nx_hoag)
-			s_printf(txt_buf, "#FFDD00 Failed to dump Joy-Con pairing info!#\n#FFDD00 Error: %d#", error);
+			s_printf(txt_buf,
+				"#008EED Joy-Con pairing data#\n\n"
+				"#FF8000 Error (%d)#: Failed to dump pairing data!", error);
 		else
-			s_printf(txt_buf, "#FFDD00 Failed to get Lite Gamepad info!#\n#FFDD00 Error: %d#", error);
+			s_printf(txt_buf,
+				"#008EED Lite Gamepad data#\n\n"
+				"#FF8000 Error (%d)#: Failed to dump pairing data!", error);
 	}
 
 	lv_mbox_set_text(mbox, txt_buf);
@@ -1168,442 +1007,113 @@ disabled_or_cal0_issue:;
 	return LV_RES_OK;
 }
 
-static lv_res_t _home_screen_action(lv_obj_t *ddlist)
+//=================================
+//  ASAP: PIN lock configuration.
+//=================================
+lv_obj_t *set_pw_area;
+static lv_res_t _set_passwd_ta_action(lv_obj_t *btnm, const char *txt)
 {
-	u32 new_selection = lv_ddlist_get_selected(ddlist);
-	if (n_cfg.home_screen != new_selection)
-	{
-		n_cfg.home_screen = new_selection;
-		nyx_changes_made = true;
+	if (!txt) return LV_RES_OK;
+	if (strcmp(txt, SYMBOL_REBOOT) == 0) {
+		lv_ta_set_text(set_pw_area, "");
+		return LV_RES_OK;
 	}
-
+	if (strcmp(txt, "Ｄ") == 0) {
+		lv_ta_del_char(set_pw_area);
+		return LV_RES_OK;
+	}
+	char c = txt[0];
+	if (c < '0' || c > '9') return LV_RES_OK;
+	lv_ta_set_cursor_pos(set_pw_area, LV_TA_CURSOR_LAST);
+	lv_ta_add_text(set_pw_area, txt);
 	return LV_RES_OK;
 }
 
-static lv_res_t _action_nyx_options_save(lv_obj_t *btns, const char * txt)
+static lv_res_t _set_passwd_action(lv_obj_t *btns, const char *txt)
 {
-	int btn_idx = lv_btnm_get_pressed(btns);
+	u32 btnidx = lv_btnm_get_pressed(btns);
 
-	mbox_action(btns, txt);
+	switch (btnidx)
+	{
+	case 0: {
+		const char *passwd = lv_ta_get_text(set_pw_area);
+		if (passwd[0] == '\0') {
+			n_cfg.pinlock[0] = '\0';
+			nyx_changes_made = true;
+			break;
+		}
+		strncpy(n_cfg.pinlock, passwd, sizeof(n_cfg.pinlock));
+		n_cfg.pinlock[sizeof(n_cfg.pinlock)-1] = '\0';
+		nyx_changes_made = true;
+		break;
+	}
+	case 1:
+		// disable, set pinlock to 0
+		n_cfg.pinlock[0] = '\0';
+		nyx_changes_made = true;
+		break;
+	}
 
-	if (!btn_idx)
+	return mbox_action(btns, txt);
+}
+
+static lv_res_t _pinlock_edit_save(lv_obj_t *btns, const char * txt)
+{
+	_set_passwd_action(btns, txt);
+
+	// Save if changes were made.
+	if (nyx_changes_made)
 		_save_nyx_options_action(NULL);
 
 	return LV_RES_INV;
 }
 
-static void _check_nyx_changes()
+lv_res_t _action_win_nyx_options_passwd(lv_obj_t *btn)
 {
-	if (nyx_changes_made)
+	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
+	lv_obj_set_style(dark_bg, &mbox_darken);
+	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
+
+	static const char * mbox_btn_map[] = { "\221Done", "\221Disable", "" };
+	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
+	lv_mbox_set_recolor_text(mbox, true);
+	lv_obj_set_width(mbox, LV_HOR_RES / 2);
+
+	lv_mbox_set_text(mbox, "PIN Setting [ #FF8000 Max 8 digits# ]");
+
+	set_pw_area = lv_ta_create(mbox, NULL);
+	lv_ta_set_one_line(set_pw_area, true);
+	lv_ta_set_pwd_mode(set_pw_area, false);
+	// makes ta_add_... not work
+	// lv_ta_set_accepted_chars(pw_area, "0123456789");
+	lv_ta_set_accepted_chars(set_pw_area, NULL);
+	lv_ta_set_cursor_type(set_pw_area, LV_CURSOR_BLOCK | LV_CURSOR_HIDDEN);
+	lv_ta_set_max_length(set_pw_area, 8);
+	lv_obj_set_width(set_pw_area, LV_HOR_RES / 5);
+	if (n_cfg.pinlock[0])
 	{
-		lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
-		lv_obj_set_style(dark_bg, &mbox_darken);
-		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
-
-		static const char * mbox_btn_map[] = { "\222Save", "\222Cancel", "" };
-		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
-		lv_mbox_set_recolor_text(mbox, true);
-
-		lv_mbox_set_text(mbox,
-			"#FF8000 Nyx configuration#\n\n"
-			"You changed the configuration!\n\n"
-			"Do you want to save it?");
-
-		lv_mbox_add_btns(mbox, mbox_btn_map, _action_nyx_options_save);
-		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
-		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
-		lv_obj_set_top(mbox, true);
-
-		nyx_changes_made = false;
+		lv_ta_set_text(set_pw_area, n_cfg.pinlock);
 	}
-}
+	else
+	{
+		lv_ta_set_text(set_pw_area, "");
+	}
 
-static lv_res_t _action_win_nyx_options_close(lv_obj_t *btn)
-{
-	// Hide status bar options save button.
-	lv_obj_set_opa_scale(status_bar.mid, LV_OPA_0);
-	lv_obj_set_click(status_bar.mid, false);
+	static const char * mbox_btnm_map[] = {
+		"1", "2", "3", "\n",
+		"4", "5", "6", "\n",
+		"7", "8", "9", "\n",
+		SYMBOL_REBOOT, "0", "Ｄ", "" };
+	lv_obj_t *btnm1 = lv_btnm_create(mbox, NULL);
+	lv_btnm_set_map(btnm1, mbox_btnm_map);
+	lv_btnm_set_action(btnm1, _set_passwd_ta_action);
+	lv_obj_set_size(btnm1, LV_HOR_RES / 3, LV_VER_RES / 4);
 
-	lv_res_t res = nyx_win_close_action_custom(btn);
+	lv_mbox_add_btns(mbox, mbox_btn_map, _pinlock_edit_save);
 
-	_check_nyx_changes();
-
-	return res;
-}
-
-lv_res_t create_win_nyx_options(lv_obj_t *parrent_btn)
-{
-	lv_theme_t *th = lv_theme_get_current();
-
-	lv_obj_t *win = nyx_create_window_custom_close_btn(SYMBOL_HOME" Nyx Settings", _action_win_nyx_options_close);
-
-	static lv_style_t h_style;
-	lv_style_copy(&h_style, &lv_style_transp);
-	h_style.body.padding.inner = 0;
-	h_style.body.padding.hor = LV_DPI - (LV_DPI / 4);
-	h_style.body.padding.ver = LV_DPI / 6;
-
-	// Create containers to keep content inside.
-	lv_obj_t * sw_h2 = lv_cont_create(win, NULL);
-	lv_cont_set_style(sw_h2, &h_style);
-	lv_cont_set_fit(sw_h2, false, true);
-	lv_obj_set_width(sw_h2, (LV_HOR_RES / 9) * 4);
-	lv_obj_set_click(sw_h2, false);
-	lv_cont_set_layout(sw_h2, LV_LAYOUT_OFF);
-
-	lv_obj_t * sw_h3 = lv_cont_create(win, NULL);
-	lv_cont_set_style(sw_h3, &h_style);
-	lv_cont_set_fit(sw_h3, false, true);
-	lv_obj_set_width(sw_h3, (LV_HOR_RES / 9) * 4);
-	lv_obj_set_click(sw_h3, false);
-	lv_cont_set_layout(sw_h3, LV_LAYOUT_OFF);
-	lv_obj_align(sw_h3, sw_h2, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI * 11 / 25, 0);
-
-	lv_obj_t * l_cont = lv_cont_create(sw_h2, NULL);
-	lv_cont_set_style(l_cont, &lv_style_transp_tight);
-	lv_cont_set_fit(l_cont, true, true);
-	lv_obj_set_click(l_cont, false);
-	lv_cont_set_layout(l_cont, LV_LAYOUT_OFF);
-	lv_obj_set_opa_scale(l_cont, LV_OPA_40);
-
-	lv_obj_t *label_sep = lv_label_create(sw_h2, NULL);
-	lv_label_set_static_text(label_sep, "");
-
-	// Create theme button.
-	lv_obj_t *btn = lv_btn_create(sw_h2, NULL);
-	lv_obj_t *label_btn = lv_label_create(btn, NULL);
-	lv_btn_set_fit(btn, true, true);
-	lv_label_set_static_text(label_btn, SYMBOL_COPY" Color Theme");
-	lv_obj_align(btn, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 5 + 3);
-	lv_btn_set_action(btn, LV_BTN_ACTION_CLICK, _create_window_nyx_colors);
-
-	lv_obj_t *label_txt2 = lv_label_create(sw_h2, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2, "Select a color for all #00FFC8 highlights# in Nyx.\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3 - 8);
-
-	// Create home screen settings list.
-	lv_obj_t *line_sep = lv_line_create(sw_h2, NULL);
-	static const lv_point_t line_pp[] = { {0, 0}, { LV_HOR_RES - (LV_DPI - (LV_DPI / 4)) * 2, 0} };
-	lv_line_set_points(line_sep, line_pp, 2);
-	lv_line_set_style(line_sep, th->line.decor);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	lv_obj_t *label_txt = lv_label_create(l_cont, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_HOME" Home Screen");
-	lv_obj_set_style(label_txt, th->label.prim);
-	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-
-	lv_obj_t *ddlist = lv_ddlist_create(l_cont, NULL);
-	lv_obj_set_top(ddlist, true);
-	lv_ddlist_set_draw_arrow(ddlist, true);
-	lv_ddlist_set_options(ddlist,
-		"Main menu       \n"
-		"All Configs\n"
-		"Launch\n"
-		"More Configs");
-	lv_ddlist_set_selected(ddlist, n_cfg.home_screen);
-	lv_ddlist_set_action(ddlist, _home_screen_action);
-	lv_obj_align(ddlist, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 2 / 3, 0);
-
-	label_txt2 = lv_label_create(l_cont, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"Select what screen to show on Nyx boot.\n"
-		"#FF8000 All Configs:# #C7EA46 Combines More configs into Launch empty slots.#\n"
-		"#FF8000 Launch / More Configs:# #C7EA46 Uses the classic divided view.#");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
-
-	line_sep = lv_line_create(sw_h2, line_sep);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create entries per line button.
-	lv_obj_t *btn2 = lv_btn_create(sw_h2, NULL);
-	nyx_create_onoff_button(th, sw_h2, btn2, SYMBOL_GPS" Extended Boot Entries", _entries_columns_action, true);
-	lv_obj_align(btn2, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
-	if (n_cfg.entries_5_col)
-		lv_btn_set_state(btn2, LV_BTN_STATE_TGL_REL);
-	nyx_generic_onoff_toggle(btn2);
-
-	label_txt2 = lv_label_create(sw_h2, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"Sets the boot entries per line to 5. (Default is 4)\n"
-		"#C7EA46 This allows a total of 10 boot entries to be shown in Launch#\n"
-		"#C7EA46 and More Configs sections.#\n\n\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn2, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
-
-	// Create the second column.
-	label_sep = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_sep, "");
-
-	// Create Dump Joy-Con BT button.
-	lv_obj_t *btn3 = lv_btn_create(sw_h3, NULL);
-	lv_obj_t *label_btn3 = lv_label_create(btn3, NULL);
-	lv_btn_set_fit(btn3, true, true);
-	lv_label_set_static_text(label_btn3, SYMBOL_DOWNLOAD" Dump Joy-Con BT");
-	lv_obj_align(btn3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 3);
-	lv_btn_set_action(btn3, LV_BTN_ACTION_CLICK, _joycon_info_dump_action);
-
-	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"Allows you to save the Switch and Joy-Con MAC addresses\n"
-		"and the LTKs associated with them. For #C7EA46 Android# and #C7EA46 Linux#.");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn3, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
-
-	line_sep = lv_line_create(sw_h3, line_sep);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create Backup/Restore Verification list.
-	label_txt = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_MODULES_ALT" Data Verification");
-	lv_obj_set_style(label_txt, th->label.prim);
-	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-
-	lv_obj_t *ddlist2 = lv_ddlist_create(sw_h3, NULL);
-	lv_obj_set_top(ddlist2, true);
-	lv_ddlist_set_draw_arrow(ddlist2, true);
-	lv_ddlist_set_options(ddlist2,
-		"Off (Fastest)\n"
-		"Sparse (Fast)    \n"
-		"Full (Slow)\n"
-		"Full (Hashes)");
-	lv_ddlist_set_selected(ddlist2, n_cfg.verification);
-	lv_obj_align(ddlist2, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 3 / 8, 0);
-	lv_ddlist_set_action(ddlist2, _data_verification_action);
-
-	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt2, "Set the type of data verification done for backup and restore.\n"
-		"Can be canceled without losing the backup/restore.\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
-
-	line_sep = lv_line_create(sw_h3, line_sep);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create clock edit button.
-	lv_obj_t *btn5 = lv_btn_create(sw_h3, NULL);
-	lv_obj_t *label_btn5 = lv_label_create(btn5, NULL);
-	lv_btn_set_fit(btn5, true, true);
-	lv_label_set_static_text(label_btn5, SYMBOL_CLOCK" Clock (Offset)");
-	lv_obj_align(btn5, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-	lv_btn_set_action(btn5, LV_BTN_ACTION_CLICK, _create_mbox_clock_edit);
-
-	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"Change clock offset manually.\n"
-		"#C7EA46 The entered Date and Time will be converted to an offset#\n"
-		"#C7EA46 automatically. This will be also used for FatFS operations.#");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn5, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
-
-	// Enable save options button in status bar and set action.
-	lv_btn_set_action(status_bar.mid, LV_BTN_ACTION_CLICK, _save_nyx_options_action);
-	lv_obj_set_opa_scale(status_bar.mid, LV_OPA_COVER);
-	lv_obj_set_click(status_bar.mid, true);
-
-	lv_obj_set_top(l_cont, true); // Set the ddlist container at top.
-	lv_obj_set_parent(ddlist, l_cont); // Reorder ddlist.
-	lv_obj_set_top(ddlist, true);
-	lv_obj_set_top(ddlist2, true);
+	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_top(mbox, true);
 
 	return LV_RES_OK;
 }
-
-void create_tab_options(lv_theme_t *th, lv_obj_t *parent)
-{
-	lv_page_set_scrl_layout(parent, LV_LAYOUT_PRETTY);
-
-	static lv_style_t h_style;
-	lv_style_copy(&h_style, &lv_style_transp);
-	h_style.body.padding.inner = 0;
-	h_style.body.padding.hor = LV_DPI - (LV_DPI / 4);
-	h_style.body.padding.ver = LV_DPI / 6;
-
-	// Create containers to keep content inside.
-	lv_obj_t * sw_h2 = lv_cont_create(parent, NULL);
-	lv_cont_set_style(sw_h2, &h_style);
-	lv_cont_set_fit(sw_h2, false, true);
-	lv_obj_set_width(sw_h2, (LV_HOR_RES / 9) * 4);
-	lv_obj_set_click(sw_h2, false);
-	lv_cont_set_layout(sw_h2, LV_LAYOUT_OFF);
-
-	lv_obj_t * sw_h3 = lv_cont_create(parent, NULL);
-	lv_cont_set_style(sw_h3, &h_style);
-	lv_cont_set_fit(sw_h3, false, true);
-	lv_obj_set_width(sw_h3, (LV_HOR_RES / 9) * 4);
-	lv_obj_set_click(sw_h3, false);
-	lv_cont_set_layout(sw_h3, LV_LAYOUT_OFF);
-
-	lv_obj_t * l_cont = lv_cont_create(sw_h2, NULL);
-	lv_cont_set_style(l_cont, &lv_style_transp_tight);
-	lv_cont_set_fit(l_cont, true, true);
-	lv_obj_set_click(l_cont, false);
-	lv_cont_set_layout(l_cont, LV_LAYOUT_OFF);
-	lv_obj_set_opa_scale(l_cont, LV_OPA_40);
-
-	lv_obj_t *label_sep = lv_label_create(sw_h2, NULL);
-	lv_label_set_static_text(label_sep, "");
-
-	// Create Auto Boot button.
-	lv_obj_t *btn = lv_btn_create(sw_h2, NULL);
-	if (hekate_bg)
-	{
-		lv_btn_set_style(btn, LV_BTN_STYLE_REL, &btn_transp_rel);
-		lv_btn_set_style(btn, LV_BTN_STYLE_PR, &btn_transp_pr);
-		lv_btn_set_style(btn, LV_BTN_STYLE_TGL_REL, &btn_transp_tgl_rel);
-		lv_btn_set_style(btn, LV_BTN_STYLE_TGL_PR, &btn_transp_tgl_pr);
-	}
-	lv_btn_set_layout(btn, LV_LAYOUT_OFF);
-	lv_obj_t *label_btn = lv_label_create(btn, NULL);
-	lv_label_set_recolor(label_btn, true);
-	lv_btn_set_fit(btn, true, true);
-	lv_btn_set_toggle(btn, true);
-	lv_label_set_static_text(label_btn, SYMBOL_GPS" Auto Boot #00FFC9   ON #");
-	lv_btn_set_action(btn, LV_BTN_ACTION_CLICK, _autoboot_hide_delay_action);
-	lv_obj_align(btn, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 18 + 6);
-	lv_btn_set_fit(btn, false, false);
-	autoboot_btn = btn;
-
-	lv_obj_t *label_txt2 = lv_label_create(sw_h2, NULL);
-	lv_label_set_static_text(label_txt2, "Choose which boot entry or payload to automatically boot\nwhen injecting.");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3 - 4);
-
-	lv_obj_t *line_sep = lv_line_create(sw_h2, NULL);
-	static const lv_point_t line_pp[] = { {0, 0}, { LV_HOR_RES - (LV_DPI - (LV_DPI / 4)) * 2, 0} };
-	lv_line_set_points(line_sep, line_pp, 2);
-	lv_line_set_style(line_sep, th->line.decor);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create Boot time delay list.
-	lv_obj_t *label_txt = lv_label_create(l_cont, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_CLOCK" Boot Time Delay  ");
-	lv_obj_set_style(label_txt, th->label.prim);
-	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-
-	lv_obj_t *ddlist = lv_ddlist_create(l_cont, NULL);
-	lv_obj_set_top(ddlist, true);
-	lv_ddlist_set_draw_arrow(ddlist, true);
-	lv_ddlist_set_options(ddlist,
-		"No bootlogo    \n"
-		"1 second\n"
-		"2 seconds\n"
-		"3 seconds\n"
-		"4 seconds\n"
-		"5 seconds\n"
-		"6 seconds");
-	lv_ddlist_set_selected(ddlist, 3);
-	lv_obj_align(ddlist, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 4, 0);
-	lv_ddlist_set_action(ddlist, _autoboot_delay_action);
-	lv_ddlist_set_selected(ddlist, h_cfg.bootwait);
-
-	if (hekate_bg)
-	{
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_BG, &ddlist_transp_bg);
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_BGO, &ddlist_transp_bg);
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_PR, &ddlist_transp_sel);
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_SEL, &ddlist_transp_sel);
-	}
-
-	label_txt2 = lv_label_create(l_cont, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"Set how long to show bootlogo when autoboot is enabled.\n"
-		"#C7EA46 You can press# #FF8000 VOL-# #C7EA46 during that time to enter hekate's menu.#\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
-
-	line_sep = lv_line_create(sw_h2, line_sep);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create Auto NoGC button.
-	lv_obj_t *btn2 = lv_btn_create(sw_h2, NULL);
-	nyx_create_onoff_button(th, sw_h2, btn2, SYMBOL_CHIP" Auto NoGC", auto_nogc_toggle, true);
-	lv_obj_align(btn2, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
-
-	label_txt2 = lv_label_create(sw_h2, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"It checks fuses and applies the patch automatically\n"
-		"if higher firmware. It is now a global config and set\n"
-		"at auto by default. (ON: Auto)\n\n\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn2, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
-
-	label_sep = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_sep, "");
-
-	// Create Auto HOS Power Off button.
-	lv_obj_t *btn3 = lv_btn_create(sw_h3, NULL);
-	nyx_create_onoff_button(th, sw_h3, btn3, SYMBOL_POWER" Auto HOS Power Off", auto_hos_poweroff_toggle, true);
-	lv_obj_align(btn3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
-
-	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt2,
-		"When Shutdown is used from HOS, the device wakes up after\n"
-		"15s. Enable this to automatically power off on the next\npayload injection.");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn3, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
-
-	line_sep = lv_line_create(sw_h3, line_sep);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create Backlight slider.
-	label_txt = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" Backlight");
-	lv_obj_set_style(label_txt, th->label.prim);
-	lv_obj_align(label_txt, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-
-	lv_obj_t * slider = lv_slider_create(sw_h3, NULL);
-	lv_obj_set_width(slider, LV_DPI * 80 / 34);
-	//lv_obj_set_height(slider, LV_DPI * 4 / 10);
-	lv_bar_set_range(slider, 30, 220);
-	lv_bar_set_value(slider, h_cfg.backlight);
-	lv_slider_set_action(slider, _slider_brightness_action);
-	lv_obj_align(slider, label_txt, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 20 / 15, 0);
-
-	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_static_text(label_txt2, "Set backlight brightness.\n\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 4);
-
-	line_sep = lv_line_create(sw_h3, line_sep);
-	lv_obj_align(line_sep, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 4);
-
-	// Create Update r2p button.
-	lv_obj_t *btn4 = lv_btn_create(sw_h3, NULL);
-	nyx_create_onoff_button(th, sw_h3, btn4, SYMBOL_REFRESH" Update Reboot 2 Payload", _update_r2p_action, true);
-	lv_obj_align(btn4, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
-
-	label_txt2 = lv_label_create(sw_h3, NULL);
-	lv_label_set_recolor(label_txt2, true);
-	lv_label_set_static_text(label_txt2,
-		"If #FF8000 FSS0# is used in the selected boot entry, the reboot 2 payload\n"
-		"binary will be checked and forced to be updated to hekate.\n\n\n\n");
-	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn4, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 12);
-
-	// Set default loaded states.
-	if (h_cfg.autohosoff)
-		lv_btn_set_state(btn3, LV_BTN_STATE_TGL_REL);
-	if (h_cfg.autonogc)
-		lv_btn_set_state(btn2, LV_BTN_STATE_TGL_REL);
-	if (h_cfg.updater2p)
-		lv_btn_set_state(btn4, LV_BTN_STATE_TGL_REL);
-
-	nyx_generic_onoff_toggle(btn2);
-	nyx_generic_onoff_toggle(btn3);
-	nyx_generic_onoff_toggle(btn4);
-	_autoboot_hide_delay_action(btn);
-
-	lv_obj_set_top(l_cont, true); // Set the ddlist container at top.
-	lv_obj_set_parent(ddlist, l_cont); // Reorder ddlist.
-	lv_obj_set_top(ddlist, true);
-}
+//=================================

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -19,7 +19,18 @@
 
 #include <libs/lvgl/lvgl.h>
 
-void create_tab_info(lv_theme_t *th, lv_obj_t *parent);
-int  dump_cal0();
+int dump_cal0();
+
+//=========================================================
+//  ASAP: NAND info, Quick lockpick. (gui_emummc_tools.c)
+//=========================================================
+lv_res_t _create_window_sdcard_info_status(lv_obj_t *btn);
+lv_res_t _create_window_emmc_info_status(lv_obj_t *btn);
+//========================================
+//  ASAP: Battery info, HW info. (gui.c)
+//========================================
+lv_res_t _create_window_battery_status(lv_obj_t *btn);
+lv_res_t _create_window_hw_info_status(lv_obj_t *btn);
+//=========================================================
 
 #endif

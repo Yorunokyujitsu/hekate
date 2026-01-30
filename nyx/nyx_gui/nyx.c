@@ -30,6 +30,13 @@
 #include "frontend/fe_emmc_tools.h"
 #include "frontend/gui.h"
 
+//====================================================
+//  ASAP: custom image, icons includes declarations.
+//====================================================
+#include "frontend/fe_emummc_tools.h"
+#include "gfx/asap_custom.h"
+//====================================================
+
 nyx_config n_cfg;
 hekate_config h_cfg;
 
@@ -109,58 +116,113 @@ static void _reloc_append(u32 payload_dst, u32 payload_src, u32 payload_size)
 	relocator->ep    = payload_dst;
 }
 
-lv_res_t launch_payload(lv_obj_t *list)
+//==========================
+//  ASAP: Launch Payloads.
+//==========================
+// buffer
+static lv_res_t boot_payload_buffer(const void *src, u32 size)
 {
-	const char *filename = lv_list_get_btn_text(list);
+	if (!src || !size)
+		return LV_RES_OK;
 
-	if (!filename || !filename[0])
+	if (size > 0x30000)
+	{
+		EPRINTF("Payload is too big!");
+		return LV_RES_OK;
+	}
+
+	memcpy((void *)RCM_PAYLOAD_ADDR, src, size);
+
+	_reloc_append(
+		PATCHED_RELOC_ENTRY,
+		EXT_PAYLOAD_ADDR,
+		ALIGN(size, 0x10)
+	);
+
+	hw_deinit(false);
+
+	void (*payload)(void) = (void *)EXT_PAYLOAD_ADDR;
+	payload();
+
+	return LV_RES_OK;
+}
+
+// Payloads
+static lv_res_t file_boot_payload(const char *path)
+{
+	if (!path || !path[0])
 		goto out;
-
-	char path[128];
-
-	strcpy(path,"bootloader/payloads/");
-	strcat(path, filename);
 
 	if (!sd_mount())
 		goto out;
 
-	// Read payload.
 	u32 size = 0;
 	void *buf = sd_file_read(path, &size);
 	if (!buf)
 	{
 		EPRINTFARGS("Payload file is missing!\n(%s)", path);
-
-		goto out;
-	}
-
-	// Check if it safely fits IRAM.
-	if (size > 0x30000)
-	{
-		EPRINTF("Payload is too big!");
-
 		goto out;
 	}
 
 	sd_end();
 
-	// Copy the payload to our chosen address.
-	memcpy((void *)RCM_PAYLOAD_ADDR, buf, size);
-
-	// Append relocator.
-	_reloc_append(PATCHED_RELOC_ENTRY, EXT_PAYLOAD_ADDR, ALIGN(size, 0x10));
-
-	hw_deinit(false);
-
-	// Launch our payload.
-	void (*payload_ptr)() = (void *)EXT_PAYLOAD_ADDR;
-	(*payload_ptr)();
+	boot_payload_buffer(buf, size);
 
 out:
 	sd_unmount();
-
 	return LV_RES_OK;
 }
+
+// Boot list payload
+lv_res_t launch_payload(lv_obj_t *list)
+{
+	const char *filename = lv_list_get_btn_text(list);
+	if (!filename || !filename[0])
+		return LV_RES_OK;
+
+	char path[128];
+	strcpy(path, "bootloader/payloads/");
+	strcat(path, filename);
+
+	return file_boot_payload(path);
+}
+
+// Boot target payload
+lv_res_t generic_boot_payload(const char *base_path, const char *filename)
+{
+	if (!base_path || !filename || !filename[0])
+		return LV_RES_OK;
+
+	char path[128];
+	strcpy(path, base_path);
+	strcat(path, filename);
+
+	return file_boot_payload(path);
+}
+
+// Lockpick
+lv_res_t launch_quicklp(lv_obj_t *list)
+{
+	(void)list;
+
+	return boot_payload_buffer(
+		(const void *)FICHIERCLE_ADDR,
+		(u32)FICHIERCLE_SIZE
+	);
+}
+
+// fusee
+lv_res_t launch_fusee(lv_obj_t *list)
+{
+	return generic_boot_payload("bootloader/payloads/", "fusee.bin");
+}
+
+// module
+lv_res_t launch_module(lv_obj_t *list)
+{
+	return generic_boot_payload("bootloader/sys/", "module");
+}
+//==========================
 
 static void _load_saved_configuration()
 {
@@ -193,14 +255,14 @@ static void _load_saved_configuration()
 					if (h_cfg.backlight <= 20)
 						h_cfg.backlight = 30;
 				}
-				else if (!strcmp("noticker",    kv->key))
-					h_cfg.noticker    = atoi(kv->val);
+				/* else if (!strcmp("noticker",    kv->key))
+					h_cfg.noticker    = atoi(kv->val); */
 				else if (!strcmp("autohosoff",  kv->key))
 					h_cfg.autohosoff  = atoi(kv->val);
 				else if (!strcmp("autonogc",    kv->key))
 					h_cfg.autonogc    = atoi(kv->val);
-				else if (!strcmp("updater2p",   kv->key))
-					h_cfg.updater2p   = atoi(kv->val);
+				/* else if (!strcmp("updater2p",   kv->key))
+					h_cfg.updater2p   = atoi(kv->val); */
 				else if (!strcmp("bootprotect", kv->key))
 					h_cfg.bootprotect = atoi(kv->val);
 			}
@@ -224,12 +286,12 @@ skip_main_cfg_parse:
 			bool time_old_raw = false;
 			LIST_FOREACH_ENTRY(ini_kv_t, kv, &ini_sec->kvs, link)
 			{
-				if      (!strcmp("themebg",      kv->key))
-					n_cfg.theme_bg       = strtol(kv->val, NULL, 16);
-				else if (!strcmp("themecolor",   kv->key))
+				/* if      (!strcmp("themebg",      kv->key))
+					n_cfg.theme_bg       = strtol(kv->val, NULL, 16); */
+				if (!strcmp("themecolor",   kv->key))
 					n_cfg.theme_color    = atoi(kv->val);
-				else if (!strcmp("entries5col",  kv->key))
-					n_cfg.entries_5_col  = atoi(kv->val) == 1;
+				/* else if (!strcmp("entries5col",  kv->key))
+					n_cfg.entries_5_col  = atoi(kv->val) == 1; */
 				else if (!strcmp("timeoffset",   kv->key))
 				{
 					n_cfg.timeoffset = strtol(kv->val, NULL, 16);
@@ -243,16 +305,24 @@ skip_main_cfg_parse:
 				}
 				else if (!strcmp("timedst",      kv->key))
 					n_cfg.timedst        = atoi(kv->val);
-				else if (!strcmp("homescreen",   kv->key))
-					n_cfg.home_screen    = atoi(kv->val);
+				/* else if (!strcmp("homescreen",   kv->key))
+					n_cfg.home_screen    = atoi(kv->val); */
 				else if (!strcmp("verification", kv->key))
 					n_cfg.verification   = atoi(kv->val);
+				//==========================================
+				//  ASAP: PIN password config for nyx.ini.
+				//==========================================
+				else if (!strcmp("pinlock", kv->key)) {
+					strncpy(n_cfg.pinlock, kv->val, sizeof(n_cfg.pinlock));
+					n_cfg.pinlock[sizeof(n_cfg.pinlock)-1] = '\0';
+				}
+				//==========================================
 				else if (!strcmp("umsemmcrw",    kv->key))
 					n_cfg.ums_emmc_rw    = atoi(kv->val) == 1;
 				else if (!strcmp("jcdisable",    kv->key))
 					n_cfg.jc_disable     = atoi(kv->val) == 1;
-				else if (!strcmp("jcforceright", kv->key))
-					n_cfg.jc_force_right = atoi(kv->val) == 1;
+				/* else if (!strcmp("jcforceright", kv->key))
+					n_cfg.jc_force_right = atoi(kv->val) == 1; */
 				else if (!strcmp("bpmpclock",    kv->key))
 					n_cfg.bpmp_clock     = atoi(kv->val);
 			}
@@ -288,20 +358,13 @@ static int nyx_load_resources()
 
 static void nyx_load_bg_icons()
 {
-	// If no custom switch icon exists, load normal.
-	if (!f_stat("bootloader/res/icon_switch_custom.bmp", NULL))
-		icon_switch = bmp_to_lvimg_obj("bootloader/res/icon_switch_custom.bmp");
-	else
-		icon_switch = bmp_to_lvimg_obj("bootloader/res/icon_switch.bmp");
-
-	// If no custom payload icon exists, load normal.
-	if (!f_stat("bootloader/res/icon_payload_custom.bmp", NULL))
-		icon_payload = bmp_to_lvimg_obj("bootloader/res/icon_payload_custom.bmp");
-	else
-		icon_payload = bmp_to_lvimg_obj("bootloader/res/icon_payload.bmp");
-
-	// Load background resource if any.
-	hekate_bg = bmp_to_lvimg_obj("bootloader/res/background.bmp");
+	if (!f_stat("bootloader/res/event_bg.bmp", NULL)) {
+		hekate_bg = bmp_to_lvimg_obj("bootloader/res/event_bg.bmp");
+	} else if (!f_stat("bootloader/res/background.bmp", NULL)) {
+		hekate_bg = bmp_to_lvimg_obj("bootloader/res/background.bmp");
+	} else {
+		hekate_bg = &background;
+	}
 }
 
 #define EXCP_EN_ADDR   0x4003FFFC
@@ -510,7 +573,7 @@ void ipl_main()
 	uart_init(DEBUG_UART_PORT, DEBUG_UART_BAUDRATE, UART_AO_TX_AO_RX);
 	uart_invert(DEBUG_UART_PORT, DEBUG_UART_INVERT, UART_INVERT_TXD);
 
-	uart_send(DEBUG_UART_PORT, (u8 *)"hekate-NYX: Hello!\r\n", 20);
+	uart_send(DEBUG_UART_PORT, (u8 *)"Hekate-NYX: Hello!\r\n", 20);
 	uart_wait_xfer(DEBUG_UART_PORT, UART_TX_IDLE);
 #endif
 

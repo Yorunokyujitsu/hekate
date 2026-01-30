@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -27,11 +27,11 @@ typedef struct _hekate_config
 	u32 autoboot;
 	u32 autoboot_list;
 	u32 bootwait;
-	u32 noticker;
+	//u32 noticker;
 	u32 backlight;
 	u32 autohosoff;
 	u32 autonogc;
-	u32 updater2p;
+	//u32 updater2p;
 	u32 bootprotect;
 	// Global temporary config.
 	bool t210b01;
@@ -45,16 +45,21 @@ typedef struct _hekate_config
 
 typedef struct _nyx_config
 {
-	u32 theme_bg;
+	//u32 theme_bg;
 	u32 theme_color;
-	u32 entries_5_col;
+	//u32 entries_5_col;
 	u32 timeoffset;
 	u32 timedst;
-	u32 home_screen;
+	//u32 home_screen;
 	u32 verification;
+	//====================================================
+	//  ASAP: Advanced settings lock. (parental control)
+	//====================================================
+	char pinlock[9];
+	//====================================================
 	u32 ums_emmc_rw;
 	u32 jc_disable;
-	u32 jc_force_right;
+	//u32 jc_force_right;
 	u32 bpmp_clock;
 } nyx_config;
 

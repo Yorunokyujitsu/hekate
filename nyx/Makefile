@@ -123,7 +123,7 @@ $(TARGET).bin: $(BUILDDIR)/$(TARGET).elf
 
 $(BUILDDIR)/$(TARGET).elf: $(OBJS) $(TRACK_LDFLAGS)
 	@echo -ne "\r[100%] Linking $(TARGET).elf\033[K"
-	@$(CC) $(LDFLAGS) -T $(SOURCEDIR)/link.ld $(OBJS) -o $@
+	@$(CC) $(LDFLAGS) -T $(SOURCEDIR)/link.ld $(OBJS) -lm -o $@
 	@printf "\n$(TARGET) was built with the following flags:\nCFLAGS:  $(CFLAGS)\nLDFLAGS: $(LDFLAGS)\n"
 
 $(BUILDDIR)/%.o: %.c $(TRACK_CFLAGS) | $(BUILDDIR)
