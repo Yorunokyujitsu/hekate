@@ -120,7 +120,7 @@ lv_res_t _create_mbox_autorcm_status(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -130,15 +130,15 @@ lv_res_t _create_mbox_autorcm_status(lv_obj_t *btn)
 	if (enabled)
 	{
 		s_printf(mbox_txt,
-			"#008EED Status Message#\n\n"
-			"#FFBA00 Info#: AutoRCM is now #C7EA46 ENABLED#!\n\n"
-			"#FF8000 How to Enter RCM#: #EFEFEF %s#", gui_pv_btn(GUI_PV_BTN_0)
+			"#008EED 상태 메시지#\n\n"
+			"#FFBA00 안내#: 자동 RCM이 #C7EA46 활성화# 되었습니다!\n\n"
+			"#FF8000 RCM 진입 방법#: #EFEFEF %s#", gui_pv_btn(GUI_PV_BTN_0)
 		);
 	} else {
 		s_printf(mbox_txt,
-			"#008EED Status Message#\n\n"
-			"#FFBA00 Info#: AutoRCM is now #FF8000 DISABLED#!\n\n"
-			"#FF8000 How to Enter RCM#: inserting the jig, %s + #EFEFEF %s#",
+			"#008EED 상태 메시지#\n\n"
+			"#FFBA00 안내#: 자동 RCM이 #FF8000 비활성화# 되었습니다!\n\n"
+			"#FF8000 RCM 진입 방법#: 지그 삽입 후, %s + #EFEFEF %s#",
 			gui_pv_btn(GUI_PV_BTN_4), gui_pv_btn(GUI_PV_BTN_0)
 		);
 	}
@@ -165,19 +165,19 @@ static lv_res_t _create_mbox_hid(usb_ctxt_t *usbs)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\262Close", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\251", "\222Close", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\262닫기", "\251", "" };
+	static const char *mbox_btn_map2[] = { "\251", "\222닫기", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	char *txt_buf = malloc(SZ_4K);
 
-	s_printf(txt_buf, "#FF8000 HID Emulation#\n\n#C7EA46 Device#: ");
+	s_printf(txt_buf, "#FF8000 HID 에뮬레이션#\n\n#C7EA46 기기#: ");
 
 	if (usbs->type == USB_HID_GAMEPAD)
-		strcat(txt_buf, "Gamepad");
+		strcat(txt_buf, "컨트롤러");
 	else
-		strcat(txt_buf, "Touchpad");
+		strcat(txt_buf, "터치패드");
 
 	lv_mbox_set_text(mbox, txt_buf);
 	free(txt_buf);
@@ -189,7 +189,7 @@ static lv_res_t _create_mbox_hid(usb_ctxt_t *usbs)
 
 	lv_obj_t *lbl_tip = lv_label_create(mbox, NULL);
 	lv_label_set_recolor(lbl_tip, true);
-	lv_label_set_static_text(lbl_tip, "#FFBA00 Note#: To end it, press #C7EA46 Ⓙ# + #C7EA46 Ⓗ# or remove the cable.");
+	lv_label_set_static_text(lbl_tip, "#FFBA00 안내#: 연결 종료하려면 #C7EA46 Ⓙ# + #C7EA46 Ⓗ# 을 입력하거나, 케이블을 제거하세요.");
 	lv_obj_set_style(lbl_tip, &hint_small_style);
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
@@ -210,30 +210,30 @@ static lv_res_t _create_mbox_ums(usb_ctxt_t *usbs)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\262Close", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\251", "\222Close", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\262닫기", "\251", "" };
+	static const char *mbox_btn_map2[] = { "\251", "\222닫기", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	char *txt_buf = malloc(SZ_4K);
 
-	s_printf(txt_buf, "#008EED USB Mass Storage#\n\n#C7EA46 Device#: ");
+	s_printf(txt_buf, "#008EED USB 저장 장치#\n\n#C7EA46 드라이브#: ");
 
 	if (usbs->type == MMC_SD)
 	{
 		switch (usbs->partition)
 		{
 		case 0:
-			strcat(txt_buf, "Micro SD Card");
+			strcat(txt_buf, "Micro SD 카드");
 			break;
 		case EMMC_GPP + 1:
-			strcat(txt_buf, "emuMMC GPP");
+			strcat(txt_buf, "에뮤낸드 GPP");
 			break;
 		case EMMC_BOOT0 + 1:
-			strcat(txt_buf, "emuMMC BOOT0");
+			strcat(txt_buf, "에뮤낸드 BOOT0");
 			break;
 		case EMMC_BOOT1 + 1:
-			strcat(txt_buf, "emuMMC BOOT1");
+			strcat(txt_buf, "에뮤낸드 BOOT1");
 			break;
 		}
 	}
@@ -242,13 +242,13 @@ static lv_res_t _create_mbox_ums(usb_ctxt_t *usbs)
 		switch (usbs->partition)
 		{
 		case EMMC_GPP + 1:
-			strcat(txt_buf, "eMMC GPP");
+			strcat(txt_buf, "시스낸드 GPP");
 			break;
 		case EMMC_BOOT0 + 1:
-			strcat(txt_buf, "eMMC BOOT0");
+			strcat(txt_buf, "시스낸드 BOOT0");
 			break;
 		case EMMC_BOOT1 + 1:
-			strcat(txt_buf, "eMMC BOOT1");
+			strcat(txt_buf, "시스낸드 BOOT1");
 			break;
 		}
 	}
@@ -268,21 +268,21 @@ static lv_res_t _create_mbox_ums(usb_ctxt_t *usbs)
 		if (usbs->type == MMC_SD)
 		{
 			lv_label_set_static_text(lbl_tip,
-				"#FFBA00 Note#: To end it, #C7EA46 safely eject# from inside the OS.\n"
-				"             #FF8000 DO NOT remove the cable!#");
+				"#FFBA00 안내#: 안전하게 종료하기 위해, PC에서 #C7EA46 꺼내기#를 선택하세요.\n"
+				"           #FF8000 작업 중에 케이블을 제거하지 마세요!#");
 		}
 		else
 		{
 			lv_label_set_static_text(lbl_tip,
-				"      #FFBA00 Note#: To end it, #C7EA46 safely eject# from inside the OS.\n"
-				"#FF8000 If it's not mounted, you might need to remove the cable!#");
+				"#FFBA00 안내#: 안전하게 종료하기 위해, PC에서 #C7EA46 꺼내기#를 선택하세요.\n"
+				"   #FF8000 케이블이 연결되어 있지 않다면 제거하여 종료하세요!#");
 		}
 	}
 	else
 	{
 		lv_label_set_static_text(lbl_tip,
-			"#FFBA00 Note#: To end it, #C7EA46 safely eject# from inside the OS\n"
-			"             or by removing the cable!#");
+			"      #FFBA00 안내#: 파일 전송 작업이 완료되었습니다.\n"
+			"PC에서 #C7EA46 꺼내기#를 선택하거나, 케이블을 제거하세요!#");
 	}
 	lv_obj_set_style(lbl_tip, &hint_small_style);
 
@@ -312,20 +312,20 @@ static lv_res_t _create_mbox_ums_error(int error)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	switch (error)
 	{
 	case 1:
-		lv_mbox_set_text(mbox, "#008EED USB Mass Storage#\n\n#FFBA00 Note#: #FF8000 Error mounting SD Card!#");
+		lv_mbox_set_text(mbox, "#008EED USB 저장 장치#\n\n#FFBA00 안내#: #FF8000 SD 카드를 읽을 수 없습니다!#");
 		break;
 	case 2:
-		lv_mbox_set_text(mbox, "#008EED USB Mass Storage#\n\n#FFBA00 Note#: #FF8000 No emuMMC found active!#");
+		lv_mbox_set_text(mbox, "#008EED USB 저장 장치#\n\n#FFBA00 안내#: #FF8000 활성화된 에뮤낸드를 찾을 수 없습니다!#");
 		break;
 	case 3:
-		lv_mbox_set_text(mbox, "#008EED USB Mass Storage#\n\n#FFBA00 Note#: #FF8000 Active emuMMC is not partition based!#");
+		lv_mbox_set_text(mbox, "#008EED USB 저장 장치#\n\n#FFBA00 안내#: #FF8000 파티션 기반 에뮤낸드가 아닙니다!#");
 		break;
 	}
 
@@ -745,7 +745,7 @@ out:
 //============================
 lv_res_t _create_window_unset_abit_tool(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_DIRECTORY" Fix Archive Bit");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_DIRECTORY"  아카이브 비트 재설정");
 
 	// Disable buttons.
 	nyx_window_toggle_buttons(win, true);
@@ -759,12 +759,12 @@ lv_res_t _create_window_unset_abit_tool(lv_obj_t *btn)
 
 	if (!sd_mount())
 	{
-		lv_label_set_text(lb_desc, "#FFBA00 Failed to init SD!#");
+		lv_label_set_text(lb_desc, "#FFBA00 SD 카드 초기화 실패!#");
 		lv_obj_set_width(lb_desc, lv_obj_get_width(desc));
 	}
 	else
 	{
-		lv_label_set_text(lb_desc, "#00DDFF Traversing all SD card files!#\nThis may take some time...");
+		lv_label_set_text(lb_desc, "#00DDFF SD 카드의 모든 폴더와 파일을 검사합니다!#\n잠시만 기다려주세요...");
 		lv_obj_set_width(lb_desc, lv_obj_get_width(desc));
 
 		lv_obj_t *val = lv_cont_create(win, NULL);
@@ -791,17 +791,17 @@ lv_res_t _create_window_unset_abit_tool(lv_obj_t *btn)
 		char *txt_buf = (char *)malloc(0x500);
 
 		if (!total[0] && !total[1])
-			s_printf(txt_buf, "#96FF00 Done! No change was needed.#");
+			s_printf(txt_buf, "#96FF00 검사 완료했으나, 재설정이 필요하지 않습니다.#");
 		else
-			s_printf(txt_buf, "#96FF00 Done!#\n"
-							  "#00DDFF Unset#: #FF8000 %d#, #00DDFF Fixes#: #FF8000 %d#",
+			s_printf(txt_buf, "#96FF00 검사가 완료되었습니다!#\n"
+							  "#00DDFF 설정 해제#: #FF8000 %d#, #00DDFF 재설정#: #FF8000 %d#",
 							  total[1], total[0]);
 
 		// Check errors.
 		if (total[2] || total[3])
 		{
-			s_printf(txt_buf, "\n\n#FF8000 Folder accesses#: #FF8000 %d#, #FF8000 Fixes#: #FF8000 %d#\n"
-							  "#FFBA00 Filesystem should be checked for errors.#",
+			s_printf(txt_buf, "\n\n#FF8000 접근 폴더#: #FF8000 %d#, #FF8000 재설정#: #FF8000 %d#\n"
+							  "#FFBA00 파일 시스템에 오류가 없는지 확인하세요.#",
 							  total[2], total[3]);
 		}
 
@@ -825,7 +825,7 @@ lv_res_t _create_mbox_fix_touchscreen(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -836,9 +836,9 @@ lv_res_t _create_mbox_fix_touchscreen(lv_obj_t *btn)
 	lv_obj_set_top(mbox, true);
 
 	s_printf(txt_buf,
-		"#008EED Fix TouchScreen\n\n"
-		"#FF8000 Warning#: Only run this if you really have issues!\n\n"
-		"#FF8000 Continue#: #EFEFEF %s#   #FF8000 Abort#: #EFEFEF %s# or #EFEFEF %s#",
+		"#008EED 터치 패널 보정\n\n"
+		"#FF8000 경고#: 반드시 문제가 있는 경우에만 실행하세요!\n\n"
+		"#FF8000 계속#: #EFEFEF %s#   #FF8000 중단#: #EFEFEF %s# 또는 #EFEFEF %s#",
 		gui_pv_btn(GUI_PV_BTN_0), gui_pv_btn(GUI_PV_BTN_1), gui_pv_btn(GUI_PV_BTN_2)
 	);
 
@@ -854,7 +854,7 @@ lv_res_t _create_mbox_fix_touchscreen(lv_obj_t *btn)
 	u32 seconds = 5;
 	while (seconds)
 	{
-		s_printf(txt_buf, "#FF8000 Warning#: The tuning process will start in %d seconds..., don't touch the screen!", seconds);
+		s_printf(txt_buf, "#FF8000 경고#: %d초 후 작업이 시작됩니다, 화면을 터치하지 마세요!", seconds);
 		lv_mbox_set_text(mbox, txt_buf);
 		manual_system_maintenance(true);
 		msleep(1000);
@@ -875,49 +875,49 @@ lv_res_t _create_mbox_fix_touchscreen(lv_obj_t *btn)
 	{
 		touch_sense_enable();
 
-		s_printf(txt_buf, "#FFFF00 ITO Test: ");
+		s_printf(txt_buf, "#FFFF00 ITO 테스트: ");
 		switch (err[0])
 		{
 		case ITO_FORCE_OPEN:
-			strcat(txt_buf, "Force Open");
+			strcat(txt_buf, "Force 회로 단선");
 			break;
 		case ITO_SENSE_OPEN:
-			strcat(txt_buf, "Sense Open");
+			strcat(txt_buf, "Sense 회로 단선");
 			break;
 		case ITO_FORCE_SHRT_GND:
-			strcat(txt_buf, "Force Short to GND");
+			strcat(txt_buf, "Force 회로와 GND 단락");
 			break;
 		case ITO_SENSE_SHRT_GND:
-			strcat(txt_buf, "Sense Short to GND");
+			strcat(txt_buf, "Sense 회로와 GND 단락");
 			break;
 		case ITO_FORCE_SHRT_VCM:
-			strcat(txt_buf, "Force Short to VDD");
+			strcat(txt_buf, "Force 회로와 VDD 단락");
 			break;
 		case ITO_SENSE_SHRT_VCM:
-			strcat(txt_buf, "Sense Short to VDD");
+			strcat(txt_buf, "Sense 회로와 VDD 단락");
 			break;
 		case ITO_FORCE_SHRT_FORCE:
-			strcat(txt_buf, "Force Short to Force");
+			strcat(txt_buf, "Force 회로끼리 단락");
 			break;
 		case ITO_SENSE_SHRT_SENSE:
-			strcat(txt_buf, "Sense Short to Sense");
+			strcat(txt_buf, "Sense 회로끼리 단락");
 			break;
 		case ITO_F2E_SENSE:
-			strcat(txt_buf, "Force Short to Sense");
+			strcat(txt_buf, "Force, Sense 회로 단락");
 			break;
 		case ITO_FPC_FORCE_OPEN:
-			strcat(txt_buf, "FPC Force Open");
+			strcat(txt_buf, "케이블 Force 회로 단선");
 			break;
 		case ITO_FPC_SENSE_OPEN:
-			strcat(txt_buf, "FPC Sense Open");
+			strcat(txt_buf, "케이블 Sense 회로 단선");
 			break;
 		default:
-			strcat(txt_buf, "Unknown");
+			strcat(txt_buf, "해독 불가");
 			break;
 
 		}
-		s_printf(txt_buf + strlen(txt_buf), " (%d), Chn: %d#\n\n", err[0], err[1]);
-		strcat(txt_buf, "#FFBA00 The touchscreen calibration failed!");
+		s_printf(txt_buf + strlen(txt_buf), " (%d), 채널: %d#\n\n", err[0], err[1]);
+		strcat(txt_buf, "#FFBA00 터치 패널 보정에 실패했습니다!");
 		lv_mbox_set_text(mbox, txt_buf);
 		goto out2;
 	}
@@ -927,9 +927,9 @@ ito_failed:
 
 out:
 	if (res)
-		lv_mbox_set_text(mbox, "#C7EA46 The touchscreen calibration finished!");
+		lv_mbox_set_text(mbox, "#C7EA46 터치 패널 보정이 완료되었습니다!");
 	else
-		lv_mbox_set_text(mbox, "#FFBA00 The touchscreen calibration failed!");
+		lv_mbox_set_text(mbox, "#FFBA00 터치 패널 보정에 실패했습니다!");
 
 out2:
 	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
@@ -941,7 +941,7 @@ out2:
 
 lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_MODULES"  Dump PACKAGE1, PACKAGE2");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_MODULES"  PACKAGE1, PACKAGE2 백업");
 
 	//===================
 	//  ASAP: eMMC S/N.
@@ -968,11 +968,12 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 	lv_obj_set_width(lb_desc2, lv_obj_get_width(desc) / 2);
 	lv_label_set_text(lb_desc2, " ");
 
-	lv_obj_align(lb_desc2, lb_desc, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI / 5, 0);
+	lv_obj_align(lb_desc, desc, LV_ALIGN_IN_TOP_LEFT, 20, 20);
+	lv_obj_align(lb_desc2, lb_desc, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI / 3, 0);
 
 	if (!sd_mount())
 	{
-		lv_label_set_text(lb_desc, "#FFBA00 Failed to init SD!#");
+		lv_label_set_text(lb_desc, "#FFBA00 SD 카 드  초 기 화  실 패 !#");
 
 		goto out_end;
 	}
@@ -990,7 +991,7 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 
 	if (!emmc_initialize(false))
 	{
-		lv_label_set_text(lb_desc, "#FFBA00 Failed to init eMMC!#");
+		lv_label_set_text(lb_desc, "#FFBA00 eMMC 초 기 화  실 패 !#");
 
 		goto out_free;
 	}
@@ -1045,7 +1046,7 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 
 		const pkg1_id_t *pkg1_id = pkg1_identify(pkg1 + pk1_offset, build_date);
 
-		s_printf(txt_buf, "#00DDFF Found %s pkg1 ('%s')#\n\n", !idx ? "Main" : "Safe", build_date);
+		s_printf(txt_buf, "#00DDFF %s pkg1 ('%s') 을  찾 았 습 니 다.#\n\n", !idx ? "Main" : "Safe", build_date);
 		lv_label_set_text(lb_log, txt_buf);
 		manual_system_maintenance(true);
 		free(build_date);
@@ -1057,13 +1058,13 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 		// Exit if unknown.
 		if (!pkg1_id)
 		{
-			strcat(txt_buf, " #FFBA00 Unknown pkg1 version!#");
+			strcat(txt_buf, " #FFBA00 지 원 하 지  않 는  펌 웨 어 가  설 치 되 어 있 습 니 다 !#");
 			lv_label_set_text(lb_log, txt_buf);
 			manual_system_maintenance(true);
 
 			if (!res)
 			{
-				strcat(txt_buf, "\n Encrypted pkg1 extracted to pkg1_enc.bin");
+				strcat(txt_buf, "\n 암 호 화 된 Package1 이 pkg1_enc.bin 로  추 출 되 었 습 니 다.");
 				lv_label_set_text(lb_log, txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -1094,9 +1095,9 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 		{
 			if (!pkg1_decrypt(pkg1_id, pkg1))
 			{
-				strcat(txt_buf, " #FFBA00 Pkg1 decryption failed!#\n");
+				strcat(txt_buf, " #FFBA00 Package1 복 호 화 에  실 패 했 습 니 다 !#\n");
 				if (h_cfg.t210b01)
-					strcat(txt_buf, " #FFBA00 Is BEK missing?#\n");
+					strcat(txt_buf, " #FFBA00 BEK 가  누 락 되 어 있 지  않 습 니 까 ?#\n");
 				lv_label_set_text(lb_log, txt_buf);
 				goto out;
 			}
@@ -1127,9 +1128,9 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 
 			// Display info.
 			s_printf(txt_buf + strlen(txt_buf),
-				"#C7EA46  NX Bootloader size#  :  0x%05X\n"
-				"#C7EA46  Secure monitor size# :  0x%05X\n"
-				"#C7EA46  Warmboot size#       :  0x%05X\n\n",
+				"#C7EA46  NX-Bootloader  크 기# :  0x%05X\n"
+				"#C7EA46  Secure Monitor 크 기# :  0x%05X\n"
+				"#C7EA46  Warmboot 크 기#       :  0x%05X\n\n",
 				hdr_pk11->ldr_size, hdr_pk11->sm_size, hdr_pk11->wb_size);
 
 			lv_label_set_text(lb_log, txt_buf);
@@ -1204,13 +1205,13 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 		pkg2_hdr_t *pkg2_hdr = pkg2_decrypt(pkg2, mkey);
 		if (!pkg2_hdr)
 		{
-			strcat(txt_buf, " #FFBA00 Pkg2 decryption failed!#");
+			strcat(txt_buf, " #FFBA00 Package2 복 호 화 에  실 패 했 습 니 다 !#");
 			lv_label_set_text(lb_log, txt_buf);
 			manual_system_maintenance(true);
 
 			if (!res)
 			{
-				strcat(txt_buf, "\n Encrypted pkg2         >  #00FFCC pkg2_encr.bin#\n");
+				strcat(txt_buf, "\n 암 호 화 pkg2         >  #00FFCC pkg2_encr.bin#\n");
 				lv_label_set_text(lb_log, txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -1223,8 +1224,8 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 
 		// Display info.
 		s_printf(txt_buf + strlen(txt_buf),
-			" #C7EA46 Kernel size#   :  0x%06X\n"
-			" #C7EA46 INI1 size#     :  0x%06X\n\n",
+			" #C7EA46 Kernel 크 기#         :  0x%06X\n"
+			" #C7EA46 INI1   크 기#         :  0x%06X\n\n",
 			pkg2_hdr->sec_size[PKG2_SEC_KERNEL], pkg2_hdr->sec_size[PKG2_SEC_INI1]);
 
 		lv_label_set_text(lb_log, txt_buf);
@@ -1258,7 +1259,7 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 
 		if (!ini1_off)
 		{
-			strcat(txt_buf, "#FFBA00  Failed to dump INI1 and kips!#\n");
+			strcat(txt_buf, "#FFBA00  INI1 및 kips 백 업  실 패 !#\n");
 			goto out;
 		}
 
@@ -1345,8 +1346,8 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 		const char *newline_prefix = !idx ? "\n\n\n\n" : "\n";
 
 		s_printf(txt_buf + strlen(txt_buf),
-			"%s #C7EA46 [# #00FF00 sdmc:/backup/##00FFCC %s##00FF00 /pkg/##00DDFF %s##00FF00 /pkg1# #C7EA46 ]# Dumped.\n"
-			" #C7EA46 [# #00FF00 sdmc:/backup/##00FFCC %s##00FF00 /pkg/##00DDFF %s##00FF00 /pkg2# #C7EA46 ]# Dumped.",
+			"%s #C7EA46 [# #00FF00 sdmc:/backup/##00FFCC %s##00FF00 /pkg/##00DDFF %s##00FF00 /pkg1# #C7EA46 ]# 백 업  완 료.\n"
+			" #C7EA46 [# #00FF00 sdmc:/backup/##00FFCC %s##00FF00 /pkg/##00DDFF %s##00FF00 /pkg2# #C7EA46 ]# 백 업  완 료.",
 			newline_prefix, sn, !idx ? "Main" : "Safe", sn, !idx ? "Main" : "Safe"
 		);
 		lv_label_set_text(lb_log, txt_buf);

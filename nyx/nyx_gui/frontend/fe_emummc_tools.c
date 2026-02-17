@@ -208,7 +208,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 	char *outFilename = sd_path;
 	u32 sdPathLen = strlen(sd_path);
 
-	s_printf(gui->txt_buf, "#96FF00 SD Card free space#: %d MiB\n#96FF00 Total size#: %d MiB\n\n",
+	s_printf(gui->txt_buf, "#96FF00 SD 카드 여유 공간#: %d MiB\n#96FF00 전체 크기#: %d MiB\n\n",
 		(u32)(sd_fs.free_clst * sd_fs.csize >> SECTORS_TO_MIB_COEFF),
 		totalSectors >> SECTORS_TO_MIB_COEFF);
 	lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
@@ -221,7 +221,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 	// Check if the USER partition or the RAW eMMC fits the sd card free space.
 	if (totalSectors > (sd_fs.free_clst * sd_fs.csize))
 	{
-		s_printf(gui->txt_buf, "\n #FFBA00 Not enough free space for file based emuMMC!#");
+		s_printf(gui->txt_buf, "\n #FFBA00 SD 카 드 의  용 량 이  부 족 합 니 다...#");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -239,7 +239,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 	}
 
 	FIL fp;
-	s_printf(gui->txt_buf, "#96FF00 Filepath#:\n%s\n#96FF00 Filename#: #FF8000 %s#",
+	s_printf(gui->txt_buf, "#96FF00 경로#:\n%s\n#96FF00 파일명#: #FF8000 %s#",
 		gui->base_path, outFilename + strlen(gui->base_path));
 	lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
 	manual_system_maintenance(true);
@@ -247,7 +247,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 	res = f_open(&fp, outFilename, FA_CREATE_ALWAYS | FA_WRITE);
 	if (res)
 	{
-		s_printf(gui->txt_buf, "\n #D03838 Error (%d) while creating#\n #D03838 %s#\n", res, outFilename);
+		s_printf(gui->txt_buf, "\n #D03838 오 류 (%d): %s#\n #D03838 파 일 을  생 성 할  수  없 습 니 다.#\n", res, outFilename);
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -293,7 +293,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 			res = f_open(&fp, outFilename, FA_CREATE_ALWAYS | FA_WRITE);
 			if (res)
 			{
-				s_printf(gui->txt_buf, "\n #D03838 Error (%d) while creating#\n #D03838 %s#\n", res, outFilename);
+				s_printf(gui->txt_buf, "\n #D03838 오 류 (%d): %s#\n #D03838 파 일 을  생 성 할  수  없 습 니 다.#\n", res, outFilename);
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -309,7 +309,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 		// Check for cancellation combo.
 		if (btn_read_vol() == (BTN_VOL_UP | BTN_VOL_DOWN))
 		{
-			s_printf(gui->txt_buf, "\n #FFBA00 The emuMMC was cancelled!#\n");
+			s_printf(gui->txt_buf, "\n #FFBA00 작 업 이  취 소 되 었 습 니 다 !#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -328,8 +328,8 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 		while (!sdmmc_storage_read(storage, lba_curr, num, buf))
 		{
 			s_printf(gui->txt_buf,
-				"\n #FFBA00 Error reading %d blocks @ LBA %08X,#\n"
-				" #FFBA00 from eMMC (try %d).#",
+				"\n #FFBA00 eMMC의 %d (@LBA %08X) 블 록 을#\n"
+				" #FFBA00 읽 지  못 했 습 니 다. (%d회  시 도)#",
 				num, lba_curr, ++retryCount);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
@@ -337,7 +337,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 			msleep(150);
 			if (retryCount >= 3)
 			{
-				s_printf(gui->txt_buf, " #D03838 Aborting...#\n Please try again...\n");
+				s_printf(gui->txt_buf, " #D03838 중 단  중...#\n 다 시  시 도 하 세 요...\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -349,7 +349,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 			}
 			else
 			{
-				s_printf(gui->txt_buf, " #FFBA00 Retrying...#");
+				s_printf(gui->txt_buf, " #FFBA00 재 시 도  중...#");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -363,7 +363,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 
 		if (res)
 		{
-			s_printf(gui->txt_buf, "\n #D03838 Fatal error (%d) when writing to SD Card#\n Please try again...\n", res);
+			s_printf(gui->txt_buf, "\n #D03838 치 명 적  오 류 (%d): SD 카 드 에  쓰 지  못 했 습 니 다.#\n 다 시  시 도 하 세 요...\n", res);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -425,11 +425,11 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 
 	if (!sd_mount())
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init SD!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 SD 카드 초기화 실패!#");
 		goto out;
 	}
 
-	lv_label_set_text(gui->label_info, "Checking for available free space...");
+	lv_label_set_text(gui->label_info, "사용 가능한 여유 공간 확인 중...");
 	manual_system_maintenance(true);
 
 	// Get SD Card free space for file based emuMMC.
@@ -437,7 +437,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 
 	if (!emmc_initialize(false))
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init eMMC!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 eMMC 초기화 실패!#");
 		goto out;
 	}
 
@@ -475,7 +475,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 		bootPart.name[4] = (u8)('0' + i);
 		bootPart.name[5] = 0;
 
-		s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+		s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 			i, bootPart.name, bootPart.lba_start, bootPart.lba_end);
 		lv_label_set_text(gui->label_info, txt_buf);
 		s_printf(txt_buf, " %02d: %s...", i, bootPart.name);
@@ -489,11 +489,11 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 
 		if (!res)
 		{
-			s_printf(txt_buf, " #FFBA00 Failed!#\n");
+			s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 			goto out_failed;
 		}
 		else
-			s_printf(txt_buf, " Done!\n");
+			s_printf(txt_buf, " 완 료 !\n");
 
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 		manual_system_maintenance(true);
@@ -513,7 +513,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 	rawPart.lba_end = RAW_AREA_NUM_SECTORS - 1;
 	strcpy(rawPart.name, "GPP");
 
-	s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+	s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 		i, rawPart.name, rawPart.lba_start, rawPart.lba_end);
 	lv_label_set_text(gui->label_info, txt_buf);
 	s_printf(txt_buf, " %02d: %s...", i, rawPart.name);
@@ -523,9 +523,9 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 	res = _dump_emummc_file_part(gui, sdPath, &emmc_storage, &rawPart);
 
 	if (!res)
-		s_printf(txt_buf, " #FFBA00 Failed!#\n");
+		s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 	else
-		s_printf(txt_buf, " Done!\n");
+		s_printf(txt_buf, " 완 료 !\n");
 
 	lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 	manual_system_maintenance(true);
@@ -536,7 +536,7 @@ out_failed:
 
 	if (res)
 	{
-		s_printf(txt_buf, "Time taken: %dm %ds.\n#008EED Finished!#", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 완료!#", timer / 60, timer % 60);
 		gui->base_path[strlen(gui->base_path) - 5] = '\0';
 		strcpy(sdPath, gui->base_path);
 		strcat(sdPath, "file_based");
@@ -548,7 +548,7 @@ out_failed:
 		save_emummc_cfg(0, 0, gui->base_path);
 	}
 	else
-		s_printf(txt_buf, "Time taken: %dm %ds.", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.", timer / 60, timer % 60);
 
 	lv_label_set_text(gui->label_finish, txt_buf);
 
@@ -576,7 +576,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 	lv_label_set_text(gui->label_pct, " "SYMBOL_DOT" 0%");
 	manual_system_maintenance(true);
 
-	s_printf(gui->txt_buf, "#96FF00 Base folder#:\n%s\n#96FF00 Partition offset#: #FF8000 0x%08X#",
+	s_printf(gui->txt_buf, "#96FF00 생성 경로#:\n%s\n#96FF00 파티션 오프셋#: #FF8000 0x%08X#",
 		gui->base_path, sd_part_off);
 	lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
 	manual_system_maintenance(true);
@@ -594,7 +594,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		emmc_part_t *user_part = emmc_part_find(&gpt_parsed, "USER");
 		if (!user_part)
 		{
-			s_printf(gui->txt_buf, "\n #FFBA00 USER partition not found!#\n");
+			s_printf(gui->txt_buf, "\n #FFBA00 USER 파 티 션 을  찾 을  수  없 습 니 다 !#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -612,7 +612,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		// Check for cancellation combo.
 		if (btn_read_vol() == (BTN_VOL_UP | BTN_VOL_DOWN))
 		{
-			s_printf(gui->txt_buf, "\n #FFBA00 The emuMMC was cancelled!#\n");
+			s_printf(gui->txt_buf, "\n #FFBA00 작 업 이  취 소 되 었 습 니 다 !#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -628,8 +628,8 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		while (!sdmmc_storage_read(&emmc_storage, lba_curr, num, buf))
 		{
 			s_printf(gui->txt_buf,
-				"\n #FFBA00 Error reading %d blocks @LBA %08X,#\n"
-				" #FFBA00 from eMMC (try %d). #",
+				"\n #FFBA00 eMMC의 %d (@LBA %08X) 블 록 을#\n"
+				" #FFBA00 읽 지  못 했 습 니 다. (%d회  시 도)#",
 				num, lba_curr, ++retryCount);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
@@ -637,7 +637,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			msleep(150);
 			if (retryCount >= 3)
 			{
-				s_printf(gui->txt_buf, " #D03838 Aborting...#\n Please try again...\n");
+				s_printf(gui->txt_buf, " #D03838 중 단  중...#\n 다 시  시 도 하 세 요...\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -645,7 +645,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			}
 			else
 			{
-				s_printf(gui->txt_buf, " #FFBA00 Retrying...#\n");
+				s_printf(gui->txt_buf, " #FFBA00 재 시 도  중...#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -658,8 +658,8 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		while (!sdmmc_storage_write(&sd_storage, sd_sector_off + lba_curr, num, buf))
 		{
 			s_printf(gui->txt_buf,
-				"\n #FFBA00 Error writing %d blocks @LBA %08X,#\n"
-				" #FFBA00 to SD (try %d). #",
+				"\n #FFBA00 SD 카 드 의 %d (@LBA %08X) 블 록 을#\n"
+				" #FFBA00 쓰 지  못 했 습 니 다. (%d회  시 도)#",
 				num, lba_curr, ++retryCount);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
@@ -667,7 +667,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			msleep(150);
 			if (retryCount >= 3)
 			{
-				s_printf(gui->txt_buf, " #D03838 Aborting...#\n Please try again...\n");
+				s_printf(gui->txt_buf, " #D03838 중 단  중...#\n 다 시  시 도 하 세 요...\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -675,7 +675,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			}
 			else
 			{
-				s_printf(gui->txt_buf, " #FFBA00 Retrying...#\n");
+				s_printf(gui->txt_buf, " #FFBA00 재 시 도  중...#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -712,7 +712,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 
 	if (resized_count)
 	{
-		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, " Done!\n");
+		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, " 완 료 !\n");
 
 		// Calculate USER size and set it for FatFS.
 		u32 user_sectors = resized_count - user_offset - 33;
@@ -726,7 +726,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		strcpy(user_part.name, "USER");
 		nx_emmc_bis_init(&user_part, true, sd_sector_off);
 
-		s_printf(gui->txt_buf, " Formatting USER...");
+		s_printf(gui->txt_buf, " USER 파 티 션  포 맷  중...");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -740,18 +740,18 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 
 		if (mkfs_error)
 		{
-			s_printf(gui->txt_buf, " #D03838 Failed (%d)!#\n Please try again...", mkfs_error);
+			s_printf(gui->txt_buf, " #D03838 작 업  실 패: %d#\n 다 시  시 도 하 세 요...", mkfs_error);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 
 			return 0;
 		}
-		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, " Done!\n");
+		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, " 완 료 !\n");
 
 		// Flush BIS cache, deinit, clear BIS keys slots and reinstate SBK.
 		nx_emmc_bis_end();
 		hos_bis_keys_clear();
 
-		s_printf(gui->txt_buf, " Writing new GPT...");
+		s_printf(gui->txt_buf, " 신 규 GPT 작 성  중...");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -771,7 +771,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 
 		if (gpt_entry_idx >= gpt->header.num_part_ents)
 		{
-			s_printf(gui->txt_buf, "\n #D03838 No USER partition...#\n Please try again...");
+			s_printf(gui->txt_buf, "\n #D03838 USER 파 티 션 이  없 습 니 다...#\n 다 시  시 도 하 세 요...");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			free(gpt);
 
@@ -848,12 +848,12 @@ int emummc_raw_derive_bis_keys()
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\251", "\222Close", "\251", "" };
+		static const char * mbox_btn_map[] = { "\251", "\222닫기", "\251", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 
-		lv_mbox_set_text(mbox, "#C7EA46 BIS Keys Generation#");
+		lv_mbox_set_text(mbox, "#96FF00 BIS 키 추출#");
 
 		lv_obj_t * lb_desc = lv_label_create(mbox, NULL);
 		lv_label_set_long_mode(lb_desc, LV_LABEL_LONG_BREAK);
@@ -861,7 +861,7 @@ int emummc_raw_derive_bis_keys()
 		lv_label_set_style(lb_desc, &monospace_text);
 		lv_obj_set_width(lb_desc, LV_HOR_RES / 9 * 4);
 
-		lv_label_set_text(lb_desc, "#FFBA00 BIS keys validation failed!#\n");
+		lv_label_set_text(lb_desc, "#FFBA00 BIS 키 검증 실패!#\n");
 		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -892,19 +892,19 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 
 	if (!sd_mount())
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init SD!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 SD 카드 초기화 실패!#");
 		goto out;
 	}
 
 	if (!emmc_initialize(false))
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init eMMC!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 eMMC 초기화 실패!#");
 		goto out;
 	}
 
 	if (resized_count && !emummc_raw_derive_bis_keys())
 	{
-		s_printf(gui->txt_buf, " #FFBA00 For formatting USER partition,#\n #FFBA00 BIS keys are needed!#\n");
+		s_printf(gui->txt_buf, " #FFBA00 USER 파 티 션 을  포 맷 하 기  위 해 서 는,#\n #FFBA00 BIS 키 가  필 요 합 니 다 !#\n");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		emmc_end();
 		goto out;
@@ -937,7 +937,7 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 		bootPart.name[4] = (u8)('0' + i);
 		bootPart.name[5] = 0;
 
-		s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+		s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 			i, bootPart.name, bootPart.lba_start, bootPart.lba_end);
 		lv_label_set_text(gui->label_info, txt_buf);
 		s_printf(txt_buf, " %02d: %s...", i, bootPart.name);
@@ -951,11 +951,11 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 
 		if (!res)
 		{
-			s_printf(txt_buf, " #FFBA00 Failed!#\n");
+			s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 			goto out_failed;
 		}
 		else
-			s_printf(txt_buf, " Done!\n");
+			s_printf(txt_buf, " 완 료 !\n");
 
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 		manual_system_maintenance(true);
@@ -974,7 +974,7 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 	rawPart.lba_end = RAW_AREA_NUM_SECTORS - 1;
 	strcpy(rawPart.name, "GPP");
 	{
-		s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+		s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 			i, rawPart.name, rawPart.lba_start, rawPart.lba_end);
 		lv_label_set_text(gui->label_info, txt_buf);
 		s_printf(txt_buf, " %02d: %s...", i, rawPart.name);
@@ -984,9 +984,9 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 		res = _dump_emummc_raw_part(gui, 2, part_idx, sector_start, &rawPart, resized_count);
 
 		if (!res)
-			s_printf(txt_buf, " #FFBA00 Failed!#\n");
+			s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 		else
-			s_printf(txt_buf, " Done!\n");
+			s_printf(txt_buf, " 완 료 !\n");
 
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 		manual_system_maintenance(true);
@@ -998,7 +998,7 @@ out_failed:
 
 	if (res)
 	{
-		s_printf(txt_buf, "Time taken: %dm %ds.\n#008EED Finished!#", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 완료!#", timer / 60, timer % 60);
 		strcpy(sdPath, gui->base_path);
 		strcat(sdPath, "raw_based");
 		FIL fp;
@@ -1010,7 +1010,7 @@ out_failed:
 		save_emummc_cfg(part_idx, sector_start, gui->base_path);
 	}
 	else
-		s_printf(txt_buf, "Time taken: %dm %ds.", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.", timer / 60, timer % 60);
 
 	lv_label_set_text(gui->label_finish, txt_buf);
 

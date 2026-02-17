@@ -60,7 +60,7 @@ static void _create_window_backup_restore(emmcPartType_t type, const char* win_l
 	else if (!strncmp(label, SYMBOL_DOWNLOAD, strlen(SYMBOL_DOWNLOAD)))
 		label += strlen(SYMBOL_DOWNLOAD);
 
-	s_printf(win_label_full, "%s%s%s", emmc_btn_ctxt.restore ? SYMBOL_DOWNLOAD : SYMBOL_UPLOAD, label, emmc_btn_ctxt.restore ? " Restore" : " Backup");
+	s_printf(win_label_full, "%s%s%s", emmc_btn_ctxt.restore ? SYMBOL_DOWNLOAD : SYMBOL_UPLOAD, label, emmc_btn_ctxt.restore ? " 복원" : " 백업");
 
 	lv_obj_t *win = nyx_create_standard_window(win_label_full);
 
@@ -227,26 +227,26 @@ static lv_res_t _emmc_backup_buttons_raw_toggle(lv_obj_t *btn)
 	if (!(lv_btn_get_state(btn) & LV_BTN_STATE_TGL_REL))
 	{
 		if (!emmc_btn_ctxt.restore)
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_UPLOAD"  eMMC BOOT0, BOOT1");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_UPLOAD"  시스낸드 BOOT0, BOOT1");
 		else
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_DOWNLOAD"  eMMC BOOT0, BOOT1");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_DOWNLOAD"  시스낸드 BOOT0, BOOT1");
 		lv_obj_realign(emmc_btn_ctxt.emmc_boot);
 
 		if (!emmc_btn_ctxt.restore)
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_UPLOAD"  eMMC RAW GPP");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_UPLOAD"  시스낸드 RAW GPP");
 		else
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_DOWNLOAD"  eMMC RAW GPP");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_DOWNLOAD"  시스낸드 RAW GPP");
 		lv_obj_realign(emmc_btn_ctxt.emmc_raw_gpp);
 
 		if (!emmc_btn_ctxt.restore)
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_sys, NULL), SYMBOL_MODULES"  eMMC SYSTEM");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_sys, NULL), SYMBOL_MODULES"  시스낸드 시스템");
 		else
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_sys, NULL), SYMBOL_MODULES"  eMMC ALL");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_sys, NULL), SYMBOL_MODULES"  시스낸드 파티션");
 		lv_obj_realign(emmc_btn_ctxt.emmc_sys);
 
 		if (!emmc_btn_ctxt.restore)
 		{
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_usr, NULL), SYMBOL_MODULES_ALT"  eMMC USER");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_usr, NULL), SYMBOL_MODULES_ALT"  시스낸드 USER 파티션");
 			lv_obj_realign(emmc_btn_ctxt.emmc_usr);
 
 			lv_obj_set_click(emmc_btn_ctxt.emmc_usr, true);
@@ -258,15 +258,15 @@ static lv_res_t _emmc_backup_buttons_raw_toggle(lv_obj_t *btn)
 	else // Backup/Restore from and to emuMMC.
 	{
 		if (!emmc_btn_ctxt.restore)
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_UPLOAD"  emuMMC BOOT0, BOOT1");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_UPLOAD"  에뮤낸드 BOOT0, BOOT1");
 		else
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_DOWNLOAD"  emuMMC BOOT0, BOOT1");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_boot, NULL), SYMBOL_DOWNLOAD"  에뮤낸드 BOOT0, BOOT1");
 		lv_obj_realign(emmc_btn_ctxt.emmc_boot);
 
 		if (!emmc_btn_ctxt.restore)
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_UPLOAD"  emuMMC RAW GPP");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_UPLOAD"  에뮤낸드 RAW GPP");
 		else
-			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_DOWNLOAD"  emuMMC RAW GPP");
+			lv_label_set_static_text(lv_obj_get_child(emmc_btn_ctxt.emmc_raw_gpp, NULL), SYMBOL_DOWNLOAD"  에뮤낸드 RAW GPP");
 		lv_obj_realign(emmc_btn_ctxt.emmc_raw_gpp);
 
 		lv_obj_set_click(emmc_btn_ctxt.emmc_sys, false);
@@ -293,7 +293,7 @@ static lv_res_t _emmc_header_toggle(lv_obj_t *btn)
 
 	lv_res_t res = _emmc_backup_buttons_raw_toggle(btn);
 
-	const char *suf = emmc_btn_ctxt.raw_emummc ? "eMMC" : "emuMMC";
+	const char *suf = emmc_btn_ctxt.raw_emummc ? "시스낸드" : "에뮤낸드";
 	lv_obj_t *lbl = lv_obj_get_child(btn, NULL);
 
 	s_printf(buf, SYMBOL_REFRESH " %s", suf);
@@ -309,13 +309,13 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	lv_obj_t *win;
 
 	emmc_btn_ctxt.restore = false;
-	if (strcmp(lv_label_get_text(lv_obj_get_child(btn, NULL)), SYMBOL_UPLOAD" Backup"))
+	if (strcmp(lv_label_get_text(lv_obj_get_child(btn, NULL)), SYMBOL_UPLOAD" 낸드 백업"))
 		emmc_btn_ctxt.restore = true;
 
 	if (!emmc_btn_ctxt.restore)
-		win = nyx_create_standard_window(SYMBOL_UPLOAD" Backup");
+		win = nyx_create_standard_window(SYMBOL_UPLOAD"  낸드 백업");
 	else
-		win = nyx_create_standard_window(SYMBOL_DOWNLOAD" Restore");
+		win = nyx_create_standard_window(SYMBOL_DOWNLOAD"  낸드 복원");
 	
 	//===========================================================
 	//  ASAP: NAND manager - backup/restore NAND on,off toggle.
@@ -331,7 +331,7 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 
 	emmc_btn_ctxt.lbl_raw = lv_obj_get_child(btn_raw, NULL);
 	{
-		lv_label_set_text(emmc_btn_ctxt.lbl_raw, SYMBOL_REFRESH " emuMMC");
+		lv_label_set_text(emmc_btn_ctxt.lbl_raw, SYMBOL_REFRESH " 에뮤낸드");
 		lv_obj_align(emmc_btn_ctxt.lbl_raw, NULL, LV_ALIGN_CENTER, 0, 0);
 	}
 	//===========================================================
@@ -369,9 +369,9 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	lv_obj_t *label_btn = lv_label_create(btn1, NULL);
 	lv_btn_set_fit(btn1, true, true);
 	if (!emmc_btn_ctxt.restore)
-		lv_label_set_static_text(label_btn, SYMBOL_UPLOAD"  eMMC BOOT0, BOOT1");
+		lv_label_set_static_text(label_btn, SYMBOL_UPLOAD"  시스낸드 BOOT0, BOOT1");
 	else
-		lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD"  eMMC BOOT0, BOOT1");
+		lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD"  시스낸드 BOOT0, BOOT1");
 
 	lv_obj_align(btn1, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 	lv_btn_set_action(btn1, LV_BTN_ACTION_CLICK, _emmc_backup_buttons_decider);
@@ -382,16 +382,16 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	if (!emmc_btn_ctxt.restore)
 	{
 		lv_label_set_static_text(label_txt2,
-			"Backup the #C7EA46 BOOT0# and #C7EA46 BOOT1#.\n"
-			"#00DDFF Target#: KEY, PKG1 (BCT, SECMON, Warmboot, etc.)\n"
-			"#FF8000 This is paired with the RAW GPP backup.#");
+			"#C7EA46 BOOT0#, #C7EA46 BOOT1# 파티션을 백업합니다.\n"
+			"#00DDFF 대상#: KEY, PKG1 (BCT, SECMON, Warmboot, etc.)\n"
+			"#FF8000 일치하는 RAW GPP 세트에만 사용 가능합니다.#");
 	}
 	else
 	{
 		lv_label_set_static_text(label_txt2,
-			"Restore the #C7EA46 BOOT0# and #C7EA46 BOOT1#.\n"
-			"#00DDFF Target#: KEY, PKG1 (BCT, SECMON, Warmboot, etc.)\n"
-			"#FF8000 This is paired with the RAW GPP restore.#");
+			"#C7EA46 BOOT0#, #C7EA46 BOOT1# 파티션을 복원합니다.\n"
+			"#00DDFF 대상#: KEY, PKG1 (BCT, SECMON, Warmboot, etc.)\n"
+			"#FF8000 일치하는 RAW GPP 세트에만 사용 가능합니다.#");
 	}
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn1, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
@@ -400,9 +400,9 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	lv_obj_t *btn2 = lv_btn_create(h1, btn1);
 	label_btn = lv_label_create(btn2, NULL);
 	if (!emmc_btn_ctxt.restore)
-		lv_label_set_static_text(label_btn, SYMBOL_UPLOAD"  eMMC RAW GPP");
+		lv_label_set_static_text(label_btn, SYMBOL_UPLOAD"  시스낸드 RAW GPP");
 	else
-		lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD"  eMMC RAW GPP");
+		lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD"  시스낸드 RAW GPP");
 	lv_obj_align(btn2, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 1);
 	lv_btn_set_action(btn2, LV_BTN_ACTION_CLICK, _emmc_backup_buttons_decider);
 	emmc_btn_ctxt.emmc_raw_gpp= btn2;
@@ -412,16 +412,16 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	if (!emmc_btn_ctxt.restore)
 	{
 		lv_label_set_static_text(label_txt2,
-			"Backup the #C7EA46 GPP physical partition#.\n"
-			"#00DDFF Target#: RAWNAND (PRODINFO, PKG2, SAFE, SYSTEM, USER)\n"
-			"#FF8000 This is paired with the BOOT0/1 backups.#");
+			"#C7EA46 RAW GPP#의 합본 파티션을 백업합니다.\n"
+			"#00DDFF 대상#: RAWNAND (PRODINFO, PKG2, SAFE, SYSTEM, USER)\n"
+			"#FF8000 일치하는 BOOT0/1 세트에만 사용 가능합니다.#");
 	}
 	else
 	{
 		lv_label_set_static_text(label_txt2,
-			"Restore the #C7EA46 GPP physical partition#.\n"
-			"#00DDFF Target#: RAWNAND (PRODINFO, PKG2, SAFE, SYSTEM, USER)\n"
-			"#FF8000 This is paired with the BOOT0/1 restore.#");
+			"#C7EA46 RAW GPP#의 합본 파티션을 복원합니다.\n"
+			"#00DDFF 대상#: RAWNAND (PRODINFO, PKG2, SAFE, SYSTEM, USER)\n"
+			"#FF8000 일치하는 BOOT0/1 세트에만 사용 가능합니다.#");
 	}
 	lv_obj_set_style(label_txt2, &hint_small_style);
 	lv_obj_align(label_txt2, btn2, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
@@ -441,7 +441,7 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	lv_obj_t *label_txt3 = lv_label_create(h2, NULL);
 	lv_label_set_static_text(label_txt3, "RAW GPP");
 	lv_obj_set_style(label_txt3, lv_theme_get_current()->label.prim);
-	lv_obj_align(label_txt3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI * 4 / 21);
+	lv_obj_align(label_txt3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, 0);
 
 	line_sep = lv_line_create(h2, line_sep);
 	lv_obj_align(line_sep, label_txt3, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 8);
@@ -451,9 +451,9 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	label_btn = lv_label_create(btn3, NULL);
 	lv_btn_set_fit(btn3, true, true);
 	if (!emmc_btn_ctxt.restore)
-		lv_label_set_static_text(label_btn, SYMBOL_MODULES"  eMMC SYSTEM");
+		lv_label_set_static_text(label_btn, SYMBOL_MODULES"  시스낸드 시스템");
 	else
-		lv_label_set_static_text(label_btn, SYMBOL_MODULES"  eMMC ALL");
+		lv_label_set_static_text(label_btn, SYMBOL_MODULES"  시스낸드 파티션");
 	lv_obj_align(btn3, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
 	lv_btn_set_action(btn3, LV_BTN_ACTION_CLICK, _emmc_backup_buttons_decider);
 	emmc_btn_ctxt.emmc_sys = btn3;
@@ -463,16 +463,16 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	if (!emmc_btn_ctxt.restore)
 	{
 		lv_label_set_static_text(label_txt4,
-			"Backup the #C7EA46 partitions from RAW GPP except#.\n"
-			"#00DDFF Target#: PRODINFO, PKG2, SAFE, SYSTEM\n"
-			"#FF8000 USER partition is excluded.#");
+			"RAW GPP의 #C7EA46 일부 파티션#을 백업합니다.\n"
+			"#00DDFF 대상#: PRODINFO, PKG2, SAFE, SYSTEM\n"
+			"#FF8000 USER 파티션은 제외됩니다.#");
 	}
 	else
 	{
 		lv_label_set_static_text(label_txt4,
-			"Restore the #C7EA46 ALL partitions from RAW GPP#.\n"
-			"#00DDFF Target#: PRODINFO, PKG2, SAFE, SYSTEM, USER\n"
-			"#FF8000 Only existing partitions will be restored.#");
+			"RAW GPP의 #C7EA46 모든 파티션#을 복원합니다.\n"
+			"#00DDFF 대상#: PRODINFO, PKG2, SAFE, SYSTEM, USER\n"
+			"#FF8000 복원하려는 파티션만 개별 복원 가능합니다.#");
 	}
 
 	lv_obj_set_style(label_txt4, &hint_small_style);
@@ -483,7 +483,7 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 	{
 		lv_obj_t *btn4 = lv_btn_create(h2, btn1);
 		label_btn = lv_label_create(btn4, NULL);
-		lv_label_set_static_text(label_btn, SYMBOL_MODULES_ALT"  eMMC USER");
+		lv_label_set_static_text(label_btn, SYMBOL_MODULES_ALT"  시스낸드 USER 파티션");
 		lv_obj_align(btn4, label_txt4, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 1);
 		lv_btn_set_action(btn4, LV_BTN_ACTION_CLICK, _emmc_backup_buttons_decider);
 		emmc_btn_ctxt.emmc_usr = btn4;
@@ -491,9 +491,9 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 		label_txt4 = lv_label_create(h2, NULL);
 		lv_label_set_recolor(label_txt4, true);
 		lv_label_set_static_text(label_txt4,
-			"Backup the #C7EA46 USER partition from RAW GPP#.\n"
-			"#00DDFF Target#: Album, Save, Contents\n"
-			"#FF8000 This is an incomplete backup.#");
+			"RAW GPP의 #C7EA46 USER 파티션#을 백업합니다.\n"
+			"#00DDFF 대상#: Album, Save, Contents\n"
+			"#FF8000 스크린샷, 녹화, 세이브, 게임만 백업됩니다.#");
 		lv_obj_set_style(label_txt4, &hint_small_style);
 		lv_obj_align(label_txt4, btn4, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 	}

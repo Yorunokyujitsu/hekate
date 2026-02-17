@@ -1,7 +1,7 @@
 /*
  * USB Gadget HID driver for Tegra X1
  *
- * Copyright (c) 2019-2025 CTCaer
+ * Copyright (c) 2019-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -352,7 +352,7 @@ static u8 _hid_transfer_start(usb_ctxt_t *usbs, u32 len)
 	u8 status = usb_ops.usb_device_ep1_in_write(rpt_buffer, len, NULL, USB_XFER_SYNCED_CMD);
 	if (status == USB_ERROR_XFER_ERROR)
 	{
-		usbs->set_text(usbs->label, "#FFDD00 Error:# EP IN transfer!");
+		usbs->set_text(usbs->label, "#FFDD00 오류#: EP IN 전송!");
 		if (usb_ops.usbd_flush_endpoint)
 			usb_ops.usbd_flush_endpoint(USB_EP_BULK_IN);
 	}
@@ -416,7 +416,7 @@ int usb_device_gadget_hid(usb_ctxt_t *usbs)
 		gadget_type = USB_GADGET_HID_TOUCHPAD;
 	}
 
-	usbs->set_text(usbs->label, "#C7EA46 Status:# Started USB");
+	usbs->set_text(usbs->label, "#C7EA46 상태#: USB 연결됨");
 
 	if (usb_ops.usb_device_init())
 	{
@@ -424,19 +424,19 @@ int usb_device_gadget_hid(usb_ctxt_t *usbs)
 		return 1;
 	}
 
-	usbs->set_text(usbs->label, "#C7EA46 Status:# Waiting for connection");
+	usbs->set_text(usbs->label, "#C7EA46 상태#: 연결 대기 중");
 
 	// Initialize Control Endpoint.
 	if (usb_ops.usb_device_enumerate(gadget_type))
 		goto error;
 
-	usbs->set_text(usbs->label, "#C7EA46 Status:# Waiting for HID report request");
+	usbs->set_text(usbs->label, "#C7EA46 상태#: HID 리포트 요청 대기 중");
 
 	u32 rpt_size = usbs->type == USB_HID_GAMEPAD ? sizeof(gamepad_report_t) : sizeof(touchpad_report_t);
 	if (usb_ops.usb_device_class_send_hid_report(rpt_buffer, rpt_size))
 		goto error;
 
-	usbs->set_text(usbs->label, "#C7EA46 Status:# Started HID emulation");
+	usbs->set_text(usbs->label, "#C7EA46 상태#: HID 에뮬레이션 실행됨");
 
 	u32 timer_sys = get_tmr_ms() + 5000;
 	while (true)
@@ -474,11 +474,11 @@ int usb_device_gadget_hid(usb_ctxt_t *usbs)
 		}
 	}
 
-	usbs->set_text(usbs->label, "#C7EA46 Status:# HID ended");
+	usbs->set_text(usbs->label, "#C7EA46 상태#: HID 종료됨");
 	goto exit;
 
 error:
-	usbs->set_text(usbs->label, "#FFDD00 Error:# Timed out or canceled");
+	usbs->set_text(usbs->label, "#FFDD00 오류#: 시간 초과");
 	res = 1;
 
 exit:

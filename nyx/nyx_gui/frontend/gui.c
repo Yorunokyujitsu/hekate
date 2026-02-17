@@ -307,7 +307,7 @@ static void _save_fb_to_bmp()
 	// Create notification box.
 	lv_obj_t * mbox = lv_mbox_create(lv_layer_top(), NULL);
 	lv_mbox_set_recolor_text(mbox, true);
-	lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #FFBA00 Saving screenshot#");
+	lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #FFBA00 스크린샷 저장 중...#");
 	lv_obj_set_width(mbox, LV_DPI * 4);
 	lv_obj_set_top(mbox, true);
 	lv_obj_align(mbox, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
@@ -383,9 +383,9 @@ static void _save_fb_to_bmp()
 	free(fb);
 
 	if (!res)
-		lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #96FF00 Screenshot saved!#");
+		lv_mbox_set_text(mbox, SYMBOL_CAMERA"  #96FF00 스크린샷 저장 완료!#");
 	else
-		lv_mbox_set_text(mbox, SYMBOL_WARNING"  #FF8000 Screenshot failed!#");
+		lv_mbox_set_text(mbox, SYMBOL_WARNING"  #FF8000 스크린샷 저장 실패!#");
 	manual_system_maintenance(true);
 	lv_mbox_start_auto_close(mbox, 4000);
 
@@ -947,15 +947,14 @@ bool nyx_emmc_check_battery_enough()
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+		static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 
 		lv_mbox_set_text(mbox,
-			"#008EED Low Battery Warning#\n\n"
-			"#FFBA00 Info#: Battery is not enough to carry on#\n"
-			"with selected operation!#\n\n"
-			"Charge to at least #C7EA46 3650 mV#, and try again!");
+			"#008EED 배터리 부족 경고#\n\n"
+			"#FFBA00 안내#: 배터리 잔량이 부족하여 작업을 수행할 수 없습니다!\n"
+			"전압을 최소 #C7EA46 3650 mV# 이상 올린 후, 다시 시도하세요!");
 
 		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -974,15 +973,15 @@ static void _nyx_sd_card_issues_warning(void *param)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
 	lv_mbox_set_text(mbox,
-		"#008EED SD Card Issues Warning#\n\n"
-		"#FFBA00 Info#: The SD Card is initialized in 1-bit mode!\n"
-		"#FF8000 This might mean detached or broken connector!#\n\n"
-		"You can check the details in #C7EA46 Ⓝ (NAND Manager)#");
+		"#008EED SD 카드 경고#\n\n"
+		"#FFBA00 안내#: SD 카드가 1-bit 모드로 초기화 되었습니다!\n"
+		"#FF8000 커넥터가 분리되었거나 손상되었을 수 있습니다!#\n\n"
+		"#C7EA46 낸드 매니저#의 #C7EA46 Ⓝ#에서 정보를 확인하세요.");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -1043,7 +1042,7 @@ static lv_obj_t *_nyx_create_window(const char *win_title, lv_action_t close_act
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE " Close", close_action);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE " 닫기", close_action);
 
 	return win;
 }
@@ -1161,17 +1160,17 @@ static void _check_sd_card_removed(void *params)
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\221Ｒ", "\221Power Off", "\221OK", "" };
-		static const char * mbox_btn_map_rcm_patched[] = { "\221Reboot", "\221Power Off", "\221OK", "" };
+		static const char * mbox_btn_map[] = { "\221Ｒ", "\221종료", "\221확인", "" };
+		static const char * mbox_btn_map_rcm_patched[] = { "\221재부팅", "\221종료", "\221확인", "" };
 		lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 		lv_obj_set_width(mbox, LV_HOR_RES * 6 / 9);
 
 		lv_mbox_set_text(mbox,
-						 "\n#008EED Status Message#\n\n"
-						 "#FFBA00 Info#: SD card was removed!\n\n"
-						 "#FF8000 Warning:#\n#FF8000 Some features are limited.#\n"
-						 "#FF8000 Reinsert the SD card to continue properly!#");
+						 "\n#008EED 상태 메시지#\n\n"
+						 "#FFBA00 안내#: SD 카드가 본체에서 제거되었습니다!\n\n"
+						 "#FF8000 경고:#\n#FF8000 일부 기능이 제한됩니다.#\n"
+						 "#FF8000 정상 동작을 위해 SD 카드를 재삽입하세요!#");
 		lv_mbox_add_btns(mbox, h_cfg.rcm_patched ? mbox_btn_map_rcm_patched : mbox_btn_map, _removed_sd_action);
 
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -1197,15 +1196,15 @@ static void _nyx_emmc_issues_warning(void *params)
 		lv_obj_set_style(dark_bg, &mbox_darken);
 		lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-		static const char * mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+		static const char * mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 		lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 		lv_mbox_set_recolor_text(mbox, true);
 
 		lv_mbox_set_text(mbox,
-			"#008EED eMMC Issues Warning#\n\n"
-			"#FFBA00 Info#: Your eMMC is initialized in a slower mode!\n"
-			"#FF8000 This might mean hardware issues!#\n\n"
-			"You can check the details in #C7EA46 Ⓢ (NAND Manager)#");
+			"#008EED eMMC 경고#\n\n"
+			"#FFBA00 안내#: eMMC가 슬로우 모드로 초기화 되었습니다!\n"
+			"#FF8000 하드웨어에 문제가 있을 수 있습니다!#\n\n"
+			"#C7EA46 낸드 매니저#의 #C7EA46 Ⓢ#에서 정보를 확인하세요.");
 
 		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -1322,7 +1321,7 @@ static bool sd_copy_file_mounted(const char *src, const char *dst)
 		fr = f_read(&fsrc, buf, sizeof(buf), &br);
 		if (fr != FR_OK) {
 			g_restore_fr = fr;
-			g_restore_step = "Failed to read the file!";
+			g_restore_step = "파일을 읽을 수 없습니다!";
 			break;
 		}
 		if (br == 0)
@@ -1331,7 +1330,7 @@ static bool sd_copy_file_mounted(const char *src, const char *dst)
 		fr = f_write(&fdst, buf, br, &bw);
 		if (fr != FR_OK || bw != br) {
 			g_restore_fr = fr;
-			g_restore_step = "Failed to write the file!";
+			g_restore_step = "파일 쓰기에 실패했습니다!";
 			break;
 		}
 	}
@@ -1356,7 +1355,7 @@ static bool _rename_if_exists(const char *src, const char *dst)
 
 	if (fr != FR_OK) {
 		g_restore_fr = fr;
-		g_restore_step = "File not found!";
+		g_restore_step = "파일을 찾을 수 없습니다!";
 		return false;
 	}
 
@@ -1365,7 +1364,7 @@ static bool _rename_if_exists(const char *src, const char *dst)
 	fr = f_rename(src, dst);
 	if (fr != FR_OK) {
 		g_restore_fr = fr;
-		g_restore_step = "Failed to switch file!";
+		g_restore_step = "파일 전환에 실패했습니다!";
 		return false;
 	}
 
@@ -1405,31 +1404,31 @@ static bool _restore_ram_mode(ram_mode_t mode)
 
 	if (!sd_mount()) {
 		g_restore_fr = FR_NOT_READY;
-		g_restore_step = "Failed to mount SD card!";
+		g_restore_step = "SD 카드 마운트 실패!";
 		return false;
 	}
 
 	if (f_chdrive("sd:") != FR_OK) {
 		g_restore_fr = FR_NOT_READY;
-		g_restore_step = "Failed to switch SD drive!";
+		g_restore_step = "SD 드라이브 전환 실패!";
 		goto out;
 	}
 
-	g_restore_step = "Failed to restore hekate!";
+	g_restore_step = "hekate 복원 실패!";
 	if (!sd_copy_file_mounted(src_hekate, dst_payload))
 		goto out;
 	if (!sd_copy_file_mounted(src_hekate, dst_update))
 		goto out;
 
-	g_restore_step = "Failed to restore fusee!";
+	g_restore_step = "fusee 복원 실패!";
 	if (!sd_copy_file_mounted(src_fusee, dst_fusee))
 		goto out;
 
-	g_restore_step = "Failed to switch exosphere!";
+	g_restore_step = "exosphere 전환 실패!";
 	if (!_rename_if_exists(src_exosphere, dst_exosphere))
 		goto out;
 
-	g_restore_step = "Failed to switch RAM configuration!";
+	g_restore_step = "RAM 설정 전환 실패!";
 	if (!_rename_if_exists(src_ram_ini, dst_ram_ini))
 		goto out;
 
@@ -1525,9 +1524,9 @@ static lv_res_t _create_mbox_ofw_warning(void)
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 
-	static const char *btn_fuse7[]   = { "\221OK", "" };
-	static const char *btn_dram[]    = { "\221Restore", "\221Continue", "" };
-	static const char *btn_restore[] = { "\221Restart", "" };
+	static const char *btn_fuse7[]   = { "\221확인", "" };
+	static const char *btn_dram[]    = { "\221복원", "\221확인", "" };
+	static const char *btn_restore[] = { "\221재부팅", "" };
 
 	const char *text = NULL;
 	const char **btn_map = NULL;
@@ -1539,34 +1538,33 @@ static lv_res_t _create_mbox_ofw_warning(void)
 		btn_map = btn_fuse7;
 		action  = mbox_action;
 
-		text = "#FF0012 Warning#\n\n"
-			   "#FFBA00 Info#: #FF8000 Unsupported DRAM fuse configuration!#\n\n"
-			   "#C7EA46 Actual device#: Erista + 8GB RAM\n"
-			   "#C7EA46 Detected as#: Mariko + 8GB RAM\n\n"
-			   "The installed memory is not supported by OFW.\n\n"
-			   "#FF0012 Boot may fail during the DRAM training stage,#\n"
-			   "#FF0012 causing infinite reboot loops or a black screen.#\n\n"
-			   "#C7EA46 Using emuMMC only is strongly recommended.#";
+		text = "#FF0012 경고#\n\n"
+			   "#FFBA00 안내#: #FF8000 지원되지 않는 DRAM Fuse 구성입니다!#\n\n"
+			   "#C7EA46 실제 기기#: Erista + 8GB RAM\n"
+			   "#C7EA46 인식 상태#: Mariko + 8GB RAM\n\n"
+			   "펌웨어가 지원할 수 없는 메모리가 설치되어있습니다.\n\n"
+			   "#FF0012 DRAM 트레이닝 단계에서 정상 부팅에 실패하며,#\n"
+			   "#FF0012 무한 리부트, 블랙스크린 등이 발생할 수 있습니다.#\n\n"
+			   "#C7EA46 에뮤낸드로만 사용하는 것을 권장합니다.#";
 	} else if (g_ofw_dram_warning) {
 		btn_map = btn_dram;
 		action  = _mbox_ofw_dram_action;
 
-		text = "#FF8000 Caution#\n\n"
-			   "#FFBA00 Info#: #FF8000 DRAM fuse info mismatch with hardware!#\n"
-			   "#FF8000 Or 8GB RAM mode is currently enabled.#\n\n"
-			   "#008EED Hint: If this device has no memory upgrade,#\n"
-			   "#008EED restore the original configuration.#\n\n"
-			   "DRAM training is limited and does not match\n"
-			   "the actual memory timings, resulting in performance degradation.\n\n"
-			   "#C7EA46 Do you want to continue booting anyway?#";
+		text = "#FF8000 주의#\n\n"
+			   "#FFBA00 안내#: #FF8000 DRAM의 Fuse 정보가 실제와 일치하지 않습니다!#\n"
+			   "#FF8000 혹은 8GB RAM 모드가 활성 상태입니다.#\n\n"
+			   "#008EED 힌트: 메모리 교체 기기가 아닌 경우, 복원하세요.#\n\n"
+			   "트레이닝이 제한적이며 실제 DRAM의 타이밍과\n"
+			   "일치하지 않기 때문에 성능 저하가 발생합니다.\n\n"
+			   "#C7EA46 무시하고 부팅하시겠습니까?#";
 	} else {
 		btn_map = btn_restore;
 		action  = _mbox_restore_failed_action;
 
 		s_printf(dbg,
-			"#FF0012 Error#\n\n"
-			"#FFDD00 Failed to restore 4GB RAM mode!#\n\n"
-			"#00DDFF Details#: %s (%d)",
+			"#FF0012 오류#\n\n"
+			"#FFDD00 4GB RAM 모드 복원에 실패했습니다!#\n\n"
+			"#00DDFF 상세#: %s (%d)",
 			g_restore_step ? g_restore_step : "unknown",
 			g_restore_fr
 		);
@@ -1594,15 +1592,15 @@ static void _create_mbox_cfw_warning(void)
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 
-	static const char *btn_restore[] = { "\221Restore 4GB RAM Mode", "" };
+	static const char *btn_restore[] = { "\2214GB RAM 모드로 복원", "" };
 
 	const char *text =
-		"#FF0012 Warning#\n\n"
-		"#FFBA00 Info#: #FF8000 Unsupported memory mode detected!#\n\n"
-		"#00DDFF RAM status#: #C7EA46 Configured#-8GB / #C7EA46 Actual#-4GB\n\n"
-		"This mode does not work on this device.\n"
-		"Use one matching the actual RAM configuration.\n\n"
-		"#008EED Restore is required to boot Ⓓ.#";
+		"#FF0012 경고#\n\n"
+		"#FFBA00 안내#: #FF8000 지원되지 않는 메모리 모드입니다!#\n\n"
+		"#00DDFF RAM 상태#: #C7EA46 설정#-8GB / #C7EA46 실제#-4GB\n\n"
+		"이 기기에서 해당 모드는 정상 작동하지 않습니다.\n"
+		"반드시 실제 RAM과 일치하는 모드를 사용하세요.\n\n"
+		"#008EED Ⓓ를 부팅하려면 복원이 필요합니다.#";
 
 	lv_mbox_set_text(mbox, text);
 	lv_mbox_add_btns(mbox, btn_restore, _mbox_cfw_dram_action);
@@ -1787,12 +1785,12 @@ static lv_res_t _create_mbox_unlock(void)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\221Unlock", "\221Cancel", "" };
+	static const char * mbox_btn_map[] = { "\221해제", "\221취소", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 2);
 
-	lv_mbox_set_text(mbox, "Enter PIN");
+	lv_mbox_set_text(mbox, "PIN 번호 입력");
 
 	pw_area = lv_ta_create(mbox, NULL);
 	lv_ta_set_one_line(pw_area, true);
@@ -2065,7 +2063,7 @@ static void _update_status_bar(void *params)
 	int J = y / 100;
 	int h = (d + (13*(m + 1))/5 + K + (K/4) + (J/4) + 5*J) % 7;
 	int wday = (h + 6) % 7;
-	static const char *weekday_str[7] = {"#D03838 Sun#", "Mon", "Tue", "Wed", "Thu", "Fri", "#3F70F9 Sat#"};
+	static const char *weekday_str[7] = {"#D03838 일#", "월", "화", "수", "목", "금", "#3F70F9 토#"};
 
 	s_printf(label, "%d/%d [%s]", time.month, time.day, weekday_str[wday]);
 	lv_label_set_text(status_bar.cal_label, label);
@@ -2100,12 +2098,12 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\251", "\222Cancel", "\251", "" };
+	static const char * mbox_btn_map[] = { "\251", "\222닫기", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES * 5 / 9);
 
-	lv_mbox_set_text(mbox, "#008EED Payload Launcher#\n\n#FFBA00 Info#: #FF8000 sdmc:/bootloader/payloads#");
+	lv_mbox_set_text(mbox, "#008EED 페이로드 런처#\n\n#FFBA00 안내#: #FF8000 sdmc:/bootloader/payloads#\n경로에 보유한 페이로드가 표시됩니다.");
 
 	// Create a list with all found payloads.
 	//! TODO: SHould that be tabs with buttons? + Icon support?
@@ -2116,7 +2114,7 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 
 	if (!sd_mount())
 	{
-		lv_mbox_set_text(mbox, "#FFBA00 Failed to init SD!#");
+		lv_mbox_set_text(mbox, "#FFBA00 SD 카드 초기화 실패!#");
 
 		goto out_end;
 	}
@@ -2218,7 +2216,7 @@ static lv_obj_t *create_window_launch(const char *win_title)
 
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", _win_launch_close_action);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", _win_launch_close_action);
 
 	return win;
 }
@@ -2319,7 +2317,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_style_copy(&btn_label_home_transp, lv_theme_get_current()->cont);
 	btn_label_home_transp.body.opa = LV_OPA_TRANSP;
 
-	lv_obj_t *win = create_window_launch(SYMBOL_HOME "  Launch · Boot Configuration");
+	lv_obj_t *win = create_window_launch(SYMBOL_HOME "  런처 · 부팅 설정");
 	lv_cont_set_fit(lv_page_get_scrl(lv_win_get_content(win)), false, false);
 	lv_page_set_scrl_height(lv_win_get_content(win), 640);
 
@@ -2366,7 +2364,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 					strcpy(label_buf, "NOT-ASAP");
 
 				entries[e] = (entry_t){ .icon = &asap_update, .label = label_buf, .is_stock = false, .is_cfw = false };
-				ddlabels[e] = "UPDATE";
+				ddlabels[e] = "업데이트";
 				e++;
 				continue;
 			}
@@ -2374,8 +2372,8 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 				(emummcforce_val && atoi(emummcforce_val) == 1) ||
 				(emummc_disable_val && atoi(emummc_disable_val) == 1 && !stock_val))
 			{
-				entries[e] = (entry_t){ .icon = emu_info.enabled ? &fusee_entry : &cfw_entry, .label = emu_info.enabled ? "EMU-CFW" : "SYS-CFW", .is_stock = false, .is_cfw = true };
-				ddlabels[e] = emu_info.enabled ? "EmuNAND" : "SysNAND";
+				entries[e] = (entry_t){ .icon = emu_info.enabled ? &fusee_entry : &cfw_entry, .label = emu_info.enabled ? "에뮤낸드 커펌" : "시스낸드 커펌", .is_stock = false, .is_cfw = true };
+				ddlabels[e] = emu_info.enabled ? "에뮤낸드 커펌" : "시스낸드 커펌";
 				found_cfw = true;
 				e++;
 				continue;
@@ -2383,27 +2381,27 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 			if (stock_val && atoi(stock_val) == 1) {
 				if (found_stock)
 					continue;
-				entries[e] = (entry_t){ .icon = &ofw_entry, .label = "SYS-STOCK", .is_stock = true, .is_cfw = false };
-				ddlabels[e] = "Stock";
+				entries[e] = (entry_t){ .icon = &ofw_entry, .label = "시스낸드 스톡", .is_stock = true, .is_cfw = false };
+				ddlabels[e] = "시스낸드 스톡";
 				found_stock = true;
 				e++;
 				continue;
 			}
 			if (id_val && !strcmp(id_val, "SWANDR")) {
-				entries[e] = (entry_t){ .icon = &android_entry, .label = "ANDROID", .is_stock = false, .is_cfw = false };
+				entries[e] = (entry_t){ .icon = &android_entry, .label = "안드로이드", .is_stock = false, .is_cfw = false };
 				ddlabels[e] = "Ⓐ";
 				e++;
 				continue;
 			}
 			if (id_val && !strcmp(id_val, "SWR-LAK")) {
-				entries[e] = (entry_t){ .icon = &lakka_entry, .label = "EMULATOR", .is_stock = false, .is_cfw = false };
+				entries[e] = (entry_t){ .icon = &lakka_entry, .label = "에뮬레이터", .is_stock = false, .is_cfw = false };
 				ddlabels[e] = "Ⓛ";
 				e++;
 				continue;
 			}
 			if (id_val && (!strcmp(id_val, "SWR-UBU") || !strcmp(id_val, "SWR-JAM") || !strcmp(id_val, "SWR-NOB")))
 			{
-				entries[e] = (entry_t){ .icon = &ubuntu_entry, .label = "UBUNTU", .is_stock = false, .is_cfw = false };
+				entries[e] = (entry_t){ .icon = &ubuntu_entry, .label = "리눅스", .is_stock = false, .is_cfw = false };
 				ddlabels[e] = "Ⓤ";
 				e++;
 				continue;
@@ -2423,11 +2421,11 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 			{
 				entries[e] = (entry_t){
 					.icon = emu_info.enabled ? &fusee_entry : &cfw_entry,
-					.label = emu_info.enabled ? "EMU-CFW" : "SYS-CFW",
+					.label = emu_info.enabled ? "에뮤낸드 커펌" : "시스낸드 커펌",
 					.is_stock = false,
 					.is_cfw = true
 				};
-				ddlabels[e] = emu_info.enabled ? "EmuNAND" : "SysNAND";
+				ddlabels[e] = emu_info.enabled ? "에뮤낸드 커펌" : "시스낸드 커펌";
 				e++;
 			}
 		}
@@ -2443,11 +2441,11 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 			{
 				entries[e] = (entry_t){
 					.icon = &ofw_entry,
-					.label = "SYS-STOCK",
+					.label = "시스낸드 스톡",
 					.is_stock = true,
 					.is_cfw = false
 				};
-				ddlabels[e] = "Stock";
+				ddlabels[e] = "시스낸드 스톡";
 				e++;
 			}
 		}
@@ -2520,7 +2518,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_obj_t *rcm_label = lv_label_create(rcm_btn, NULL);
 	lv_btn_set_fit(rcm_btn, true, true);
 	lv_label_set_recolor(rcm_label, true);
-	lv_label_set_text(rcm_label, SYMBOL_REFRESH" Auto RCM #008EED   ON #");
+	lv_label_set_text(rcm_label, SYMBOL_REFRESH" RCM 부팅 #008EED   ON #");
 	lv_obj_align(rcm_btn, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, -10, 35);
 	lv_btn_set_action(rcm_btn, LV_BTN_ACTION_CLICK, _create_mbox_autorcm_status);
 
@@ -2541,10 +2539,10 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	char *txt_buf = (char *)malloc(SZ_4K);
 
 	s_printf(txt_buf,
-		"#FF8000 Erista# - Configure the #EFEFEF %s# input behavior.\n\n"
-		"#00DDFF ON #: Boot into #C7EA46 RCM# without a jig.\n"
-		"#00DDFF OFF#: #C7EA46 charging#, boot #C7EA46 stock firmware# only.\n"
-		"#FF3C28 Battery must be sufficiently charged.#", gui_pv_btn(GUI_PV_BTN_0)
+		"#FF8000 Erista 전용# - #EFEFEF %s# 입력 동작을 설정합니다.\n\n"
+		"#00DDFF ON #: 지그 없이 #C7EA46 RCM#으로 부팅합니다.\n"
+		"#00DDFF OFF#: #C7EA46 충전# 표시, #C7EA46 정펌#으로만 부팅합니다.\n"
+		"#FF3C28 주의#: 방전 시, 충분한 충전 이후 작동합니다.", gui_pv_btn(GUI_PV_BTN_0)
 	);
 	lv_obj_t *rcm_txt = lv_label_create(win, NULL);
 	lv_label_set_recolor(rcm_txt, true);
@@ -2555,7 +2553,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 
 	// Create Auto Boot button.
 	lv_obj_t *label_autoboot = lv_label_create(win, NULL);
-	lv_label_set_static_text(label_autoboot, SYMBOL_GPS " AutoBoot");
+	lv_label_set_static_text(label_autoboot, SYMBOL_GPS " 자동 부팅");
 	lv_obj_set_style(label_autoboot, lv_theme_get_current()->label.prim);
 	lv_obj_align(label_autoboot, rcm_btn, LV_ALIGN_OUT_RIGHT_MID, 78, 0);
 
@@ -2572,7 +2570,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	launch_ctxt.dd_map[0] = 0;
 	launch_ctxt.dd_count  = 1;
 	static char dd_options[256];
-	s_printf(dd_options, "Disable         ");
+	s_printf(dd_options, "비활성화         ");
 
 	for (uint32_t i = 0; i < max_entries; i++) {
 		if (entries[i].icon) {
@@ -2599,19 +2597,19 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_obj_t *atb_txt = lv_label_create(win, NULL);
 	lv_label_set_recolor(atb_txt, true);
 	s_printf(txt_buf,
-		"Select the OS to boot automatically on reboot.\n\n"
-		"#00DDFF Custom Firmware#: #C7EA46 Default NAND# CFW.\n"
-		"#00DDFF Stock#: #FF8000 SysNAND# chainloaded via Ｈ.\n"
-		"#00DDFF Ⓐ# · #00DDFF Ⓛ# · #00DDFF Ⓤ#: #C7EA46 L4T# emuMMC.");
+		"재부팅시 자동으로 부팅할 OS를 선택합니다.\n\n"
+		"#00DDFF 커스텀 펌웨어#: #C7EA46 기본 낸드# 커펌.\n"
+		"#00DDFF 시스낸드 스톡#: #FF8000 커펌 모듈 OFF# 시스낸드.\n"
+		"#00DDFF Ⓐ# · #00DDFF Ⓛ# · #00DDFF Ⓤ#: #C7EA46 L4T# 에뮤낸드.");
 	lv_label_set_text(atb_txt, txt_buf);
 	lv_obj_set_style(atb_txt, &hint_small_style);
 	lv_obj_align(atb_txt, label_autoboot, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2);
 
 	// Create Boot time delay list.
 	lv_obj_t *bt_dly = lv_label_create(win, NULL);
-	lv_label_set_static_text(bt_dly, SYMBOL_CLOCK" Boot Wait");
+	lv_label_set_static_text(bt_dly, SYMBOL_CLOCK" 부팅 대기 시간");
 	lv_obj_set_style(bt_dly, lv_theme_get_current()->label.prim);
-	lv_obj_align(bt_dly, ddlist, LV_ALIGN_OUT_RIGHT_MID, 48, 0);
+	lv_obj_align(bt_dly, ddlist, LV_ALIGN_OUT_RIGHT_MID, 42, 0);
 
 	lv_obj_t *ddlist2 = lv_ddlist_create(win, NULL);
 	if (hekate_bg)
@@ -2624,12 +2622,12 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_obj_set_top(ddlist2, true);
 	lv_ddlist_set_draw_arrow(ddlist2, true);
 	lv_ddlist_set_options(ddlist2,
-		"OFF      \n"
-		"1 sec\n"
-		"2 sec\n"
-		"3 sec\n"
-		"4 sec\n"
-		"5 sec");
+		"화면 스킵    \n"
+		"1초\n"
+		"2초\n"
+		"3초\n"
+		"4초\n"
+		"5초");
 	lv_ddlist_set_selected(ddlist2, 5);
 	lv_obj_align(ddlist2, bt_dly, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 4, 0);
 	lv_ddlist_set_action(ddlist2, _autoboot_delay_action);
@@ -2638,10 +2636,10 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	atb_txt = lv_label_create(win, NULL);
 	lv_label_set_recolor(atb_txt, true);
 	s_printf(txt_buf,
-		"Configure boot wait time.\n\n"
-		"#00DDFF OFF#: #C7EA46 Skip# boot screen delay.\n"
-		"#00DDFF Set#: Press %s to return to #C7EA46 Ｈ#.\n"
-		"#FFBA00 Info#: Not applied to the #C7EA46 Home launcher#.",
+		"부팅 화면(=로딩바)의 표시 시간을 설정합니다.\n\n"
+		"#00DDFF 화면 스킵#: 부팅 화면 없이 #C7EA46 즉시# 부팅합니다.\n"
+		"#00DDFF 시간 설정#: %s 입력 시 #C7EA46 Ｈ#로 돌아갑니다.\n"
+		"#FFBA00 안내#: 홈 화면의 #C7EA46 메인 런처#에는 적용되지 않습니다.",
 		gui_pv_btn(GUI_PV_BTN_3)
 	);
 	lv_label_set_text(atb_txt, txt_buf);
@@ -3082,7 +3080,7 @@ void first_time_bpmp_clock(void *param)
 static lv_res_t _show_about_tab(lv_obj_t *obj)
 {
 	lv_obj_t *win = nyx_create_standard_window("Ｈ × Ｌ");
-	lv_win_add_btn(win, NULL, SYMBOL_HINT " Theme", _create_window_nyx_colors);
+	lv_win_add_btn(win, NULL, SYMBOL_HINT " 테마", _create_window_nyx_colors);
 	lv_obj_t *tab = lv_cont_create(win, NULL);
 	lv_cont_set_fit(tab, true, true);
 	lv_cont_set_layout(tab, LV_LAYOUT_OFF);
@@ -3375,16 +3373,16 @@ void refresh_nand_info_label(void)
 	const char *chip = (hw_get_chip_id() == GP_HIDREV_MAJOR_T210) ? "Erista" : "Mariko";
 	const char *sku;
 	switch (fuse_read_hw_type()) {
-		case FUSE_NX_HW_TYPE_ICOSA: sku = "Original (V1)"; break;
-		case FUSE_NX_HW_TYPE_IOWA:	sku = "Battery improved (V2)"; break;
+		case FUSE_NX_HW_TYPE_ICOSA: sku = "구형"; break;
+		case FUSE_NX_HW_TYPE_IOWA:	sku = "배터리 개선판"; break;
 		case FUSE_NX_HW_TYPE_HOAG:	sku = "Lite"; break;
 		case FUSE_NX_HW_TYPE_AULA:	sku = "OLED"; break;
 		default:					sku = "#FF8000 Unknown#"; break;
 	}
 	const char *fs_label = g_sd_is_exfat ? "#C02C1D exFAT#" : "FAT32";
 	const char *emu_label = (!emu_info.enabled)
-		? (ini_exists ? "#FF8800 SysNAND#" : "No EmuNAND found, Connecting to #FF8800 SysNAND#")
-		: (emu_info.sector ? "Partition based #00FFCC EmuNAND#" : "File based #00FFCC EmuNAND#");
+		? (ini_exists ? "#FF8800 시스낸드#" : "에뮤낸드 미생성, #FF8800 시스낸드#로 연결됩니다")
+		: (emu_info.sector ? "파티션 #00FFCC 에뮤낸드#" : "파일 #00FFCC 에뮤낸드#");
 
 	s_printf(txt_buf, "%s [%s] · %s · %s", chip, sku, fs_label, emu_label);
 
@@ -3449,22 +3447,22 @@ void refresh_nand_info_label(void)
 		case 20240808143958ULL: fusee_ver = "19.0.0 - 19.0.1"; prev_ver = "18.1.0"; break;
 		case 20250206151829ULL: fusee_ver = "20.0.0 - 20.5.0"; prev_ver = "19.0.1"; break;
 		case 20251009153823ULL: fusee_ver = "21.0.0 - 21.2.0+"; prev_ver = "20.5.0"; break;
-		default:				fusee_ver = "Unsupported HOS";  prev_ver = "21.2.0"; break;
+		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "21.2.0"; break;
 	}
 
 	if (!id) {
 		if (!emu_info.enabled) {
-			s_printf(info_buf, "\nInfo: #FF8800 Installed %s, please downgrade to %s#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 ＡＳＡＰ 업데이트 필요#", fusee_ver, prev_ver);
 		} else if (emu_info.sector) {
-			s_printf(info_buf, "\nInfo: #FF8800 Installed %s, please downgrade to %s#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 ＡＳＡＰ 업데이트 필요#", fusee_ver, prev_ver);
 		} else {
-			s_printf(info_buf, "\nInfo: #FF8800 Installed %s, please downgrade to %s#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 ＡＳＡＰ 업데이트 필요#", fusee_ver, prev_ver);
 		}
 		strcat(txt_buf, info_buf);
 	}
 
 	if (sd_fs.fs_type == FS_EXFAT) {
-		strcat(txt_buf, "\n#C02C1D Warning#: exFAT may cause data corruption, #00FFCC FAT32# is recommended");
+		strcat(txt_buf, "\n#C02C1D 경고#: exFAT 시스템은 데이터 파손의 우려가 있습니다, #00FFCC FAT32# 포맷을 권장합니다");
 	}
 
 	lv_label_set_text(label_nand_obj, txt_buf);

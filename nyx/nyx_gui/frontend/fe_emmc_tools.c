@@ -115,7 +115,7 @@ static lv_obj_t *create_mbox_text(const char *text, bool button_ok)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
@@ -169,8 +169,8 @@ static int _emmc_sd_copy_verify(emmc_tool_gui_t *gui, sdmmc_storage_t *storage, 
 				f_close(&fp);
 
 				s_printf(gui->txt_buf,
-						"\n #D03838 Hash file could not be written (error %d)!#\n"
-						" #D03838 Aborting..#\n", res);
+						"\n #D03838 오 류 (%d): 해 시  파 일 을  작 성 할  수  없 습 니 다 !#\n"
+						" #D03838 중 단  중...#\n", res);
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -214,8 +214,8 @@ static int _emmc_sd_copy_verify(emmc_tool_gui_t *gui, sdmmc_storage_t *storage, 
 				if (!sdmmc_storage_read(storage, lba_curr, num, bufEm))
 				{
 					s_printf(gui->txt_buf,
-						"\n #D03838 Failed to read %d blocks (@LBA %08X),#\n"
-						" #D03838 from eMMC! Verification failed..#\n",
+						"\n #D03838 eMMC의 %d (@LBA %08X) 블 록 을#\n"
+						" #D03838 읽 지  못 하 여, 검 사 에  실 패 했 습 니 다...#\n",
 						num, lba_curr);
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
@@ -235,8 +235,8 @@ static int _emmc_sd_copy_verify(emmc_tool_gui_t *gui, sdmmc_storage_t *storage, 
 				if (f_read_fast(&fp, bufSd, num << 9))
 				{
 					s_printf(gui->txt_buf,
-						"\n #D03838 Failed to read %d blocks (@LBA %08X),#\n"
-						" #D03838 from SD card! Verification failed..#\n",
+						"\n #D03838 SD 카 드 의 %d (@LBA %08X) 블 록 을#\n"
+						" #D03838 읽 지  못 하 여, 검 사 에  실 패 했 습 니 다...#\n",
 						num, lba_curr);
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
@@ -256,8 +256,8 @@ static int _emmc_sd_copy_verify(emmc_tool_gui_t *gui, sdmmc_storage_t *storage, 
 				if (res)
 				{
 					s_printf(gui->txt_buf,
-						"\n #D03838 SD & eMMC data (@LBA %08X) do not match!#\n"
-						"\n #D03838 Verification failed..#\n",
+						"\n #D03838 SD 카 드, eMMC 데 이 터 (@LBA %08X)가#\n"
+						"\n #D03838 일 치 하 지  않 아, 검 사 에  실 패 했 습 니 다...#\n",
 						lba_curr);
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
@@ -307,7 +307,7 @@ static int _emmc_sd_copy_verify(emmc_tool_gui_t *gui, sdmmc_storage_t *storage, 
 			// Check for cancellation combo.
 			if (btn_read_vol() == (BTN_VOL_UP | BTN_VOL_DOWN))
 			{
-				strcpy(gui->txt_buf, " #FFBA00 Verification was cancelled!#\n");
+				strcpy(gui->txt_buf, " #FFBA00 검 사 가  취 소 되 었 습 니 다 !#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -333,7 +333,7 @@ static int _emmc_sd_copy_verify(emmc_tool_gui_t *gui, sdmmc_storage_t *storage, 
 	}
 	else
 	{
-		strcpy(gui->txt_buf, "\n #FFBA00 File not found or could not be loaded!#\n #FFBA00 Verification failed..#\n");
+		strcpy(gui->txt_buf, "\n #FFBA00 파 일 이  없 거 나, 불 러 올  수  없 습 니 다 !#\n #FFBA00 검 사 에  실 패 했 습 니 다...#\n");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -376,7 +376,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 		_get_valid_partition(&sector_start, &sector_size, &part_idx, true);
 		if (!part_idx || !sector_size)
 		{
-			strcpy(gui->txt_buf, "\n #FFBA00 Failed to find a partition...#\n");
+			strcpy(gui->txt_buf, "\n #FFBA00 파 티 션 을  찾 지  못 했 습 니 다...#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -391,7 +391,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 		}
 	}
 
-	s_printf(gui->txt_buf, "#96FF00 SD Card free space#: %d MiB\n#96FF00 Total backup size#: %d MiB\n\n",
+	s_printf(gui->txt_buf, "#96FF00 SD 카드 여유 공간#: %d MiB\n#96FF00 전체 백업 크기#: %d MiB\n\n",
 		(u32)(sd_fs.free_clst * sd_fs.csize >> SECTORS_TO_MIB_COEFF),
 		totalSectors >> SECTORS_TO_MIB_COEFF);
 	lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
@@ -414,13 +414,13 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 	{
 		isSmallSdCard = true;
 
-		strcpy(gui->txt_buf, "\n #FFBA00 Free space is smaller than backup size.#\n");
+		strcpy(gui->txt_buf, "\n #FFBA00 SD 카 드 의  용 량 이  부 족 합 니 다 !#\n");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
 		if (!maxSplitParts)
 		{
-			strcpy(gui->txt_buf, "\n #FFBA00 Not enough free space for Partial Backup!#");
+			strcpy(gui->txt_buf, "\n #FFBA00 분 할  백 업 을  위 한  용 량 이  부 족 합 니 다...#");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -430,7 +430,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 	// Check if we are continuing a previous raw eMMC or USER partition backup in progress.
 	if (f_open(&partialIdxFp, partialIdxFilename, FA_READ) == FR_OK && totalSectors > (FAT32_FILESIZE_LIMIT / EMMC_BLOCKSIZE))
 	{
-		strcpy(gui->txt_buf, "\n #4DC100 Partial Backup in progress. Continuing...#");
+		strcpy(gui->txt_buf, "\n #4DC100 이 어 서  분 할  백 업 을  진 행 합 니 다...#");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -443,7 +443,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 
 		if (!maxSplitParts)
 		{
-			strcpy(gui->txt_buf, "\n #FFBA00 Not enough free space for Partial Backup!#");
+			strcpy(gui->txt_buf, "\n #FFBA00 분 할  백 업 을  위 한  용 량 이  부 족 합 니 다...#");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -455,7 +455,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 	}
 	else if (isSmallSdCard)
 	{
-		s_printf(gui->txt_buf, "\n #FFBA00 Partial Backup enabled (%d MiB parts)...#", multipartSplitSize >> 20);
+		s_printf(gui->txt_buf, "\n #FFBA00 %d MiB 단 위 로  분 할 하 여  백 업 됩 니 다...#", multipartSplitSize >> 20);
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 	}
@@ -479,10 +479,10 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 
 		char warn_txt[512];
 		s_printf(warn_txt,
-			"#008EED NAND Manager#\n\n"
-			"#FFBA00 Info#: Backup file already exists.\n"
-			"Overwrite?\n\n"
-			"#FF8000 Continue#: #EFEFEF %s#   #FF8000 Cancel#: #EFEFEF %s# / #EFEFEF %s#",
+			"#008EED 낸드 매니저#\n\n"
+			"#FFBA00 안내#: 같은 이름의 백업 파일이 이미 존재합니다.\n"
+			"기존 파일을 덮어씁니다, 계속하시겠습니까?\n\n"
+			"#FF8000 계속#: #EFEFEF %s#   #FF8000 중단#: #EFEFEF %s# 또는 #EFEFEF %s#",
 			gui_pv_btn(GUI_PV_BTN_0), gui_pv_btn(GUI_PV_BTN_1), gui_pv_btn(GUI_PV_BTN_2)
 		);
 
@@ -497,7 +497,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 		lv_obj_del(warn_mbox_bg);
 	}
 
-	s_printf(gui->txt_buf, "#96FF00 Filepath#:\nsdmc:/%s\n#96FF00 Filename#: #FF8000 %s#",
+	s_printf(gui->txt_buf, "#96FF00 경로#:\nsdmc:/%s\n#96FF00 파일명#: #FF8000 %s#",
 		gui->base_path, outFilename + strlen(gui->base_path));
 	lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
 	manual_system_maintenance(true);
@@ -505,7 +505,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 	res = f_open(&fp, outFilename, FA_CREATE_ALWAYS | FA_WRITE);
 	if (res)
 	{
-		s_printf(gui->txt_buf, "\n #D03838 Error (%d) while creating#\n #D03838 %s#\n", res, outFilename);
+		s_printf(gui->txt_buf, "\n #D03838 오 류 (%d): %s#\n #D03838 파 일 을  생 성 할  수  없 습 니 다.#\n", res, outFilename);
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -557,7 +557,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 				case VERIF_STATUS_OK:
 					break;
 				case VERIF_STATUS_ERROR:
-					strcpy(gui->txt_buf, " #FFBA00 Please try again...#\n");
+					strcpy(gui->txt_buf, " #FFBA00 다 시  시 도 하 세 요...#\n");
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
 					return 0;
@@ -583,7 +583,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 				}
 				else
 				{
-					strcpy(gui->txt_buf, "\n #D03838 Error creating partial.idx file!#\n");
+					strcpy(gui->txt_buf, "\n #D03838 partial.idx  생 성  실 패 !#\n");
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
 
@@ -594,12 +594,12 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 				if (currPartIdx >= maxSplitParts)
 				{
 					create_mbox_text(
-						"#008EED NAND Manager# [#47B100 Partial Backup#]\n\n"
-						"#FFBA00 Info#: To resume a partial backup.\n"
-						"Do NOT delete or move '#00FFCC partial.idx#\'#\n\n"
-						"#96FF00 1#. Go Home and connect to PC..  \n"
-						"#96FF00 2#. Press Ｕ and copy files to PC.\n"
-						"#96FF00 3#. Run the same backup again.   ", true);
+						"#008EED 낸드 매니저# [#47B100 분할 백업#]\n\n"
+						"#FFBA00 안내#: 분할을 계속하려면 다음 순서를 따르십시오.\n"
+						"'#00FFCC partial.idx#\'를 삭제하거나, 이동하지 마십시오.\n\n"
+						"#96FF00 1#. 홈 화면으로 돌아간 뒤, PC와 케이블 연결.  \n"
+						"#96FF00 2#. Ｕ 버튼 입력 후, PC로 백업 파일 옮기기.\n"
+						"#96FF00 3#. 낸드 매니저에서 같은 백업 옵션을 재실행.   ", true);
 
 					partial_sd_full_unmount = true;
 
@@ -618,7 +618,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 			res = f_open(&fp, outFilename, FA_CREATE_ALWAYS | FA_WRITE);
 			if (res)
 			{
-				s_printf(gui->txt_buf, "\n #D03838 Error (%d) while creating#\n #D03838 %s#\n", res, outFilename);
+				s_printf(gui->txt_buf, "\n #D03838 오 류 (%d): %s#\n #D03838 파 일 을  생 성 할  수  없 습 니 다.#\n", res, outFilename);
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -645,16 +645,16 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 			if (!gui->raw_emummc)
 			{
 				s_printf(gui->txt_buf,
-					"\n #D03838 Error reading %d blocks @ LBA %08X,#\n"
-					" #D03838 from eMMC (try %d).#\n",
+					"\n #D03838 eMMC의 %d (@LBA %08X) 블 록 을#\n"
+					" #D03838 읽 지  못 했 습 니 다. (%d회  시 도)#\n",
 					num, lba_curr, ++retryCount);
 			}
 			else
 			{
 				s_printf(gui->txt_buf,
-					"\n #D03838 Error reading %d blocks @ LBA %08X,#\n"
-					" #D03838 from emuMMC @ %08X (try %d).#\n",
-					num, lba_curr + sd_sector_off, lba_curr, ++retryCount);
+					"\n #D03838 SD 카 드 의 %08X 에 서 %d (@LBA %08X)#\n"
+					" #D03838 블 록 을  읽 지  못 했 습 니 다. (%d회  시 도)#\n",
+					lba_curr + sd_sector_off, num, lba_curr, ++retryCount);
 			}
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
@@ -662,7 +662,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 			msleep(150);
 			if (retryCount >= 3)
 			{
-				strcpy(gui->txt_buf, " #D03838 Aborting...#\nPlease try again...\n");
+				strcpy(gui->txt_buf, " #D03838 중 단  중...#\n 다 시  시 도 하 세 요...\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -674,7 +674,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 			}
 			else
 			{
-				strcpy(gui->txt_buf, " #FFBA00 Retrying...#\n");
+				strcpy(gui->txt_buf, " #FFBA00  재 시 도  중...#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -685,7 +685,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 
 		if (res)
 		{
-			s_printf(gui->txt_buf, "\n #D03838 Fatal error (%d) when writing to SD Card#\nPlease try again...\n", res);
+			s_printf(gui->txt_buf, "\n #D03838 치 명 적  오 류 (%d): SD 카 드 에  쓸  수  없 습 니 다.#\n 다 시  시 도 하 세 요...\n", res);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -722,7 +722,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 		// Check for cancellation combo.
 		if (btn_read_vol() == (BTN_VOL_UP | BTN_VOL_DOWN))
 		{
-			strcpy(gui->txt_buf, "\n #FFBA00 The backup was cancelled!#\n");
+			strcpy(gui->txt_buf, "\n #FFBA00 백 업 이  취 소 되 었 습 니 다 !#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -748,7 +748,7 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 		// Verify last part or single file backup.
 		if (_emmc_sd_copy_verify(gui, storage, lbaStartPart, outFilename, part) == VERIF_STATUS_ERROR)
 		{
-			strcpy(gui->txt_buf, "\n #FFBA00 Please try again...#\n");
+			strcpy(gui->txt_buf, "\n #FFBA00 다 시  시 도 하 세 요...#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -765,9 +765,9 @@ static int _dump_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_part,
 		f_unlink(partialIdxFilename);
 
 		create_mbox_text(
-			"#008EED NAND Manager# [#47B100 Partial Backup#]\n\n"
-			"#FFBA00 Info#: Partial Backup done!\n"
-			"'#00FFCC rawnand_joiner#\' merges into a single GPP.", true);
+			"#008EED 낸드 매니저# [#47B100 분할 백업#]\n\n"
+			"#FFBA00 안내#: 분할 백업이 완료되었습니다.\n"
+			"'#00FFCC rawnand_joiner#\'를 통하여 단일 GPP로 통합 가능합니다.", true);
 
 		partial_sd_full_unmount = true;
 	}
@@ -786,12 +786,12 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 	txt_buf[0] = 0;
 	lv_label_set_text(gui->label_log, txt_buf);
 
-	lv_label_set_text(gui->label_info, "Checking for available free space...");
+	lv_label_set_text(gui->label_info, "사용 가능한 여유 공간 확인 중...");
 	manual_system_maintenance(true);
 
 	if (!sd_mount())
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init SD!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 SD 카드 초기화 실패!#");
 		goto out;
 	}
 
@@ -800,7 +800,7 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 
 	if (!emmc_initialize(false))
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init eMMC!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 eMMC 초기화 실패!#");
 		goto out;
 	}
 
@@ -835,7 +835,7 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 			bootPart.name[4] = (u8)('0' + i);
 			bootPart.name[5] = 0;
 
-			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 				i, bootPart.name, bootPart.lba_start, bootPart.lba_end);
 			lv_label_set_text(gui->label_info, txt_buf);
 			s_printf(txt_buf, " %02d: %s...", i, bootPart.name);
@@ -853,9 +853,9 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 			res = _dump_emmc_part(gui, sdPath, i, &emmc_storage, &bootPart);
 
 			if (!res)
-				strcpy(txt_buf, " #FFBA00 Failed!#\n");
+				strcpy(txt_buf, " #FFBA00 실 패 !#\n");
 			else
-				strcpy(txt_buf, " Done!\n");
+				strcpy(txt_buf, " 완 료 !\n");
 
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 			manual_system_maintenance(true);
@@ -881,7 +881,7 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 				if ((dumpType & PART_SYSTEM) == 0 && strcmp(part->name, "USER"))
 					continue;
 
-				s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+				s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 					i, part->name, part->lba_start, part->lba_end);
 				lv_label_set_text(gui->label_info, txt_buf);
 				s_printf(txt_buf, " %02d: %s...", i, part->name);
@@ -894,12 +894,12 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 				// If a part failed, don't continue.
 				if (!res)
 				{
-					strcpy(txt_buf, " #FFBA00 Failed!#\n");
+					strcpy(txt_buf, " #FFBA00 실 패 !#\n");
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 					break;
 				}
 				else
-					strcpy(txt_buf, " Done!\n");
+					strcpy(txt_buf, " 완 료 !\n");
 
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 				manual_system_maintenance(true);
@@ -918,7 +918,7 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 			rawPart.lba_end = RAW_AREA_NUM_SECTORS - 1;
 			strcpy(rawPart.name, "rawnand.bin");
 			{
-				s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n",
+				s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n",
 					i, rawPart.name, rawPart.lba_start, rawPart.lba_end);
 				lv_label_set_text(gui->label_info, txt_buf);
 				s_printf(txt_buf, " %02d: %s...", i, rawPart.name);
@@ -936,9 +936,9 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 				res = _dump_emmc_part(gui, sdPath, 2, &emmc_storage, &rawPart);
 
 				if (!res)
-					strcpy(txt_buf, " #FFBA00 Failed!#\n");
+					strcpy(txt_buf, " #FFBA00 실 패 !#\n");
 				else
-					strcpy(txt_buf, " Done!\n");
+					strcpy(txt_buf, " 완 료 !\n");
 
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
 				manual_system_maintenance(true);
@@ -950,11 +950,11 @@ void dump_emmc_selected(emmcPartType_t dumpType, emmc_tool_gui_t *gui)
 	emmc_end();
 
 	if (res && n_cfg.verification && !gui->raw_emummc)
-		s_printf(txt_buf, "Time taken: %dm %ds.\n#008EED Finished and verified!#", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 작업 및 검사 완료!#", timer / 60, timer % 60);
 	else if (res)
-		s_printf(txt_buf, "Time taken: %dm %ds.\n#008EED Finished!#", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 완료!#", timer / 60, timer % 60);
 	else
-		s_printf(txt_buf, "Time taken: %dm %ds.", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.", timer / 60, timer % 60);
 
 	lv_label_set_text(gui->label_finish, txt_buf);
 
@@ -1000,10 +1000,10 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 
 	char warn_txt[512];
 	s_printf(warn_txt,
-		"#008EED NAND Manager#\n\n"
-		"#FFBA00 Info#: Backup size does not match eMMC size!\n"
-		"#FF8000 Corruption# or #FF8000 missing files# may occur. Stopping is recommended!\n\n"
-		"#FF8000 Continue#: #EFEFEF %s#   #FF8000 Cancel#: #EFEFEF %s# / #EFEFEF %s#",
+		"#008EED 낸드 매니저#\n\n"
+		"#FFBA00 안내#: 백업 크기가 eMMC 크기와 일치하지 않습니다!\n"
+		"#FF8000 백업 손상#, #FF8000 파일 누락# 가능성이 있으므로 중단할 것을 권장합니다!\n\n"
+		"#FF8000 계속#: #EFEFEF %s#   #FF8000 중단#: #EFEFEF %s# 또는 #EFEFEF %s#",
 		gui_pv_btn(GUI_PV_BTN_0), gui_pv_btn(GUI_PV_BTN_1), gui_pv_btn(GUI_PV_BTN_2)
 	);
 
@@ -1014,7 +1014,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 	if (f_stat(outFilename, &fno))
 	{
 		// If not, check if there are partial files and the total size matches.
-		strcpy(gui->txt_buf, "\n No single file, checking for part files...\n");
+		strcpy(gui->txt_buf, "\n 파 일  확 인  중...\n");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -1022,7 +1022,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 
 		_update_filename(outFilename, sdPathLen, numSplitParts);
 
-		s_printf(gui->txt_buf, "#96FF00 Filepath#:\n%s\n#96FF00 Filename#: #FF8000 %s#",
+		s_printf(gui->txt_buf, "#96FF00 경로#:\n%s\n#96FF00 파일명#: #FF8000 %s#",
 			gui->base_path, outFilename + strlen(gui->base_path));
 		lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
 
@@ -1040,7 +1040,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 
 			if ((u32)((u64)totalCheckFileSize >> (u64)9) > totalSectors)
 			{
-				strcpy(gui->txt_buf, "\n #FF8000 Size of SD Card split backup exceeds#\n #FF8000 eMMC's selected part size!#\n #FFBA00 Aborting...#");
+				strcpy(gui->txt_buf, "\n #FF8000 SD 카 드 의  분 할  백 업  크 기 가#\n #FF8000 선 택 된 eMMC 크 기 를  초 과 합 니 다 !#\n #FFBA00 중 단  중...#");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -1050,7 +1050,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 			{
 				if (!gui->raw_emummc)
 				{
-					s_printf(gui->txt_buf, "\n #FFBA00 Error (%d) file not found#\n #FFBA00 %s.#\n\n", res, outFilename);
+					s_printf(gui->txt_buf, "\n #FFBA00 오 류 (%d): %s#\n #FFBA00 파 일 을  찾 을  수  없 습 니 다 #\n\n", res, outFilename);
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
 
@@ -1069,7 +1069,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 				// Restore folder is empty.
 				if (!numSplitParts)
 				{
-					strcpy(gui->txt_buf, "\n #FFBA00 Restore folder is empty.#\n\n");
+					strcpy(gui->txt_buf, "\n #FFBA00 복 원  폴 더 가  비 어 있 습 니 다.#\n\n");
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
 
@@ -1082,7 +1082,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 
 				if (check_4MB_aligned && (((u64)fno.fsize) % SZ_4M))
 				{
-					strcpy(gui->txt_buf, "\n #FFBA00 The split file must be a#\n #FFBA00 multiple of 4 MiB.#\n #FFBA00 Aborting...#");
+					strcpy(gui->txt_buf, "\n #FFBA00 분 할  파 일 은 4 MiB 단 위 여 야  합 니 다.#\n #FFBA00 중 단  중...#");
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
 
@@ -1095,7 +1095,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 			numSplitParts++;
 		}
 
-		s_printf(gui->txt_buf, " Sectors: %X\n", (u32)((u64)totalCheckFileSize >> (u64)9));
+		s_printf(gui->txt_buf, " 섹 터: %X\n", (u32)((u64)totalCheckFileSize >> (u64)9));
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
@@ -1107,7 +1107,7 @@ static int _restore_emmc_part(emmc_tool_gui_t *gui, char *sd_path, int active_pa
 			if (!(btn_wait() & BTN_POWER))
 			{
 				lv_obj_del(warn_mbox_bg);
-				strcpy(gui->txt_buf, "\n #D03838 Size of SD Card split backup does not match#\n #D03838 eMMC's selected part size!#\n");
+				strcpy(gui->txt_buf, "\n #D03838 SD 카 드 의  분 할  백 업  크 기 가#\n #D03838 선 택 된 eMMC 크 기 와  일 치 하 지  않 습 니 다 !#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -1137,7 +1137,7 @@ multipart_not_allowed:
 	}
 	else
 	{
-		s_printf(gui->txt_buf, "#96FF00 Filepath#:\n%s\n#96FF00 Filename#: #FF8000 %s#",
+		s_printf(gui->txt_buf, "#96FF00 경로#:\n%s\n#96FF00 파일명#: #FF8000 %s#",
 			gui->base_path, outFilename + strlen(gui->base_path));
 			lv_label_ins_text(gui->label_info, LV_LABEL_POS_LAST, gui->txt_buf);
 	}
@@ -1146,13 +1146,13 @@ multipart_not_allowed:
 	{
 		if (res != FR_NO_FILE)
 		{
-			s_printf(gui->txt_buf, "\n #D03838 Error (%d) while opening file. Continuing...#\n", res);
+			s_printf(gui->txt_buf, "\n #D03838 오 류 (%d): 파 일 을  열  수  없 습 니 다.#\n", res);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 		}
 		else
 		{
-			s_printf(gui->txt_buf, "\n #D03838 Error (%d) file not found. Continuing...#\n", res);
+			s_printf(gui->txt_buf, "\n #FFBA00 오 류 (%d): 파 일 을  찾 을  수  없 습 니 다.#\n", res);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 		}
@@ -1163,7 +1163,7 @@ multipart_not_allowed:
 	{
 		if (((u32)((u64)f_size(&fp) >> (u64)9)) > totalSectors)
 		{
-			strcpy(gui->txt_buf, "\n# FF8000 Size of SD Card backup exceeds#\n #FF8000 eMMC's selected part size!#\n #FFBA00 Aborting...#");
+			strcpy(gui->txt_buf, "\n #FF8000 SD 카 드 의  분 할  백 업  크 기 가#\n #FF8000 선 택 된 eMMC 크 기 를  초 과 합 니 다 !#\n #FFBA00 중 단  중...#");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -1179,7 +1179,7 @@ multipart_not_allowed:
 			if (!(btn_wait() & BTN_POWER))
 			{
 				lv_obj_del(warn_mbox_bg);
-				strcpy(gui->txt_buf, "\n #D03838 Size of the SD Card backup does not match#\n #D03838 eMMC's selected part size.#\n");
+				strcpy(gui->txt_buf, "\n #D03838 SD 카 드 의  분 할  백 업  크 기 가#\n #D03838 선 택 된 eMMC 크 기 와  일 치 하 지  않 습 니 다 !#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -1196,7 +1196,7 @@ multipart_not_allowed:
 	else
 	{
 		fileSize = (u64)f_size(&fp);
-		s_printf(gui->txt_buf, "\n Total restore size: %d MiB...",
+		s_printf(gui->txt_buf, "\n 크 기: %d MiB...",
 			(u32)((use_multipart ? (u64)totalCheckFileSize : fileSize) >> (u64)9) >> SECTORS_TO_MIB_COEFF);
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
@@ -1223,7 +1223,7 @@ multipart_not_allowed:
 		_get_valid_partition(&sector_start, &sector_size, &part_idx, false);
 		if (!part_idx || !sector_size)
 		{
-			strcpy(gui->txt_buf, "\n #FFBA00 Failed to find a partition...#\n");
+			strcpy(gui->txt_buf, "\n #FFBA00 파 티 션 을  찾 을  수  없 습 니 다...#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -1254,7 +1254,7 @@ multipart_not_allowed:
 				case VERIF_STATUS_OK:
 					break;
 				case VERIF_STATUS_ERROR:
-					strcpy(gui->txt_buf, "\n #FFBA00 Please try again...#\n");
+					strcpy(gui->txt_buf, "\n #FFBA00 다 시  시 도 하 세 요...#\n");
 					lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 					manual_system_maintenance(true);
 					return 0;
@@ -1282,7 +1282,7 @@ multipart_not_allowed:
 			res = f_open(&fp, outFilename, FA_READ);
 			if (res)
 			{
-				s_printf(gui->txt_buf, "\n #D03838 Error (%d) while opening file#\n #D03838 %s!#\n", res, outFilename);
+				s_printf(gui->txt_buf, "\n #D03838 오 류 (%d): %s#\n #D03838 파 일 을  열  수  없 습 니 다 !#\n", res, outFilename);
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -1302,9 +1302,9 @@ multipart_not_allowed:
 		if (res)
 		{
 			s_printf(gui->txt_buf,
-				"\n #D03838 Fatal error (%d) when reading from SD!#\n"
-				" #D03838 This device may be in an inoperative state!#\n"
-				" #FFBA00 Please try again now!#\n", res);
+				"\n #D03838 치 명 적  오 류 (%d): SD 카 드 를  읽 을  수  없 습 니 다.#\n"
+				" #D03838 장 치 가  작 동  불 능  상 태 가  될  수  있 습 니 다 !#\n"
+				" #FFBA00 지 금  즉 시  다 시  시 도 하 세 요 !#\n", res);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -1322,8 +1322,8 @@ multipart_not_allowed:
 		while (res)
 		{
 			s_printf(gui->txt_buf,
-				"\n #D03838 Error writing %d blocks @ LBA %08X,#\n"
-				" #D03838 from eMMC (try %d). #",
+				"\n #D03838 eMMC의 %d (@LBA %08X) 블 록 을#\n"
+				" #D03838 쓰 지  못 했 습 니 다. (%d회  시 도)#",
 				num, lba_curr, ++retryCount);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
@@ -1331,9 +1331,9 @@ multipart_not_allowed:
 			msleep(150);
 			if (retryCount >= 3)
 			{
-				strcpy(gui->txt_buf, " #D03838 Aborting...#\n"
-					" #D03838 This device may be in an inoperative state!#\n"
-					" #FFBA00 Please try again now!#\n");
+				strcpy(gui->txt_buf, " #D03838 중 단  중...#\n"
+					" #D03838 장 치 가  작 동  불 능  상 태 가  될  수  있 습 니 다 !#\n"
+					" #FFBA00 지 금  즉 시  다 시  시 도 하 세 요 !#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
@@ -1343,7 +1343,7 @@ multipart_not_allowed:
 			}
 			else
 			{
-				strcpy(gui->txt_buf, " #FFBA00 Retrying...#\n");
+				strcpy(gui->txt_buf, " #FFBA00 재 시 도  중...#\n");
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 			}
@@ -1380,7 +1380,7 @@ multipart_not_allowed:
 		// Verify restored data.
 		if (_emmc_sd_copy_verify(gui, storage, lbaStartPart, outFilename, part) == VERIF_STATUS_ERROR)
 		{
-			strcpy(gui->txt_buf, " #FFBA00 Please try again...#\n");
+			strcpy(gui->txt_buf, " #FFBA00 다 시  시 도 하 세 요...#\n");
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
@@ -1425,21 +1425,20 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 	manual_system_maintenance(true);
 
 	if (!gui->raw_emummc)
-		strcpy(txt_buf, "#008EED NAND Manager#\n\n"
-						  "#FFBA00 Info#: Using incorrect files may cause loss of\n"
-						  "console-unique data or render the device unusable.");
+		strcpy(txt_buf, "#008EED 낸드 매니저#\n\n"
+						  "#FFBA00 안내#: 잘못된 파일 사용 시, 기기 고유 데이터를 잃거나\n");
 	else
-		strcpy(txt_buf, "#008EED NAND Manager#\n\n"
-						  "#FFBA00 Info#: Using incorrect files may cause loss of\n"
-						  "emuMMC data or render it unusable.");
+		strcpy(txt_buf, "#008EED 낸드 매니저#\n\n"
+						  "#FFBA00 안내#: 잘못된 파일 사용 시, 에뮤낸드 데이터를 잃거나\n");
+	strcat(txt_buf, "파손되어 작동하지 않을 수 있습니다.");
 
 	if (gui->raw_emummc)
-		strcat(txt_buf, "\n\nOnly the first detected emuMMC will be restored!");
+		strcat(txt_buf, "\n\n처음 검출된 에뮤낸드로만 복구됩니다!");
 
 	if ((restoreType & PART_BOOT) || (restoreType & PART_GP_ALL))
 	{
 		strcat(txt_buf,
-			"\n\nOnly detected partitions will be restored.");
+			"\n\n해당 옵션은 검출된 파티션만 복원합니다.");
 	}
 
 	u32 orig_msg_len = strlen(txt_buf);
@@ -1450,7 +1449,7 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 	u8 failsafe_wait = 3;
 	while (failsafe_wait > 0)
 	{
-		s_printf(txt_buf + orig_msg_len, "\n\n#888888 Wait... (%ds)#", failsafe_wait);
+		s_printf(txt_buf + orig_msg_len, "\n\n#888888 시작까지 앞으로 %d초...#", failsafe_wait);
 		lv_mbox_set_text(warn_mbox, txt_buf);
 		msleep(1000);
 		manual_system_maintenance(true);
@@ -1458,7 +1457,7 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 	}
 
 	s_printf(txt_buf + orig_msg_len,
-		"\n\n#FF8000 Continue#: #EFEFEF %s#   #FF8000 Cancel#: #EFEFEF %s# / #EFEFEF %s#",
+		"\n\n#FF8000 계속#: #EFEFEF %s#   #FF8000 중단#: #EFEFEF %s# 또는 #EFEFEF %s#",
 		gui_pv_btn(GUI_PV_BTN_0), gui_pv_btn(GUI_PV_BTN_1), gui_pv_btn(GUI_PV_BTN_2)
 	);
 	lv_mbox_set_text(warn_mbox, txt_buf);
@@ -1466,7 +1465,7 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 
 	if (!(btn_wait() & BTN_POWER))
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Restore operation was aborted!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 복원 작업이 중단되었습니다!#");
 		lv_obj_del(warn_mbox_bg);
 		goto out;
 	}
@@ -1475,13 +1474,13 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 
 	if (!sd_mount())
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init SD!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 SD 카드 초기화 실패!#");
 		goto out;
 	}
 
 	if (!emmc_initialize(false))
 	{
-		lv_label_set_text(gui->label_info, "#FFBA00 Failed to init eMMC!#");
+		lv_label_set_text(gui->label_info, "#FFBA00 eMMC 초기화 실패!#");
 		goto out;
 	}
 
@@ -1513,7 +1512,7 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 			bootPart.name[4] = (u8)('0' + i);
 			bootPart.name[5] = 0;
 
-			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n\n\n\n",
+			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n\n\n\n",
 				i, bootPart.name, bootPart.lba_start, bootPart.lba_end);
 			lv_label_set_text(gui->label_info, txt_buf);
 			s_printf(txt_buf, " %02d: %s...", i, bootPart.name);
@@ -1529,9 +1528,9 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 			res = _restore_emmc_part(gui, sdPath, i, &emmc_storage, &bootPart, false);
 
 			if (!res)
-				strcpy(txt_buf, " #FFBA00 Failed!#\n");
+				strcpy(txt_buf, " #FFBA00 실 패 !#\n");
 			else if (res > 0)
-				strcpy(txt_buf, " Done!\n");
+				strcpy(txt_buf, " 완 료 !\n");
 
 			if (res >= 0)
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
@@ -1553,7 +1552,7 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 		emmc_gpt_parse(&gpt);
 		LIST_FOREACH_ENTRY(emmc_part_t, part, &gpt, link)
 		{
-			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n\n\n\n",
+			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n\n\n\n",
 				i, part->name, part->lba_start, part->lba_end);
 			lv_label_set_text(gui->label_info, txt_buf);
 			s_printf(txt_buf, " %02d: %s...", i, part->name);
@@ -1565,9 +1564,9 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 			res = _restore_emmc_part(gui, sdPath, 0, &emmc_storage, part, false);
 
 			if (!res)
-				strcpy(txt_buf, " #FFBA00 Failed!#\n");
+				strcpy(txt_buf, " #FFBA00 실 패 !#\n");
 			else if (res > 0)
-				strcpy(txt_buf, " Done!\n");
+				strcpy(txt_buf, " 완 료 !\n");
 
 			if (res >= 0)
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
@@ -1589,7 +1588,7 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 		rawPart.lba_end = RAW_AREA_NUM_SECTORS - 1;
 		strcpy(rawPart.name, "rawnand.bin");
 		{
-			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF Range: 0x%08X - 0x%08X#\n\n\n\n\n",
+			s_printf(txt_buf, "#00DDFF %02d: %s#\n#00DDFF 블록 범위: 0x%08X - 0x%08X#\n\n\n\n\n",
 				i, rawPart.name, rawPart.lba_start, rawPart.lba_end);
 			lv_label_set_text(gui->label_info, txt_buf);
 			s_printf(txt_buf, " %02d: %s...", i, rawPart.name);
@@ -1604,9 +1603,9 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 			res = _restore_emmc_part(gui, sdPath, 2, &emmc_storage, &rawPart, true);
 
 			if (!res)
-				strcpy(txt_buf, " #FFBA00 Failed!#\n");
+				strcpy(txt_buf, " #FFBA00 실 패 !#\n");
 			else if (res > 0)
-				strcpy(txt_buf, " Done!\n");
+				strcpy(txt_buf, " 완 료 !\n");
 
 			if (res >= 0)
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, txt_buf);
@@ -1620,11 +1619,11 @@ void restore_emmc_selected(emmcPartType_t restoreType, emmc_tool_gui_t *gui)
 	emmc_end();
 
 	if (res && n_cfg.verification && !gui->raw_emummc)
-		s_printf(txt_buf, "Time taken: %dm %ds.\n#008EED Finished and verified!#", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 작업 및 검사 완료!#", timer / 60, timer % 60);
 	else if (res)
-		s_printf(txt_buf, "Time taken: %dm %ds.\n#008EED Finished!#", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 완료!#", timer / 60, timer % 60);
 	else
-		s_printf(txt_buf, "Time taken: %dm %ds.", timer / 60, timer % 60);
+		s_printf(txt_buf, "경과 시간: %d분 %d초.", timer / 60, timer % 60);
 
 	lv_label_set_text(gui->label_finish, txt_buf);
 

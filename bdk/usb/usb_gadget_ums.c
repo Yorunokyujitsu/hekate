@@ -4,7 +4,7 @@
  * Copyright (c) 2003-2008 Alan Stern
  * Copyright (c) 2009 Samsung Electronics
  *                    Author: Michal Nazarewicz <m.nazarewicz@samsung.com>
- * Copyright (c) 2019-2024 CTCaer
+ * Copyright (c) 2019-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -326,11 +326,11 @@ static void _transfer_start(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt, u32 
 
 		if (bulk_ctxt->bulk_in_status == USB_ERROR_XFER_ERROR)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# EP IN transfer!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP IN 전송 실패!");
 			_flush_endpoint(bulk_ctxt->bulk_in);
 		}
 		else if (bulk_ctxt->bulk_in_status == USB2_ERROR_XFER_NOT_ALIGNED)
-			ums->set_text(ums->label, "#FFDD00 Error:# EP IN Buffer not aligned!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP IN 버퍼 메모리 정렬 실패!");
 
 		if (sync_timeout)
 			bulk_ctxt->bulk_in_buf_state = BUF_STATE_EMPTY;
@@ -343,11 +343,11 @@ static void _transfer_start(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt, u32 
 
 		if (bulk_ctxt->bulk_out_status == USB_ERROR_XFER_ERROR)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# EP OUT transfer!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP OUT  전송 실패!");
 			_flush_endpoint(bulk_ctxt->bulk_out);
 		}
 		else if (bulk_ctxt->bulk_out_status == USB2_ERROR_XFER_NOT_ALIGNED)
-			ums->set_text(ums->label, "#FFDD00 Error:# EP OUT Buffer not aligned!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP OUT 버퍼 메모리 정렬 실패!");
 
 		if (sync_timeout)
 			bulk_ctxt->bulk_out_buf_state = BUF_STATE_FULL;
@@ -362,7 +362,7 @@ static void _transfer_out_big_read(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctx
 
 		if (bulk_ctxt->bulk_out_status == USB_ERROR_XFER_ERROR)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# EP OUT transfer!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP OUT 전송 실패!");
 			_flush_endpoint(bulk_ctxt->bulk_out);
 		}
 
@@ -378,7 +378,7 @@ static void _transfer_finish(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt, u32
 
 		if (bulk_ctxt->bulk_in_status == USB_ERROR_XFER_ERROR)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# EP IN transfer!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP IN 전송 실패!");
 			_flush_endpoint(bulk_ctxt->bulk_in);
 		}
 
@@ -391,7 +391,7 @@ static void _transfer_finish(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt, u32
 
 		if (bulk_ctxt->bulk_out_status == USB_ERROR_XFER_ERROR)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# EP OUT transfer!");
+			ums->set_text(ums->label, "#FFDD00 오류#: EP OUT 전송 실패!");
 			_flush_endpoint(bulk_ctxt->bulk_out);
 		}
 
@@ -461,7 +461,7 @@ static int _scsi_read(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 	}
 	if (lba_offset >= ums->lun.num_sectors)
 	{
-		ums->set_text(ums->label, "#FF8000 Warn:# Read - Out of range! Host notified.");
+		ums->set_text(ums->label, "#FF8000 경고:# 호스트에서 요청한 읽기 범위를 벗어남!");
 		ums->lun.sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 
 		return UMS_RES_INVALID_ARG;
@@ -513,7 +513,7 @@ static int _scsi_read(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 		// If an error occurred, report it and its position.
 		if (!amount)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# SDMMC Read!");
+			ums->set_text(ums->label, "#FFDD00 오류#: SD 카드 읽기 실패!");
 			ums->lun.sense_data      = SS_UNRECOVERED_READ_ERROR;
 			ums->lun.sense_data_info = lba_offset;
 			ums->lun.info_valid      = 1;
@@ -551,7 +551,7 @@ static int _scsi_write(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 
 	if (ums->lun.ro)
 	{
-		ums->set_text(ums->label, "#FF8000 Warn:# Write - Read only! Host notified.");
+		ums->set_text(ums->label, "#FF8000 경고:# 읽기 전용 상태, 쓰기 시도 실패!");
 		ums->lun.sense_data = SS_WRITE_PROTECTED;
 
 		return UMS_RES_INVALID_ARG;
@@ -575,7 +575,7 @@ static int _scsi_write(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 	// Check that starting LBA is not past the end sector offset.
 	if (lba_offset >= ums->lun.num_sectors)
 	{
-		ums->set_text(ums->label, "#FF8000 Warn:# Write - Out of range! Host notified.");
+		ums->set_text(ums->label, "#FF8000 경고:# 호스트에서 요청한 쓰기 범위를 벗어남!");
 		ums->lun.sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 
 		return UMS_RES_INVALID_ARG;
@@ -597,7 +597,7 @@ static int _scsi_write(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 
 			if (usb_lba_offset >= ums->lun.num_sectors)
 			{
-				ums->set_text(ums->label, "#FFDD00 Error:# Write - Past last sector!");
+				ums->set_text(ums->label, "#FFDD00 오류#: 쓰기 위치를 벗어남!");
 				ums->lun.sense_data      = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 				ums->lun.sense_data_info = usb_lba_offset;
 				ums->lun.info_valid      = 1;
@@ -663,7 +663,7 @@ DPRINTF("file write %X @ %X\n", amount, lba_offset);
 			// If an error occurred, report it and its position.
 			if (!amount)
 			{
-				ums->set_text(ums->label, "#FFDD00 Error:# SDMMC Write!");
+				ums->set_text(ums->label, "#FFDD00 오류#: SD 카드 쓰기 실패!");
 				ums->lun.sense_data      = SS_WRITE_ERROR;
 				ums->lun.sense_data_info = lba_offset;
 				ums->lun.info_valid      = 1;
@@ -674,7 +674,7 @@ DPRINTF("file write %X @ %X\n", amount, lba_offset);
 			// Did the host decide to stop early?
 			if (bulk_ctxt->bulk_out_length_actual < bulk_ctxt->bulk_out_length)
 			{
-				ums->set_text(ums->label, "#FFDD00 Error:# Empty Write!");
+				ums->set_text(ums->label, "#FFDD00 오류#: 빈 쓰기!");
 				ums->short_packet_received = 1;
 				break;
 			}
@@ -690,7 +690,7 @@ static int _scsi_verify(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 	u32 lba_offset = get_array_be_to_le32(&ums->cmnd[2]);
 	if (lba_offset >= ums->lun.num_sectors)
 	{
-		ums->set_text(ums->label, "#FF8000 Warn:# Verif - Out of range! Host notified.");
+		ums->set_text(ums->label, "#FF8000 경고:# 호스트에서 요청한 검증 범위를 벗어남!");
 		ums->lun.sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 
 		return UMS_RES_INVALID_ARG;
@@ -729,7 +729,7 @@ DPRINTF("File read %X @ %X\n", amount, lba_offset);
 
 		if (!amount)
 		{
-			ums->set_text(ums->label, "#FFDD00 Error:# File verify!");
+			ums->set_text(ums->label, "#FFDD00 오류#: 파일 검증 실패!");
 			ums->lun.sense_data      = SS_UNRECOVERED_READ_ERROR;
 			ums->lun.sense_data_info = lba_offset;
 			ums->lun.info_valid      = 1;
@@ -1058,7 +1058,7 @@ static int _scsi_start_stop(usbd_gadget_ums_t *ums)
 	// Check if we are allowed to unload the media.
 	if (ums->lun.prevent_medium_removal)
 	{
-		ums->set_text(ums->label, "#C7EA46 Status:# Unload attempt prevented");
+		ums->set_text(ums->label, "#C7EA46 상태#: 디스크 언로드 시도 방지됨");
 		ums->lun.sense_data = SS_MEDIUM_REMOVAL_PREVENTED;
 
 		return UMS_RES_INVALID_ARG;
@@ -1466,7 +1466,7 @@ static int _finish_reply(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 		{
 			_set_ep_stall(bulk_ctxt->bulk_out);
 			rc = _set_ep_stall(bulk_ctxt->bulk_in);
-			ums->set_text(ums->label, "#FFDD00 Error:# Direction unknown. Stalled both EP!");
+			ums->set_text(ums->label, "#FFDD00 오류#: 방향 불명, EP IN/OUT 중단됨!");
 		} // Else do nothing.
 		break;
 
@@ -1487,7 +1487,7 @@ static int _finish_reply(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 			{
 				_transfer_start(ums, bulk_ctxt, bulk_ctxt->bulk_in, USB_XFER_SYNCED_DATA);
 				rc = _set_ep_stall(bulk_ctxt->bulk_in);
-				ums->set_text(ums->label, "#FFDD00 Error:# Residue. Stalled EP IN!");
+				ums->set_text(ums->label, "#FFDD00 오류#: 잔여 데이터 확인, EP IN 중단됨!");
 			}
 			else
 				rc = _pad_with_zeros(ums, bulk_ctxt);
@@ -1560,7 +1560,7 @@ static int _received_cbw(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 				{
 					if (usb_ops.usb_device_get_port_in_sleep())
 					{
-						ums->set_text(ums->label, "#C7EA46 Status:# EP in sleep");
+						ums->set_text(ums->label, "#C7EA46 상태#: EP 슬립 모드");
 						ums->timeouts += 14;
 					}
 					else if (!ums->xusb) // Timeout only on USB2.
@@ -1579,7 +1579,7 @@ static int _received_cbw(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 
 			if (ums->lun.unmounted)
 			{
-				ums->set_text(ums->label, "#C7EA46 Status:# Medium unmounted");
+				ums->set_text(ums->label, "#C7EA46 상태#: 미디어 분리됨");
 				ums->timeouts++;
 				if (!bulk_ctxt->bulk_out_status)
 					ums->timeouts += 3;
@@ -1631,7 +1631,7 @@ static int _received_cbw(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 		{
 			_set_ep_stall(bulk_ctxt->bulk_out);
 			_set_ep_stall(bulk_ctxt->bulk_in);
-			ums->set_text(ums->label, "#FFDD00 Error:# CBW unknown - Stalled both EP!");
+			ums->set_text(ums->label, "#FFDD00 오류#: 알 수 없는 CBW - EP IN/OUT 중단됨!");
 		}
 
 		return UMS_RES_INVALID_ARG;
@@ -1710,7 +1710,7 @@ static void _send_status(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 
 	if (ums->phase_error)
 	{
-		ums->set_text(ums->label, "#FFDD00 Error:# Phase-error!");
+		ums->set_text(ums->label, "#FFDD00 오류#: 페이즈 오류!");
 		status = USB_STATUS_PHASE_ERROR;
 		sd = SS_INVALID_COMMAND;
 	}
@@ -1824,7 +1824,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 		xusb_device_get_ops(&usb_ops);
 	}
 
-	usbs->set_text(usbs->label, "#C7EA46 Status:# Started USB");
+	usbs->set_text(usbs->label, "#C7EA46 상태#: USB 시작됨");
 
 	if (usb_ops.usb_device_init())
 	{
@@ -1855,7 +1855,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 	ums.set_text = usbs->set_text;
 	ums.system_maintenance = usbs->system_maintenance;
 
-	ums.set_text(ums.label, "#C7EA46 Status:# Mounting disk");
+	ums.set_text(ums.label, "#C7EA46 상태#: 디스크 마운트 중");
 
 	// Initialize sdmmc.
 	if (usbs->type == MMC_SD)
@@ -1863,7 +1863,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 		sd_end();
 		if (!sd_mount())
 		{
-			ums.set_text(ums.label, "#FFDD00 Failed to init SD!#");
+			ums.set_text(ums.label, "#FFDD00 SD 카드 초기화 실패!#");
 			res = 1;
 			goto init_fail;
 		}
@@ -1876,7 +1876,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 	{
 		if (!emmc_initialize(false))
 		{
-			ums.set_text(ums.label, "#FFDD00 Failed to init eMMC!#");
+			ums.set_text(ums.label, "#FFDD00 eMMC 초기화 실패!#");
 			res = 1;
 			goto init_fail;
 		}
@@ -1886,18 +1886,18 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 		ums.lun.storage = &emmc_storage;
 	}
 
-	ums.set_text(ums.label, "#C7EA46 Status:# Waiting for connection");
+	ums.set_text(ums.label, "#C7EA46 상태#: 연결 대기 중");
 
 	// Initialize Control Endpoint.
 	if (usb_ops.usb_device_enumerate(USB_GADGET_UMS))
 		goto usb_enum_error;
 
-	ums.set_text(ums.label, "#C7EA46 Status:# Waiting for LUN");
+	ums.set_text(ums.label, "#C7EA46 상태#: LUN 대기 중");
 
 	if (usb_ops.usb_device_class_send_max_lun(0)) // One device for now.
 		goto usb_enum_error;
 
-	ums.set_text(ums.label, "#C7EA46 Status:# Started UMS");
+	ums.set_text(ums.label, "#C7EA46 상태#: UMS 시작됨");
 
 	// If partition sectors are not set get them from hardware.
 	if (!ums.lun.num_sectors)
@@ -1918,7 +1918,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 		{
 			// Check if we are allowed to unload the media.
 			if (ums.lun.prevent_medium_removal)
-				ums.set_text(ums.label, "#C7EA46 Status:# Unload attempt prevented");
+				ums.set_text(ums.label, "#C7EA46 상태#: 언로드 시도 차단됨");
 			else
 				break;
 		}
@@ -1950,13 +1950,13 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 	} while (ums.state != UMS_STATE_TERMINATED);
 
 	if (ums.lun.prevent_medium_removal)
-		ums.set_text(ums.label, "#FFDD00 Error:# Disk unsafely ejected");
+		ums.set_text(ums.label, "#FFDD00 오류#: 안전하게 분리되지 않음");
 	else
-		ums.set_text(ums.label, "#C7EA46 Status:# Disk ejected");
+		ums.set_text(ums.label, "#C7EA46 상태#: 디스크 분리됨");
 	goto exit;
 
 usb_enum_error:
-	ums.set_text(ums.label, "#FFDD00 Error:# Timed out or canceled!");
+	ums.set_text(ums.label, "#FFDD00 오류#: 시간 초과 또는 취소됨!");
 	res = 1;
 
 exit:

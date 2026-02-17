@@ -31,7 +31,7 @@
 
 #define CLOCK_MIN_YEAR 2026
 #define CLOCK_MAX_YEAR (CLOCK_MIN_YEAR + 10)
-#define CLOCK_YEARLIST "2026\n2027\n2028\n2029\n2030\n2031\n2032\n2033\n2034\n2035\n2036"
+#define CLOCK_YEARLIST "2026년\n2027년\n2028년\n2029년\n2030년\n2031년\n2032년\n2033년\n2034년\n2035년\n2036년"
 
 static lv_obj_t *autoboot_btn;
 
@@ -142,7 +142,7 @@ lv_obj_t *create_window_autoboot(const char *win_title)
 	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
 	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
 
-	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", _win_autoboot_close_action);
+	close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", _win_autoboot_close_action);
 
 	return win;
 }
@@ -360,13 +360,13 @@ static const u16 theme_colors[17] = {
 
 lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_HINT" Color Theme & Backlight");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_HINT"  테마 색상 & 화면 밝기");
 	if (close_btn)
 	{
 		lv_obj_del(close_btn);
 		close_btn = NULL;
 	}
-	lv_win_add_btn(win, NULL, SYMBOL_SAVE" Save & Reload", _save_theme_color_action);
+	lv_win_add_btn(win, NULL, SYMBOL_SAVE" 저장 및 적용", _save_theme_color_action);
 	color_test.window = win;
 
 	// Set current theme colors.
@@ -425,16 +425,16 @@ lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 	color_test.header2 = h2;
 
 	lv_obj_t *lbl_sample = lv_label_create(h2, NULL);
-	lv_label_set_static_text(lbl_sample, "Sample:");
+	lv_label_set_static_text(lbl_sample, "색상 샘플:");
 
 	lv_obj_t *lbl_test = lv_label_create(h2, NULL);
 	lv_label_set_long_mode(lbl_test, LV_LABEL_LONG_BREAK);
 	lv_label_set_static_text(lbl_test,
-		"This build is a fork of Asa's project, designed for Mariko only.\n"
-		"It is intended for personal use.\n"
-		"No responsibility is assumed for misuse.\n\n"
-		"Hold for 3 seconds to access the hidden menu.\n"
-		"Partition:  eMMC Partition  |   Ｘ:  RAM Mode   |   Ｅ:  Payloads   |   Ｕ:  HID");
+		"현재 Ｌ은 Asa의 프로젝트에서 포크되었습니다.\n"
+		"Mariko 전용으로 설계되었으며, 개인 사용만을 목적으로합니다.\n"
+		"이를 어기고 무단 사용으로 인해 발생한 문제에 대하여 일절 책임지지 않습니다.\n\n"
+		"3초 이상 입력을 유지하여 숨겨진 메뉴를 사용 가능합니다.\n"
+		"포맷·분할:  eMMC 분할 모드   |   Ｘ:  RAM 전환   |   Ｅ:  페이로드 부팅   |   Ｕ:  HID 모드");
 	lv_obj_set_width(lbl_test, lv_obj_get_width(h2) - LV_DPI * 6 / 10);
 	lv_obj_align(lbl_test, lbl_sample, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
 	color_test.label = lbl_test;
@@ -449,7 +449,7 @@ lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 
 	// Create Backlight slider.
 	lv_obj_t *label_txt = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" Brightness:");
+	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" 화면 밝기:");
 	lv_obj_align(label_txt, lbl_icons, LV_ALIGN_OUT_RIGHT_MID, 100, 0);
 
 	// Create sample slider.
@@ -613,16 +613,16 @@ lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222Done", "\222Cancel", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222적용", "\222취소", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_style(mbox, LV_MBOX_STYLE_BG, &mbox_style);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
 	lv_mbox_set_text(mbox,
-		"#008EED Ｃ Date and Time#\n\n"
-		"#FFBA00 Info#: Ｈ Clock setting.\n"
-		"This doesn't alter the actual HW clock!");
+		"#008EED Ｃ 날짜 및 시간#\n\n"
+		"#FFBA00 안내#: Ｈ 시스템 시간을 설정합니다.\n"
+		"본체의 시간과는 동기화되지 않습니다.");
 
 	lv_obj_t *padding = lv_cont_create(mbox, NULL);
 	lv_cont_set_fit(padding, true, false);
@@ -655,18 +655,18 @@ lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	// Create month roller.
 	lv_obj_t *roller_month = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_month,
-		"January\n"
-		"February\n"
-		"March\n"
-		"April\n"
-		"May\n"
-		"June\n"
-		"July\n"
-		"August\n"
-		"September\n"
-		"October\n"
-		"November\n"
-		"December");
+		"1월\n"
+		"2월\n"
+		"3월\n"
+		"4월\n"
+		"5월\n"
+		"6월\n"
+		"7월\n"
+		"8월\n"
+		"9월\n"
+		"10월\n"
+		"11월\n"
+		"12월");
 	lv_roller_set_selected(roller_month, time.month - 1, false);
 	lv_obj_align(roller_month, roller_year, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 	lv_roller_set_action(roller_month, _action_date_validation);
@@ -676,7 +676,7 @@ lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	static char days[256];
 	days[0] = 0;
 	for (u32 i = 1; i < 32; i++)
-		s_printf(days + strlen(days), " %d \n", i);
+		s_printf(days + strlen(days), " %d일 \n", i);
 	days[strlen(days) - 1] = 0;
 	lv_obj_t *roller_day = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_day, days);
@@ -689,7 +689,7 @@ lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	static char hours[256];
 	hours[0] = 0;
 	for (u32 i = 0; i < 24; i++)
-		s_printf(hours + strlen(hours), " %d \n", i);
+		s_printf(hours + strlen(hours), " %d시 \n", i);
 	hours[strlen(hours) - 1] = 0;
 	lv_obj_t *roller_hour = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_hour, hours);
@@ -701,7 +701,7 @@ lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 	static char minutes[512];
 	minutes[0] = 0;
 	for (u32 i = 0; i < 60; i++)
-		s_printf(minutes + strlen(minutes), " %02d \n", i);
+		s_printf(minutes + strlen(minutes), " %02d분 \n", i);
 	minutes[strlen(minutes) - 1] = 0;
 	lv_obj_t *roller_minute = lv_roller_create(h1, roller_year);
 	lv_roller_set_options(roller_minute, minutes);
@@ -711,7 +711,7 @@ lv_res_t _create_mbox_clock_edit(lv_obj_t *btn)
 
 	// Add DST option.
 	lv_obj_t *btn_dst = lv_btn_create(mbox, NULL);
-	nyx_create_onoff_button(th, h1, btn_dst, SYMBOL_BRIGHTNESS" Auto Daylight Saving Time", _action_auto_dst_toggle, true);
+	nyx_create_onoff_button(th, h1, btn_dst, SYMBOL_BRIGHTNESS" 서머 타임 자동 적용", _action_auto_dst_toggle, true);
 	if (n_cfg.timedst)
 		lv_btn_set_state(btn_dst, LV_BTN_STATE_TGL_REL);
 	nyx_generic_onoff_toggle(btn_dst);
@@ -919,7 +919,7 @@ disabled_or_cal0_issue:;
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\222OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
@@ -928,20 +928,20 @@ disabled_or_cal0_issue:;
 	{
 		if (!nx_hoag)
 		{
-			s_printf(txt_buf, "#008EED Ｊ BT Dump#\n\n");
+			s_printf(txt_buf, "#008EED Ｊ 조이콘 페어링 데이터#\n\n");
 
 			bool success = true;
 
 			// Check if pairing info was found.
 			if (joycon_found == 2)
 				strcat(txt_buf,
-					"#FFBA00 Info#: Saved to the following path.\n\n"
+					"#FFBA00 안내#: 다음 경로에 저장되었습니다.\n\n"
 					"#C7EA46 sdmc:/switchroot/#\n"
 					"#C7EA46 joycon_mac.bin, joycon_mac.ini, switch.cal#");
 			else
 			{
 				s_printf(txt_buf + strlen(txt_buf),
-						"#FFBA00 Info#: Found #008EED %d# out of 2# pairing data!\n\n"
+						"#FFBA00 안내#: 다음 경로에 #008EED %d#개 데이터가 저장되었습니다.\n\n"
 						"#C7EA46 sdmc:/switchroot/#\n"
 						"#C7EA46 joycon_mac.bin, joycon_mac.ini, switch.cal#\n\n", joycon_found);
 				success = false;
@@ -952,33 +952,32 @@ disabled_or_cal0_issue:;
 				strcat(txt_buf, "");
 			else if (!is_l_hos && is_r_hos)
 			{
-				strcat(txt_buf, "#FF8000 Warning#: #FFBA00 Left# pairing data is not HOS based!");
+				strcat(txt_buf, "#FF8000 경고#: #FFBA00 좌측 조이콘#이 연결되어 있지 않습니다!");
 				success = false;
 			}
 			else if (is_l_hos && !is_r_hos)
 			{
-				strcat(txt_buf, "#FF8000 Warning#: #FFBA00 Right# pairing data is not HOS based!");
+				strcat(txt_buf, "#FF8000 경고#: #FFBA00 우측 조이콘#이 연결되어 있지 않습니다!");
 				success = false;
 			}
 			else
 			{
-				strcat(txt_buf, "#FF8000 Warning#: #FFBA00 No# pairing data is HOS based!");
+				strcat(txt_buf, "#FF8000 경고#: #FFBA00 조이콘이 연결되어 있지 않습니다!#");
 				success = false;
 			}
 
 			if (!success)
 				strcat(txt_buf,
-					"\n#FFBA00 Make sure that both Joy-Con are connected,#\n"
-					"#FFBA00 and that you paired them in HOS!#");
+					"\n#FFBA00 조이콘이 세트로 등록되어 있는지 확인하세요!#");
 
 			if (cal_error)
-				s_printf(txt_buf + strlen(txt_buf), "\n\n#FF8000 Warning#: Failed (%d) to get IMU calibration!", cal_error);
+				s_printf(txt_buf + strlen(txt_buf), "\n\n#FF8000 오류 (%d)#: IMU 보정 값을 읽을 수 없습니다!#", cal_error);
 		}
 		else
 		{
 			s_printf(txt_buf,
-				"#008EED Lite Gamepad data#\n\n"
-				"#FFBA00 Info#: Saved to the following path.\n\n"
+				"#008EED Lite 컨트롤러 페어링 데이터#\n\n"
+				"#FFBA00 안내#: 다음 경로에 저장되었습니다.\n\n"
 				"#C7EA46 sdmc:/switchroot/switch.cal#\n");
 		}
 	}
@@ -986,12 +985,12 @@ disabled_or_cal0_issue:;
 	{
 		if (!nx_hoag)
 			s_printf(txt_buf,
-				"#008EED Joy-Con pairing data#\n\n"
-				"#FF8000 Error (%d)#: Failed to dump pairing data!", error);
+				"#008EED 조이콘 페어링 데이터#\n\n"
+				"#FF8000 오류 (%d)#: 페어링 데이터 저장에 실패했습니다!", error);
 		else
 			s_printf(txt_buf,
-				"#008EED Lite Gamepad data#\n\n"
-				"#FF8000 Error (%d)#: Failed to dump pairing data!", error);
+				"#008EED Lite 컨트롤러 페어링 데이터#\n\n"
+				"#FF8000 오류 (%d)#: 페어링 데이터 저장에 실패했습니다!", error);
 	}
 
 	lv_mbox_set_text(mbox, txt_buf);
@@ -1074,12 +1073,12 @@ lv_res_t _action_win_nyx_options_passwd(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\221Done", "\221Disable", "" };
+	static const char * mbox_btn_map[] = { "\221적용", "\221비활성화", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 2);
 
-	lv_mbox_set_text(mbox, "PIN Setting [ #FF8000 Max 8 digits# ]");
+	lv_mbox_set_text(mbox, "PIN 설정 [ #FF8000 최대 8자리# ]");
 
 	set_pw_area = lv_ta_create(mbox, NULL);
 	lv_ta_set_one_line(set_pw_area, true);
