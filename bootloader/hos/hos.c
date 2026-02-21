@@ -725,7 +725,7 @@ void hos_launch(ini_sec_t *cfg)
 		}
 	}
 	if (early_stock)
-		gfx_con.mute = false;
+		gfx_con.mute = true;
 	// ===============================================================
 
 	if (!gfx_con.mute)
