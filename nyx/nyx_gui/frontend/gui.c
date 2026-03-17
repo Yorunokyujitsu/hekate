@@ -3446,8 +3446,9 @@ void refresh_nand_info_label(void)
 		case 20240207110330ULL: fusee_ver = "18.0.0 - 18.1.0"; prev_ver = "17.0.1"; break;
 		case 20240808143958ULL: fusee_ver = "19.0.0 - 19.0.1"; prev_ver = "18.1.0"; break;
 		case 20250206151829ULL: fusee_ver = "20.0.0 - 20.5.0"; prev_ver = "19.0.1"; break;
-		case 20251009153823ULL: fusee_ver = "21.0.0 - 21.2.0+"; prev_ver = "20.5.0"; break;
-		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "21.2.0"; break;
+		case 20251009153823ULL: fusee_ver = "21.0.0 - 21.2.0"; prev_ver = "20.5.0"; break;
+		case 20260123111804ULL: fusee_ver = "22.0.0+";		   prev_ver = "21.2.0"; break;
+		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "22.0.0"; break;
 	}
 
 	if (!id) {
