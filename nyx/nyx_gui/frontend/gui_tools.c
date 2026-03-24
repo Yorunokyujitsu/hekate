@@ -31,8 +31,6 @@
 #include <libs/compr/blz.h>
 #include <libs/fatfs/ff.h>
 
-extern volatile boot_cfg_t *b_cfg;
-
 lv_obj_t *ums_mbox;
 
 extern char *emmcsn_path_impl(char *path, char *sub_dir, char *filename, sdmmc_storage_t *storage);
@@ -145,7 +143,7 @@ lv_res_t _create_mbox_autorcm_status(lv_obj_t *btn)
 
 	lv_mbox_set_text(mbox, mbox_txt);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -165,8 +163,8 @@ static lv_res_t _create_mbox_hid(usb_ctxt_t *usbs)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\262닫기", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\251", "\222닫기", "\251", "" };
+	static const char *mbox_btn_map_dis[] = { "\251", "\262닫기", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222닫기", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -192,14 +190,14 @@ static lv_res_t _create_mbox_hid(usb_ctxt_t *usbs)
 	lv_label_set_static_text(lbl_tip, "#FFBA00 안내#: 연결 종료하려면 #C7EA46 Ⓙ# + #C7EA46 Ⓗ# 을 입력하거나, 케이블을 제거하세요.");
 	lv_obj_set_style(lbl_tip, &hint_small_style);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map_dis, nyx_mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
 
 	usb_device_gadget_hid(usbs);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map2, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	return LV_RES_OK;
 }
@@ -210,8 +208,8 @@ static lv_res_t _create_mbox_ums(usb_ctxt_t *usbs)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "\262닫기", "\251", "" };
-	static const char *mbox_btn_map2[] = { "\251", "\222닫기", "\251", "" };
+	static const char *mbox_btn_map_dis[] = { "\251", "\262닫기", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "\222닫기", "\251", "" };
 	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -286,7 +284,7 @@ static lv_res_t _create_mbox_ums(usb_ctxt_t *usbs)
 	}
 	lv_obj_set_style(lbl_tip, &hint_small_style);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map_dis, nyx_mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -299,7 +297,7 @@ static lv_res_t _create_mbox_ums(usb_ctxt_t *usbs)
 	// Restore backlight.
 	display_backlight_brightness(h_cfg.backlight - 20, 1000);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map2, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	ums_mbox = dark_bg;
 
@@ -329,7 +327,7 @@ static lv_res_t _create_mbox_ums_error(int error)
 		break;
 	}
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -472,7 +470,7 @@ lv_res_t _action_ums_emuemmc_boot0(lv_obj_t *btn)
 
 	usb_ctxt_t usbs;
 
-	int error = !sd_mount();
+	int error = sd_mount();
 	if (!error)
 	{
 		emummc_cfg_t emu_info;
@@ -519,7 +517,7 @@ lv_res_t _action_ums_emuemmc_boot1(lv_obj_t *btn)
 
 	usb_ctxt_t usbs;
 
-	int error = !sd_mount();
+	int error = sd_mount();
 	if (!error)
 	{
 		emummc_cfg_t emu_info;
@@ -566,7 +564,7 @@ lv_res_t _action_ums_emuemmc_gpp(lv_obj_t *btn)
 
 	usb_ctxt_t usbs;
 
-	int error = !sd_mount();
+	int error = sd_mount();
 	if (!error)
 	{
 		emummc_cfg_t emu_info;
@@ -582,7 +580,7 @@ lv_res_t _action_ums_emuemmc_gpp(lv_obj_t *btn)
 				usbs.offset = emu_info.sector + 0x4000;
 
 				u8 *gpt = malloc(SD_BLOCKSIZE);
-				if (sdmmc_storage_read(&sd_storage, usbs.offset + 1, 1, gpt))
+				if (!sdmmc_storage_read(&sd_storage, usbs.offset + 1, 1, gpt))
 				{
 					if (!memcmp(gpt, "EFI PART", 8))
 					{
@@ -745,7 +743,7 @@ out:
 //============================
 lv_res_t _create_window_unset_abit_tool(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_DIRECTORY"  아카이브 비트 재설정");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_DIRECTORY"  아카이브 비트 재설정", NULL);
 
 	// Disable buttons.
 	nyx_window_toggle_buttons(win, true);
@@ -757,7 +755,7 @@ lv_res_t _create_window_unset_abit_tool(lv_obj_t *btn)
 	lv_label_set_long_mode(lb_desc, LV_LABEL_LONG_BREAK);
 	lv_label_set_recolor(lb_desc, true);
 
-	if (!sd_mount())
+	if (sd_mount())
 	{
 		lv_label_set_text(lb_desc, "#FFBA00 SD 카드 초기화 실패!#");
 		lv_obj_set_width(lb_desc, lv_obj_get_width(desc));
@@ -820,7 +818,7 @@ lv_res_t _create_window_unset_abit_tool(lv_obj_t *btn)
 
 lv_res_t _create_mbox_fix_touchscreen(lv_obj_t *btn)
 {
-	int res = 0;
+	int res = 1;
 	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
@@ -862,13 +860,13 @@ lv_res_t _create_mbox_fix_touchscreen(lv_obj_t *btn)
 	}
 
 	u8 err[2];
-	if (!touch_panel_ito_test(err))
+	if (touch_panel_ito_test(err))
 		goto ito_failed;
 
 	if (!err[0] && !err[1])
 	{
 		res = touch_execute_autotune();
-		if (res)
+		if (!res)
 			goto out;
 	}
 	else
@@ -926,13 +924,13 @@ ito_failed:
 	touch_sense_enable();
 
 out:
-	if (res)
+	if (!res)
 		lv_mbox_set_text(mbox, "#C7EA46 터치 패널 보정이 완료되었습니다!");
 	else
 		lv_mbox_set_text(mbox, "#FFBA00 터치 패널 보정에 실패했습니다!");
 
 out2:
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	free(txt_buf);
 
@@ -941,7 +939,7 @@ out2:
 
 lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_MODULES"  PACKAGE1, PACKAGE2 백업");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_MODULES"  PACKAGE1, PACKAGE2 백업", NULL);
 
 	//===================
 	//  ASAP: eMMC S/N.
@@ -971,7 +969,7 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 	lv_obj_align(lb_desc, desc, LV_ALIGN_IN_TOP_LEFT, 20, 20);
 	lv_obj_align(lb_desc2, lb_desc, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI / 3, 0);
 
-	if (!sd_mount())
+	if (sd_mount())
 	{
 		lv_label_set_text(lb_desc, "#FFBA00 SD 카 드  초 기 화  실 패 !#");
 
@@ -989,7 +987,7 @@ lv_res_t _create_window_dump_pk12_tool(lv_obj_t *btn)
 
 	char *txt_buf  = (char *)malloc(SZ_16K);
 
-	if (!emmc_initialize(false))
+	if (emmc_initialize(false))
 	{
 		lv_label_set_text(lb_desc, "#FFBA00 eMMC 초 기 화  실 패 !#");
 

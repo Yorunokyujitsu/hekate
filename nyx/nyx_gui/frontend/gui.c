@@ -139,7 +139,7 @@ lv_img_dsc_t *icon_lakka;
 
 const lv_img_dsc_t *hekate_bg;
 
-lv_style_t btn_transp_rel, btn_transp_pr, btn_transp_tgl_rel, btn_transp_tgl_pr;
+lv_style_t btn_transp_rel, btn_transp_pr, btn_transp_tgl_rel, btn_transp_tgl_pr, btn_transp_ina;
 lv_style_t ddlist_transp_bg, ddlist_transp_sel;
 
 lv_style_t mbox_darken;
@@ -190,6 +190,7 @@ static void _nyx_disp_init()
 
 	// Rotate and copy the first frame.
 	vic_compose();
+	vic_wait_idle();
 
 	// Switch to new window configuration.
 	display_init_window_a_pitch_vic();
@@ -413,19 +414,19 @@ static void _disp_fb_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const
 	lv_flush_ready();
 }
 
-static touch_event touchpad;
+static touch_event_t touchpad;
 static bool touch_enabled;
 static bool console_enabled = false;
 
 static bool _fts_touch_read(lv_indev_data_t *data)
 {
-	if (touch_enabled)
-		touch_poll(&touchpad);
-	else
+	if (!touch_enabled)
 		return false;
 
-	// Take a screenshot if 3 fingers.
-	if (touchpad.fingers > 2)
+	int res = touch_poll(&touchpad);
+
+	// Take a screenshot if 3rd finger.
+	if (touchpad.finger > 2)
 	{
 		_save_fb_to_bmp();
 
@@ -435,14 +436,18 @@ static bool _fts_touch_read(lv_indev_data_t *data)
 
 	if (console_enabled)
 	{
+		// If no event, keep last debug message.
+		if (res)
+			return false;
+
 		// Print input debugging in console.
 		gfx_con_getpos(&gfx_con.savedx, &gfx_con.savedy, &gfx_con.savedcol);
 		gfx_con_setpos(32, 638, GFX_COL_AUTO);
 		gfx_con.fntsz = 8;
 		gfx_printf("x: %4d, y: %4d | z: %3d | ", touchpad.x, touchpad.y, touchpad.z);
-		gfx_printf("1: %02X, 2: %02X, 3: %02X, ", touchpad.raw[1], touchpad.raw[2], touchpad.raw[3]);
-		gfx_printf("4: %02X, 5: %02X, 6: %02X, 7: %02X",
-			touchpad.raw[4], touchpad.raw[5], touchpad.raw[6], touchpad.raw[7]);
+		gfx_printf("0: %02X, 1: %02X, 2: %02X, ", touchpad.raw[0], touchpad.raw[1], touchpad.raw[2]);
+		gfx_printf("3: %02X, 4: %02X, 5: %02X, 6: %02X",
+			touchpad.raw[3], touchpad.raw[4], touchpad.raw[5], touchpad.raw[6]);
 		gfx_con_setpos(gfx_con.savedx, gfx_con.savedy, gfx_con.savedcol);
 		gfx_con.fntsz = 16;
 
@@ -454,23 +459,10 @@ static bool _fts_touch_read(lv_indev_data_t *data)
 	data->point.y = touchpad.y;
 
 	// Decide touch enable.
-	switch (touchpad.type & STMFTS_MASK_EVENT_ID)
-	{
-	case STMFTS_EV_MULTI_TOUCH_ENTER:
-	case STMFTS_EV_MULTI_TOUCH_MOTION:
+	if (touchpad.touch)
 		data->state = LV_INDEV_STATE_PR;
-		break;
-	case STMFTS_EV_MULTI_TOUCH_LEAVE:
+	else
 		data->state = LV_INDEV_STATE_REL;
-		break;
-	case STMFTS_EV_NO_EVENT:
-	default:
-		if (touchpad.touch)
-			data->state = LV_INDEV_STATE_PR;
-		else
-			data->state = LV_INDEV_STATE_REL;
-		break;
-	}
 
 	return false; // No buffering so no more data read.
 }
@@ -787,7 +779,7 @@ lv_img_dsc_t *bmp_to_lvimg_obj(const char *path)
 		}
 
 		lv_img_dsc_t *img_desc = (lv_img_dsc_t *)bitmap;
-		u32 offset_copy = ALIGN((u32)bitmap + sizeof(lv_img_dsc_t), 0x10);
+		uptr offset_copy = ALIGN((uptr)bitmap + sizeof(lv_img_dsc_t), 0x10);
 
 		img_desc->header.always_zero = 0;
 		img_desc->header.w = bmpData.size_x;
@@ -922,7 +914,7 @@ lv_res_t nyx_generic_onoff_toggle(lv_obj_t *btn)
 	return LV_RES_OK;
 }
 
-lv_res_t mbox_action(lv_obj_t *btns, const char *txt)
+lv_res_t nyx_mbox_action(lv_obj_t *btns, const char *txt)
 {
 	lv_obj_t *mbox = lv_mbox_get_from_btn(btns);
 	lv_obj_t *dark_bg = lv_obj_get_parent(mbox);
@@ -956,7 +948,7 @@ bool nyx_emmc_check_battery_enough()
 			"#FFBA00 안내#: 배터리 잔량이 부족하여 작업을 수행할 수 없습니다!\n"
 			"전압을 최소 #C7EA46 3650 mV# 이상 올린 후, 다시 시도하세요!");
 
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 		lv_obj_set_top(mbox, true);
@@ -983,7 +975,7 @@ static void _nyx_sd_card_issues_warning(void *param)
 		"#FF8000 커넥터가 분리되었거나 손상되었을 수 있습니다!#\n\n"
 		"#C7EA46 낸드 매니저#의 #C7EA46 Ⓝ#에서 정보를 확인하세요.");
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -1018,7 +1010,7 @@ void nyx_window_toggle_buttons(lv_obj_t *win, bool disable)
 	}
 }
 
-lv_res_t nyx_win_close_action_custom(lv_obj_t * btn)
+lv_res_t nyx_win_close_action(lv_obj_t * btn)
 {
 	autorcm_btn = NULL;
 	close_btn = NULL;
@@ -1048,14 +1040,25 @@ static lv_obj_t *_nyx_create_window(const char *win_title, lv_action_t close_act
 }
 //============================
 
-lv_obj_t *nyx_create_standard_window(const char *win_title)
+lv_obj_t *nyx_create_standard_window(const char *win_title, lv_action_t close_action)
 {
-	return _nyx_create_window(win_title, nyx_win_close_action_custom);
-}
+	static lv_style_t win_bg_style;
 
-lv_obj_t *nyx_create_window_custom_close_btn(const char *win_title, lv_action_t rel_action)
-{
-	return _nyx_create_window(win_title, rel_action);
+	lv_style_copy(&win_bg_style, &lv_style_plain);
+	win_bg_style.body.main_color = lv_theme_get_current()->bg->body.main_color;
+	win_bg_style.body.grad_color = win_bg_style.body.main_color;
+
+	lv_obj_t *win = lv_win_create(lv_scr_act(), NULL);
+	lv_win_set_title(win, win_title);
+	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
+	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
+
+	if (!close_action)
+		close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", nyx_win_close_action);
+	else
+		close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" Close", close_action);
+
+	return win;
 }
 
 //===============================================
@@ -1144,7 +1147,7 @@ static lv_res_t _removed_sd_action(lv_obj_t *btns, const char *txt)
 		break;
 	}
 
-	return mbox_action(btns, txt);
+	return nyx_mbox_action(btns, txt);
 }
 
 static void _check_sd_card_removed(void *params)
@@ -1206,7 +1209,7 @@ static void _nyx_emmc_issues_warning(void *params)
 			"#FF8000 하드웨어에 문제가 있을 수 있습니다!#\n\n"
 			"#C7EA46 낸드 매니저#의 #C7EA46 Ⓢ#에서 정보를 확인하세요.");
 
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 		lv_obj_set_top(mbox, true);
@@ -1214,7 +1217,7 @@ static void _nyx_emmc_issues_warning(void *params)
 }
 
 //==================================================================================
-//  ASAP: CFW/OFW/RCM boot, shutdown process - Updated hekate & nyx 6.5.1 & 1.9.1.
+//  ASAP: CFW/OFW/RCM boot, shutdown process - Updated hekate & nyx 6.5.2 & 1.9.2.
 //==================================================================================
 // Convert DRAM density to 0.5GB units.
 static u32 density_to_halfgb(u8 density)
@@ -1484,7 +1487,7 @@ static lv_res_t _mbox_ofw_dram_action(lv_obj_t *btns, const char *txt)
 
 	case 1: // Force Boot
 		g_ofw_dram_confirmed = true;
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		g_ofw_dram_warning = false;
 		_do_ofw_boot();
 		return LV_RES_OK;
@@ -1536,7 +1539,7 @@ static lv_res_t _create_mbox_ofw_warning(void)
 
 	if (g_ofw_fuse7_warning) {
 		btn_map = btn_fuse7;
-		action  = mbox_action;
+		action  = nyx_mbox_action;
 
 		text = "#FF0012 경고#\n\n"
 			   "#FFBA00 안내#: #FF8000 지원되지 않는 DRAM Fuse 구성입니다!#\n\n"
@@ -1756,7 +1759,7 @@ static lv_res_t _unlock_action(lv_obj_t *btns, const char *txt)
 		break;
 	}
 
-	return mbox_action(btns, txt);
+	return nyx_mbox_action(btns, txt);
 }
 
 // PIN number del, refresh config.
@@ -1864,7 +1867,7 @@ void nyx_create_onoff_button(lv_theme_t *th, lv_obj_t *parent, lv_obj_t *btn, co
 		btn_onoff_pr_hos_style.body.opa = 35;
 	}
 	else
-		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D);
+		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D); // COLOR_HOS_BG_LIGHT.
 	btn_onoff_pr_hos_style.body.grad_color = btn_onoff_pr_hos_style.body.main_color;
 	btn_onoff_pr_hos_style.text.color = th->btn.pr->text.color;
 	btn_onoff_pr_hos_style.body.empty = 0;
@@ -1914,7 +1917,7 @@ static void _create_text_button(lv_theme_t *th, lv_obj_t *parent, lv_obj_t *btn,
 		btn_onoff_pr_hos_style.body.opa = 35;
 	}
 	else
-		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D);
+		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D); // COLOR_HOS_BG_LIGHT
 	btn_onoff_pr_hos_style.body.grad_color = btn_onoff_pr_hos_style.body.main_color;
 	btn_onoff_pr_hos_style.text.color = th->btn.pr->text.color;
 	btn_onoff_pr_hos_style.body.empty = 0;
@@ -1953,18 +1956,18 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 		"Greetings to: #FFFFFF fincs#, #FFFFFF hexkyz#, #FFFFFF SciresM#,\n"
 		"              #FFFFFF Shiny Quagsire#, #FFFFFF WinterMute#\n\n"
 		"Open source and free packages used:                                              \n" // Label width alignment padding.
+		" - Littlev Graphics Library,\n"
+		"   Copyright (c) 2016-2018, #FFFFFF Gabor Kiss-Vamosi#\n\n"
 		" - FatFs R0.13c,\n"
 		"   Copyright (c) 2006-2018, #FFFFFF ChaN#\n"
 		"   Copyright (c) 2018-2022, #FF0012 CTC##FFFFFF aer#\n\n"
+		" - bcl-1.2.0,\n"
+		"   Copyright (c) 2003-2006, #FFFFFF Marcus Geelnard#\n\n"
 		" - blz,\n"
 		"   Copyright (c) 2018, #FFFFFF SciresM#\n\n"
 		" - elfload,\n"
 		"   Copyright (c) 2014, #FFFFFF Owen Shepherd#\n"
-		"   Copyright (c) 2018, #FFFFFF M4xw#\n\n"
-		" - bcl-1.2.0,\n"
-		"   Copyright (c) 2003-2006, #FFFFFF Marcus Geelnard#\n\n"
-		" - Littlev Graphics Library,\n"
-		"   Copyright (c) 2016-2018, #FFFFFF Gabor Kiss-Vamosi#\n"
+		"   Copyright (c) 2018, #FFFFFF M4xw#"
 	);
 
 	lv_obj_t * asap_credits = lv_label_create(parent, NULL);
@@ -2136,7 +2139,7 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 	}
 
 out_end:
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -2993,9 +2996,9 @@ static void _nyx_set_default_styles(lv_theme_t * th)
 	hint_small_style_white.text.font = &interui_20;
 
 	lv_style_copy(&monospace_text, &lv_style_plain);
-	monospace_text.body.main_color = LV_COLOR_HEX(0x1B1B1B);
-	monospace_text.body.grad_color = LV_COLOR_HEX(0x1B1B1B);
-	monospace_text.body.border.color = LV_COLOR_HEX(0x1B1B1B);
+	monospace_text.body.main_color = COLOR_HOS_BG_DARKER;
+	monospace_text.body.grad_color = COLOR_HOS_BG_DARKER;
+	monospace_text.body.border.color = COLOR_HOS_BG_DARKER;
 	monospace_text.body.border.width = 0;
 	monospace_text.body.opa = LV_OPA_TRANSP;
 	monospace_text.text.color = LV_COLOR_HEX(0xD8D8D8);
@@ -3006,22 +3009,40 @@ static void _nyx_set_default_styles(lv_theme_t * th)
 	lv_style_copy(&btn_transp_rel, th->btn.rel);
 	btn_transp_rel.body.main_color = LV_COLOR_HEX(0x444444);
 	btn_transp_rel.body.grad_color = btn_transp_rel.body.main_color;
+	btn_transp_rel.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_rel.body.opa = LV_OPA_50;
 
 	lv_style_copy(&btn_transp_pr, th->btn.pr);
 	btn_transp_pr.body.main_color = LV_COLOR_HEX(0x888888);
 	btn_transp_pr.body.grad_color = btn_transp_pr.body.main_color;
+	btn_transp_pr.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_pr.body.opa = LV_OPA_50;
 
 	lv_style_copy(&btn_transp_tgl_rel, th->btn.tgl_rel);
 	btn_transp_tgl_rel.body.main_color = LV_COLOR_HEX(0x444444);
 	btn_transp_tgl_rel.body.grad_color = btn_transp_tgl_rel.body.main_color;
+	btn_transp_tgl_rel.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_tgl_rel.body.opa = LV_OPA_50;
 
 	lv_style_copy(&btn_transp_tgl_pr, th->btn.tgl_pr);
 	btn_transp_tgl_pr.body.main_color = LV_COLOR_HEX(0x888888);
 	btn_transp_tgl_pr.body.grad_color = btn_transp_tgl_pr.body.main_color;
+	btn_transp_tgl_pr.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_tgl_pr.body.opa = LV_OPA_50;
+
+	lv_style_copy(&btn_transp_ina, th->btn.ina);
+	btn_transp_ina.body.main_color = LV_COLOR_HEX(0x292929);
+	btn_transp_ina.body.grad_color = btn_transp_ina.body.main_color;
+	btn_transp_ina.body.border.color = LV_COLOR_HEX(0x444444);
+	btn_transp_ina.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
+	btn_transp_ina.body.opa = LV_OPA_50;
+
+	lv_style_copy(&btn_transp_ina, th->btn.ina);
+	btn_transp_ina.body.main_color = LV_COLOR_HEX(0x292929);
+	btn_transp_ina.body.grad_color = btn_transp_ina.body.main_color;
+	btn_transp_ina.body.border.color = LV_COLOR_HEX(0x444444);
+	btn_transp_ina.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
+	btn_transp_ina.body.opa = LV_OPA_50;
 
 	lv_style_copy(&ddlist_transp_bg, th->ddlist.bg);
 	ddlist_transp_bg.body.main_color = LV_COLOR_HEX(0x0E0E1A);
@@ -3031,7 +3052,7 @@ static void _nyx_set_default_styles(lv_theme_t * th)
 	lv_style_copy(&ddlist_transp_sel, th->ddlist.sel);
 	ddlist_transp_sel.body.main_color = LV_COLOR_HEX(0x4D4D4D);
 	ddlist_transp_sel.body.grad_color = ddlist_transp_sel.body.main_color;
-	ddlist_transp_sel.body.opa = 180;
+	ddlist_transp_sel.body.opa = 180; // 70.6%.
 
 	//=====================
 	//  ASAP: New transp.
@@ -3079,7 +3100,7 @@ void first_time_bpmp_clock(void *param)
 //===============================
 static lv_res_t _show_about_tab(lv_obj_t *obj)
 {
-	lv_obj_t *win = nyx_create_standard_window("Ｈ × Ｌ");
+	lv_obj_t *win = nyx_create_standard_window("Ｈ × Ｌ", NULL);
 	lv_win_add_btn(win, NULL, SYMBOL_HINT " 테마", _create_window_nyx_colors);
 	lv_obj_t *tab = lv_cont_create(win, NULL);
 	lv_cont_set_fit(tab, true, true);
@@ -3500,7 +3521,7 @@ void nyx_load_and_run()
 	close_btn = NULL;
 
 	// Initialize touch.
-	touch_enabled = touch_power_on();
+	touch_enabled = !touch_power_on();
 	lv_indev_drv_t indev_drv_touch;
 	lv_indev_drv_init(&indev_drv_touch);
 	indev_drv_touch.type = LV_INDEV_TYPE_POINTER;
@@ -3512,7 +3533,7 @@ void nyx_load_and_run()
 	tmp451_init();
 
 	// Set hekate theme based on chosen hue.
-	lv_theme_t *th = lv_theme_hekate_init(0x0E0E1A, n_cfg.theme_color, NULL); // n_cfg.theme_bg
+	lv_theme_t *th = lv_theme_hekate_init(n_cfg.theme_bg, n_cfg.theme_color, NULL); // n_cfg.theme_bg 0x0E0E1A
 	lv_theme_set_current(th);
 
 	// Create main menu

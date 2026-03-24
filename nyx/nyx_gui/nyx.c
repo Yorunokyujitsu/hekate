@@ -59,7 +59,7 @@ char *emmcsn_path_impl(char *path, char *sub_dir, char *filename, sdmmc_storage_
 	// Get actual eMMC S/N.
 	if (!storage)
 	{
-		if (!emmc_initialize(false))
+		if (emmc_initialize(false))
 			strcpy(emmc_sn, "00000000");
 		else
 		{
@@ -229,7 +229,7 @@ static void _load_saved_configuration()
 	LIST_INIT(ini_sections);
 	LIST_INIT(ini_nyx_sections);
 
-	if (!ini_parse(&ini_sections, "bootloader/hekate_ipl.ini", false))
+	if (ini_parse(&ini_sections, "bootloader/hekate_ipl.ini", false))
 	{
 		create_config_entry();
 		goto skip_main_cfg_parse;
@@ -274,7 +274,7 @@ static void _load_saved_configuration()
 	ini_free(&ini_sections);
 
 skip_main_cfg_parse:
-	if (!ini_parse(&ini_nyx_sections, "bootloader/nyx.ini", false))
+	if (ini_parse(&ini_nyx_sections, "bootloader/nyx.ini", false))
 		return;
 
 	// Load Nyx configuration.
@@ -286,9 +286,9 @@ skip_main_cfg_parse:
 			bool time_old_raw = false;
 			LIST_FOREACH_ENTRY(ini_kv_t, kv, &ini_sec->kvs, link)
 			{
-				/* if      (!strcmp("themebg",      kv->key))
-					n_cfg.theme_bg       = strtol(kv->val, NULL, 16); */
-				if (!strcmp("themecolor",   kv->key))
+				if      (!strcmp("themebg",      kv->key))
+					n_cfg.theme_bg       = strtol(kv->val, NULL, 16);
+				else if (!strcmp("themecolor",   kv->key))
 					n_cfg.theme_color    = atoi(kv->val);
 				/* else if (!strcmp("entries5col",  kv->key))
 					n_cfg.entries_5_col  = atoi(kv->val) == 1; */
@@ -367,14 +367,14 @@ static void nyx_load_bg_icons()
 	}
 }
 
-#define EXCP_EN_ADDR   0x4003FFFC
+#define EXCP_EN_ADDR   0x4003FF1C
 #define  EXCP_MAGIC 0x30505645      // EVP0
-#define EXCP_TYPE_ADDR 0x4003FFF8
+#define EXCP_TYPE_ADDR 0x4003FF18
 #define  EXCP_TYPE_RESET 0x545352   // RST
 #define  EXCP_TYPE_UNDEF 0x464455   // UDF
 #define  EXCP_TYPE_PABRT 0x54424150 // PABT
 #define  EXCP_TYPE_DABRT 0x54424144 // DABT
-#define EXCP_LR_ADDR   0x4003FFF4
+#define EXCP_LR_ADDR   0x4003FF14
 
 enum {
 	SD_NO_ERROR    = 0,
@@ -488,13 +488,13 @@ void nyx_init_load_res()
 	_show_errors(SD_NO_ERROR);
 
 	// Try 2 times to mount SD card.
-	if (!sd_mount())
+	if (sd_mount())
 	{
 		// Restore speed to SDR104.
 		sd_end();
 
 		// Retry.
-		if (!sd_mount())
+		if (sd_mount())
 			_show_errors(SD_MOUNT_ERROR); // Fatal.
 	}
 

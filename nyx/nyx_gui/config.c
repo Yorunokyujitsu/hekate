@@ -48,7 +48,7 @@ void set_default_configuration()
 
 void set_nyx_default_configuration()
 {
-	//n_cfg.theme_bg       = 0x0E0E1A;
+	n_cfg.theme_bg       = 0x0E0E1A;
 	n_cfg.theme_color    = 204;
 	//n_cfg.entries_5_col  = 0;
 	n_cfg.timeoffset     = 0;
@@ -70,12 +70,12 @@ int create_config_entry()
 {
 	char lbuf[64];
 	FIL fp;
-	bool mainIniFound = false;
+	bool ini_found = false;
 
 	LIST_INIT(ini_sections);
 
-	if (ini_parse(&ini_sections, "bootloader/hekate_ipl.ini", false))
-		mainIniFound = true;
+	if (!ini_parse(&ini_sections, "bootloader/hekate_ipl.ini", false))
+		ini_found = true;
 	else
 	{
 		u8 res = f_open(&fp, "bootloader/hekate_ipl.ini", FA_READ);
@@ -142,7 +142,7 @@ int create_config_entry()
 
 	f_puts("\n", &fp);
 
-	if (mainIniFound)
+	if (ini_found)
 	{
 		// Re-construct existing entries.
 		LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_sections, link)
@@ -193,7 +193,7 @@ int create_nyx_config_entry(bool force_unmount)
 {
 	bool sd_mounted = sd_get_card_mounted();
 
-	if (!sd_mount())
+	if (sd_mount())
 		return 1;
 
 	char lbuf[64];

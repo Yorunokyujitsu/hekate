@@ -495,7 +495,7 @@ static int _scsi_read(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 		}
 
 		// Do the SDMMC read.
-		if (!sdmmc_storage_read(ums->lun.storage, ums->lun.offset + lba_offset, amount, sdmmc_buf))
+		if (sdmmc_storage_read(ums->lun.storage, ums->lun.offset + lba_offset, amount, sdmmc_buf))
 			amount = 0;
 
 		// Wait for the async USB transfer to finish.
@@ -625,7 +625,7 @@ static int _scsi_write(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 				ums->lun.sense_data_info = lba_offset;
 				ums->lun.info_valid      = 1;
 
-				s_printf(txt_buf, "#FFDD00 Error:# Write - Comm failure %d!", bulk_ctxt->bulk_out_status);
+				s_printf(txt_buf, "#FFDD00 오류 (%d):# 쓰기 중 통신 실패!", bulk_ctxt->bulk_out_status);
 				ums->set_text(ums->label, txt_buf);
 				break;
 			}
@@ -650,7 +650,7 @@ static int _scsi_write(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 				goto empty_write;
 
 			// Perform the write.
-			if (!sdmmc_storage_write(ums->lun.storage, ums->lun.offset + lba_offset,
+			if (sdmmc_storage_write(ums->lun.storage, ums->lun.offset + lba_offset,
 				amount >> UMS_DISK_LBA_SHIFT, (u8 *)bulk_ctxt->bulk_out_buf))
 				amount = 0;
 
@@ -722,7 +722,7 @@ static int _scsi_verify(usbd_gadget_ums_t *ums, bulk_ctxt_t *bulk_ctxt)
 			break;
 		}
 
-		if (!sdmmc_storage_read(ums->lun.storage, ums->lun.offset + lba_offset, amount, bulk_ctxt->bulk_in_buf))
+		if (sdmmc_storage_read(ums->lun.storage, ums->lun.offset + lba_offset, amount, bulk_ctxt->bulk_in_buf))
 			amount = 0;
 
 DPRINTF("File read %X @ %X\n", amount, lba_offset);
@@ -1861,7 +1861,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 	if (usbs->type == MMC_SD)
 	{
 		sd_end();
-		if (!sd_mount())
+		if (sd_mount())
 		{
 			ums.set_text(ums.label, "#FFDD00 SD 카드 초기화 실패!#");
 			res = 1;
@@ -1874,7 +1874,7 @@ int usb_device_gadget_ums(usb_ctxt_t *usbs)
 	}
 	else
 	{
-		if (!emmc_initialize(false))
+		if (emmc_initialize(false))
 		{
 			ums.set_text(ums.label, "#FFDD00 eMMC 초기화 실패!#");
 			res = 1;
