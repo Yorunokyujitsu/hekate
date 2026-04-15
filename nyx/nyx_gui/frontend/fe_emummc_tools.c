@@ -33,15 +33,13 @@
 #define OUT_FILENAME_SZ      128
 #define NUM_SECTORS_PER_ITER 8192 // 4MB Cache.
 
-extern volatile boot_cfg_t *b_cfg;
-
 void load_emummc_cfg(emummc_cfg_t *emu_info)
 {
 	memset(emu_info, 0, sizeof(emummc_cfg_t));
 
 	// Parse emuMMC configuration.
 	LIST_INIT(ini_sections);
-	if (!ini_parse(&ini_sections, "emuMMC/emummc.ini", false))
+	if (ini_parse(&ini_sections, "emuMMC/emummc.ini", false))
 		return;
 
 	LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_sections, link)
@@ -225,7 +223,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
-		return 0;
+		return 1;
 	}
 
 	// Check if filesystem is FAT32 or the free space is smaller and dump in parts.
@@ -251,7 +249,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 		manual_system_maintenance(true);
 
-		return 0;
+		return 1;
 	}
 
 	u8 *buf = (u8 *)MIXD_BUF_ALIGNED;
@@ -297,7 +295,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
-				return 0;
+				return 1;
 			}
 
 			bytesWritten = 0;
@@ -319,13 +317,13 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 
 			msleep(1000);
 
-			return 0;
+			return 1;
 		}
 
 		retryCount = 0;
 		num = MIN(totalSectors, NUM_SECTORS_PER_ITER);
 
-		while (!sdmmc_storage_read(storage, lba_curr, num, buf))
+		while (sdmmc_storage_read(storage, lba_curr, num, buf))
 		{
 			s_printf(gui->txt_buf,
 				"\n #FFBA00 eMMC의 %d (@LBA %08X) 블 록 을#\n"
@@ -345,7 +343,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 				free(clmt);
 				f_unlink(outFilename);
 
-				return 0;
+				return 1;
 			}
 			else
 			{
@@ -371,7 +369,7 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 			free(clmt);
 			f_unlink(outFilename);
 
-			return 0;
+			return 1;
 		}
 		pct = (u64)((u64)(lba_curr - part->lba_start) * 100u) / (u64)(part->lba_end - part->lba_start);
 		if (pct != prevPct)
@@ -405,12 +403,12 @@ static int _dump_emummc_file_part(emmc_tool_gui_t *gui, char *sd_path, sdmmc_sto
 	f_close(&fp);
 	free(clmt);
 
-	return 1;
+	return 0;
 }
 
 void dump_emummc_file(emmc_tool_gui_t *gui)
 {
-	int res = 0;
+	int res = 1;
 	int base_len = 0;
 	u32 timer = 0;
 
@@ -423,7 +421,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 
 	manual_system_maintenance(true);
 
-	if (!sd_mount())
+	if (sd_mount())
 	{
 		lv_label_set_text(gui->label_info, "#FFBA00 SD 카드 초기화 실패!#");
 		goto out;
@@ -435,7 +433,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 	// Get SD Card free space for file based emuMMC.
 	f_getfree("", &sd_fs.free_clst, NULL);
 
-	if (!emmc_initialize(false))
+	if (emmc_initialize(false))
 	{
 		lv_label_set_text(gui->label_info, "#FFBA00 eMMC 초기화 실패!#");
 		goto out;
@@ -487,7 +485,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 		strcat(sdPath, bootPart.name);
 		res = _dump_emummc_file_part(gui, sdPath, &emmc_storage, &bootPart);
 
-		if (!res)
+		if (res)
 		{
 			s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 			goto out_failed;
@@ -522,7 +520,7 @@ void dump_emummc_file(emmc_tool_gui_t *gui)
 
 	res = _dump_emummc_file_part(gui, sdPath, &emmc_storage, &rawPart);
 
-	if (!res)
+	if (res)
 		s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 	else
 		s_printf(txt_buf, " 완 료 !\n");
@@ -534,7 +532,7 @@ out_failed:
 	timer = get_tmr_s() - timer;
 	emmc_end();
 
-	if (res)
+	if (!res)
 	{
 		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 완료!#", timer / 60, timer % 60);
 		gui->base_path[strlen(gui->base_path) - 5] = '\0';
@@ -598,7 +596,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			manual_system_maintenance(true);
 
-			return 0;
+			return 1;
 		}
 
 		user_offset = user_part->lba_start;
@@ -618,14 +616,14 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 
 			msleep(1000);
 
-			return 0;
+			return 1;
 		}
 
 		retryCount = 0;
 		num = MIN(totalSectors, NUM_SECTORS_PER_ITER);
 
 		// Read data from eMMC.
-		while (!sdmmc_storage_read(&emmc_storage, lba_curr, num, buf))
+		while (sdmmc_storage_read(&emmc_storage, lba_curr, num, buf))
 		{
 			s_printf(gui->txt_buf,
 				"\n #FFBA00 eMMC의 %d (@LBA %08X) 블 록 을#\n"
@@ -641,7 +639,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
-				return 0;
+				return 1;
 			}
 			else
 			{
@@ -655,7 +653,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 
 		// Write data to SD card.
 		retryCount = 0;
-		while (!sdmmc_storage_write(&sd_storage, sd_sector_off + lba_curr, num, buf))
+		while (sdmmc_storage_write(&sd_storage, sd_sector_off + lba_curr, num, buf))
 		{
 			s_printf(gui->txt_buf,
 				"\n #FFBA00 SD 카 드 의 %d (@LBA %08X) 블 록 을#\n"
@@ -671,7 +669,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 				lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 				manual_system_maintenance(true);
 
-				return 0;
+				return 1;
 			}
 			else
 			{
@@ -743,7 +741,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			s_printf(gui->txt_buf, " #D03838 작 업  실 패: %d#\n 다 시  시 도 하 세 요...", mkfs_error);
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 
-			return 0;
+			return 1;
 		}
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, " 완 료 !\n");
 
@@ -775,7 +773,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 			lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
 			free(gpt);
 
-			return 0;
+			return 1;
 		}
 
 		// Set new emuMMC size and USER size.
@@ -816,15 +814,16 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		free(gpt);
 	}
 
-	return 1;
+	return 0;
 }
 
 int emummc_raw_derive_bis_keys()
 {
-	// Generate BIS keys.
-	hos_bis_keygen();
-
 	u8 *cal0_buff = malloc(SZ_64K);
+
+	// Generate BIS keys.
+	if (hos_bis_keygen())
+		goto error;
 
 	// Read and decrypt CAL0 for validation of working BIS keys.
 	emmc_set_partition(EMMC_GPP);
@@ -841,6 +840,7 @@ int emummc_raw_derive_bis_keys()
 	// Check keys validity.
 	if (memcmp(&cal0->magic, "CAL0", 4))
 	{
+error:
 		// Clear EKS keys.
 		hos_eks_clear(HOS_MKEY_VER_MAX);
 
@@ -862,7 +862,7 @@ int emummc_raw_derive_bis_keys()
 		lv_obj_set_width(lb_desc, LV_HOR_RES / 9 * 4);
 
 		lv_label_set_text(lb_desc, "#FFBA00 BIS 키 검증 실패!#\n");
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 		lv_obj_set_top(mbox, true);
@@ -878,7 +878,7 @@ int emummc_raw_derive_bis_keys()
 
 void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 resized_count)
 {
-	int res = 0;
+	int res = 1;
 	u32 timer = 0;
 
 	char *txt_buf = (char *)malloc(SZ_16K);
@@ -890,13 +890,13 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 
 	manual_system_maintenance(true);
 
-	if (!sd_mount())
+	if (sd_mount())
 	{
 		lv_label_set_text(gui->label_info, "#FFBA00 SD 카드 초기화 실패!#");
 		goto out;
 	}
 
-	if (!emmc_initialize(false))
+	if (emmc_initialize(false))
 	{
 		lv_label_set_text(gui->label_info, "#FFBA00 eMMC 초기화 실패!#");
 		goto out;
@@ -949,7 +949,7 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 		strcat(sdPath, bootPart.name);
 		res = _dump_emummc_raw_part(gui, i, part_idx, sector_start, &bootPart, 0);
 
-		if (!res)
+		if (res)
 		{
 			s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 			goto out_failed;
@@ -983,7 +983,7 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 
 		res = _dump_emummc_raw_part(gui, 2, part_idx, sector_start, &rawPart, resized_count);
 
-		if (!res)
+		if (res)
 			s_printf(txt_buf, " #FFBA00 실 패 !#\n");
 		else
 			s_printf(txt_buf, " 완 료 !\n");
@@ -996,7 +996,7 @@ out_failed:
 	timer = get_tmr_s() - timer;
 	emmc_end();
 
-	if (res)
+	if (!res)
 	{
 		s_printf(txt_buf, "경과 시간: %d분 %d초.\n#008EED 완료!#", timer / 60, timer % 60);
 		strcpy(sdPath, gui->base_path);

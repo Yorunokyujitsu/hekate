@@ -324,7 +324,7 @@ static void _create_gpt_partition(gpt_t *gpt, u8 *gpt_idx, u32 *curr_part_lba, u
 	memcpy(gpt->entries[*gpt_idx].name, name_utf16, name_lenth * sizeof(u16));
 
 	// Wipe the first 1MB to sanitize it as raw-empty partition.
-	sdmmc_storage_write(part_info.storage, *curr_part_lba, 0x800, (void *)SDMMC_UPPER_BUFFER);
+	sdmmc_storage_write(part_info.storage, *curr_part_lba, 0x800, (void *)SDMMC_ALT_DMA_BUFFER);
 
 	// Prepare for next.
 	(*curr_part_lba) += size_lba;
@@ -346,8 +346,8 @@ static void _sd_prepare_and_flash_mbr_gpt()
 		memcpy(&mbr.bootstrap[0xE0], &part_info.mbr_old.bootstrap[0xE0], 208);
 
 	// Clear the first 16MB.
-	memset((void *)SDMMC_UPPER_BUFFER, 0, AU_ALIGN_BYTES);
-	sdmmc_storage_write(&sd_storage, 0, AU_ALIGN_SECTORS, (void *)SDMMC_UPPER_BUFFER);
+	memset((void *)SDMMC_ALT_DMA_BUFFER, 0, AU_ALIGN_BYTES);
+	sdmmc_storage_write(&sd_storage, 0, AU_ALIGN_SECTORS, (void *)SDMMC_ALT_DMA_BUFFER);
 
 	// Set disk signature.
 	se_rng_pseudo(random_number, sizeof(u32));
@@ -362,7 +362,7 @@ static void _sd_prepare_and_flash_mbr_gpt()
 		mbr.partitions[mbr_idx].type = 0x83; // Linux system partition.
 		mbr.partitions[mbr_idx].start_sct = AU_ALIGN_SECTORS + ((u32)part_info.hos_size << 11);
 		mbr.partitions[mbr_idx].size_sct = part_info.l4t_size << 11;
-		sdmmc_storage_write(&sd_storage, mbr.partitions[mbr_idx].start_sct, 0x800, (void *)SDMMC_UPPER_BUFFER); // Clear the first 1MB.
+		sdmmc_storage_write(&sd_storage, mbr.partitions[mbr_idx].start_sct, 0x800, (void *)SDMMC_ALT_DMA_BUFFER); // Clear the first 1MB.
 		mbr_idx++;
 	}
 
@@ -478,7 +478,7 @@ static void _sd_prepare_and_flash_mbr_gpt()
 
 			// Android Encryption partition. 16MB.
 			// Note: 16MB size is for aligning UDA. If any other tiny partition must be added, it should split the MDA one.
-			sdmmc_storage_write(&sd_storage, curr_part_lba, 0x8000, (void *)SDMMC_UPPER_BUFFER); // Clear the whole of it.
+			sdmmc_storage_write(&sd_storage, curr_part_lba, 0x8000, (void *)SDMMC_ALT_DMA_BUFFER); // Clear the whole of it.
 			_create_gpt_partition(gpt, &gpt_idx, &curr_part_lba,   0x8000, "MDA", 6);
 
 			// Android Cache partition. 700MB.
@@ -558,6 +558,8 @@ static int _emmc_prepare_and_flash_mbr_gpt()
 {
 	gpt_t *gpt = zalloc(sizeof(gpt_t));
 	gpt_header_t gpt_hdr_backup = { 0 };
+
+	memset((void *)SDMMC_ALT_DMA_BUFFER, 0, AU_ALIGN_BYTES);
 
 	// Read main GPT.
 	sdmmc_storage_read(&emmc_storage, 1, sizeof(gpt_t) >> 9, gpt);
@@ -645,7 +647,7 @@ static int _emmc_prepare_and_flash_mbr_gpt()
 
 		// Android Encryption partition. 16MB.
 		// Note: 16MB size is for aligning UDA. If any other tiny partition must be added, it should split the MDA one.
-		sdmmc_storage_write(&emmc_storage, curr_part_lba, 0x8000, (void *)SDMMC_UPPER_BUFFER); // Clear the whole of it.
+		sdmmc_storage_write(&emmc_storage, curr_part_lba, 0x8000, (void *)SDMMC_ALT_DMA_BUFFER); // Clear the whole of it.
 		_create_gpt_partition(gpt, &gpt_idx, &curr_part_lba,   0x8000, "MDA", 6);
 
 		// Android Cache partition. 700MB.
@@ -718,7 +720,7 @@ static lv_res_t _action_delete_linux_installer_files(lv_obj_t * btns, const char
 	int btn_idx = lv_btnm_get_pressed(btns);
 
 	// Delete parent mbox.
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	// Flash Linux.
 	if (!btn_idx)
@@ -762,7 +764,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 	int btn_idx = lv_btnm_get_pressed(btns);
 
 	// Delete parent mbox.
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	bool succeeded = false;
 
@@ -892,7 +894,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 		}
 
 		// Write data block to L4T partition.
-		res = !sdmmc_storage_write(part_info.storage, lba_curr + l4t_flash_ctxt.offset_sct, num, buf);
+		res = sdmmc_storage_write(part_info.storage, lba_curr + l4t_flash_ctxt.offset_sct, num, buf);
 
 		manual_system_maintenance(false);
 
@@ -912,7 +914,7 @@ static lv_res_t _action_flash_linux_data(lv_obj_t * btns, const char * txt)
 				goto exit;
 			}
 
-			res = !sdmmc_storage_write(part_info.storage, lba_curr + l4t_flash_ctxt.offset_sct, num, buf);
+			res = sdmmc_storage_write(part_info.storage, lba_curr + l4t_flash_ctxt.offset_sct, num, buf);
 			manual_system_maintenance(false);
 		}
 
@@ -946,7 +948,7 @@ exit:
 	free(txt_buf);
 
 	if (!succeeded)
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	else
 		lv_mbox_add_btns(mbox, mbox_btn_map2, _action_delete_linux_installer_files);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -1148,7 +1150,7 @@ static lv_res_t _action_check_flash_linux(lv_obj_t *btn)
 	goto exit;
 
 error:
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 exit:
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -1165,7 +1167,7 @@ static lv_res_t _action_reboot_recovery(lv_obj_t * btns, const char * txt)
 	int btn_idx = lv_btnm_get_pressed(btns);
 
 	// Delete parent mbox.
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	if (!btn_idx)
 	{
@@ -1197,7 +1199,7 @@ static lv_res_t _action_flash_android_data(lv_obj_t * btns, const char * txt)
 	bool boot_recovery = false;
 
 	// Delete parent mbox.
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	if (btn_idx)
 		return LV_RES_INV;
@@ -1443,7 +1445,7 @@ error:
 		lv_mbox_add_btns(mbox, mbox_btn_map2, _action_reboot_recovery);
 	}
 	else
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 
@@ -1487,6 +1489,8 @@ static lv_res_t _action_flash_android(lv_obj_t *btn)
 static lv_res_t _action_part_manager_flash_options0(lv_obj_t *btns, const char *txt)
 {
 	int btn_idx = lv_btnm_get_pressed(btns);
+	if (part_info.emmc)
+		btn_idx++;
 
 	switch (btn_idx)
 	{
@@ -1501,7 +1505,7 @@ static lv_res_t _action_part_manager_flash_options0(lv_obj_t *btns, const char *
 		_action_flash_android(NULL);
 		break;
 	case 3:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		return LV_RES_INV;
 	}
 
@@ -1511,6 +1515,8 @@ static lv_res_t _action_part_manager_flash_options0(lv_obj_t *btns, const char *
 static lv_res_t _action_part_manager_flash_options1(lv_obj_t *btns, const char *txt)
 {
 	int btn_idx = lv_btnm_get_pressed(btns);
+	if (part_info.emmc)
+		btn_idx++;
 
 	switch (btn_idx)
 	{
@@ -1519,11 +1525,11 @@ static lv_res_t _action_part_manager_flash_options1(lv_obj_t *btns, const char *
 		lv_obj_del(ums_mbox);
 		break;
 	case 1:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		_action_check_flash_linux(NULL);
 		return LV_RES_INV;
 	case 2:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		return LV_RES_INV;
 	}
 
@@ -1533,6 +1539,8 @@ static lv_res_t _action_part_manager_flash_options1(lv_obj_t *btns, const char *
 static lv_res_t _action_part_manager_flash_options2(lv_obj_t *btns, const char *txt)
 {
 	int btn_idx = lv_btnm_get_pressed(btns);
+	if (part_info.emmc)
+		btn_idx++;
 
 	switch (btn_idx)
 	{
@@ -1541,11 +1549,11 @@ static lv_res_t _action_part_manager_flash_options2(lv_obj_t *btns, const char *
 		lv_obj_del(ums_mbox);
 		break;
 	case 1:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		_action_flash_android(NULL);
 		return LV_RES_INV;
 	case 2:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		return LV_RES_INV;
 	}
 
@@ -1866,7 +1874,7 @@ out:
 	lv_obj_del(lbl_paths[1]);
 exit:
 	if (!buttons_set)
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
 
@@ -1945,7 +1953,7 @@ static lv_res_t _emmc_create_mbox_start_partitioning()
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	manual_system_maintenance(true);
 
-	if (!emmc_initialize(false))
+	if (emmc_initialize(false))
 	{
 		lv_label_set_text(lbl_extra, "#FFBA00 eMMC 초기화 실패!#");
 		goto exit;
@@ -2069,7 +2077,7 @@ exit:
 	free(txt_buf);
 
 	if (!buttons_set)
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
 
@@ -2090,11 +2098,11 @@ static lv_res_t _create_mbox_partitioning_option0(lv_obj_t *btns, const char *tx
 		action_ums_sd(NULL);
 		return LV_RES_OK;
 	case 1:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		_sd_create_mbox_start_partitioning();
 		break;
 	case 2:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		break;
 	}
 
@@ -2105,11 +2113,11 @@ static lv_res_t _create_mbox_partitioning_option1(lv_obj_t *btns, const char *tx
 {
 	int btn_idx = lv_btnm_get_pressed(btns);
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	if (!btn_idx)
 	{
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		if (!part_info.emmc)
 			_sd_create_mbox_start_partitioning();
 		else
@@ -2127,7 +2135,7 @@ static lv_res_t _create_mbox_partitioning_warn()
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
 	static const char *mbox_btn_map[] = { "\222Ｕ 백업", "\222시작", "\222취소", "" };
-	static const char *mbox_btn_map2[] = { "\222시작", "\222취소", "" };
+	static const char *mbox_btn_map1[] = { "\222시작", "\222취소", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -2157,7 +2165,7 @@ static lv_res_t _create_mbox_partitioning_warn()
 		lv_label_set_text(lbl_status, txt_buf);
 
 		if (part_info.backup_possible)
-			lv_mbox_add_btns(mbox, mbox_btn_map2, _create_mbox_partitioning_option1);
+			lv_mbox_add_btns(mbox, mbox_btn_map1, _create_mbox_partitioning_option1);
 		else
 			lv_mbox_add_btns(mbox, mbox_btn_map, _create_mbox_partitioning_option0);
 	}
@@ -2166,7 +2174,7 @@ static lv_res_t _create_mbox_partitioning_warn()
 		s_printf(txt_buf, "#FFBA00 안내: 이 작업은 낸드를 분할합니다!#\n\n"
 						  "#FF8000 주의: USER 파티션을 포맷합니다!#");
 		lv_label_set_text(lbl_status, txt_buf);
-		lv_mbox_add_btns(mbox, mbox_btn_map2, _create_mbox_partitioning_option1);
+		lv_mbox_add_btns(mbox, mbox_btn_map1, _create_mbox_partitioning_option1);
 	}
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -2179,11 +2187,10 @@ static lv_res_t _create_mbox_partitioning_warn()
 
 static lv_res_t _create_mbox_partitioning_android(lv_obj_t *btns, const char *txt)
 {
-	int btn_idx = lv_btnm_get_pressed(btns);
+	part_info.and_dynamic = lv_btnm_get_pressed(btns);
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
-	part_info.and_dynamic = btn_idx;
 	_create_mbox_partitioning_warn();
 
 	return LV_RES_INV;
@@ -2195,7 +2202,7 @@ static lv_res_t _create_mbox_partitioning_andr_part()
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\222Ⓐ 10~11", "\222Ⓐ 13~15", "" };
+	static const char *mbox_btn_map[] = { "\222Ⓐ 11", "\222Ⓐ 13+", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 
@@ -2470,7 +2477,7 @@ static lv_res_t _mbox_check_files_total_size_option(lv_obj_t *btns, const char *
 	if (!lv_btnm_get_pressed(btns))
 		part_info.backup_possible = false;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -2650,7 +2657,7 @@ static void _create_mbox_check_files_total_size()
 	lv_obj_align(lbl_table, h1, LV_ALIGN_IN_TOP_MID, 0, LV_DPI);
 
 	if (!part_info.backup_possible)
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	else
 		lv_mbox_add_btns(mbox, mbox_btn_map2, _mbox_check_files_total_size_option);
 
@@ -2687,7 +2694,7 @@ static lv_res_t _action_fix_mbr_gpt(lv_obj_t *btn)
 	int  gpt_emummc_migrate_no = 0;
 
 	// Try to init sd card. No need for valid MBR.
-	if (!sd_mount() && !sd_get_card_initialized())
+	if (sd_mount() && !sd_get_card_initialized())
 	{
 		lv_label_set_text(lbl_status, "#FFBA00 안내#: SD 카드 초기화 실패!");
 		goto out;
@@ -2986,7 +2993,7 @@ check_changes:
 out:
 	free(gpt);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -3000,11 +3007,11 @@ lv_res_t create_window_partition_manager(bool emmc)
 
 	if (!emmc)
 	{
-		win = nyx_create_standard_window(SYMBOL_DRIVE"  SD 카드 파티션 매니저");
+		win = nyx_create_standard_window(SYMBOL_DRIVE"  SD 카드 파티션 매니저", NULL);
 		lv_win_add_btn(win, NULL, SYMBOL_MODULES_ALT" 하이브리드 MBR · GPT 수정", _action_fix_mbr_gpt);
 	}
 	else
-		win = nyx_create_standard_window(SYMBOL_DRIVE"  eMMC 파티션 매니저");
+		win = nyx_create_standard_window(SYMBOL_DRIVE"  eMMC 파티션 매니저", NULL);
 
 	static lv_style_t bar_hos_bg, bar_emu_bg, bar_l4t_bg, bar_and_bg;
 	static lv_style_t bar_hos_ind, bar_emu_ind, bar_l4t_ind, bar_and_ind;
@@ -3073,7 +3080,7 @@ lv_res_t create_window_partition_manager(bool emmc)
 	u32 emmc_size = 0;
 	if (!emmc)
 	{
-		if (!sd_mount())
+		if (sd_mount())
 		{
 			lv_obj_t *lbl = lv_label_create(h1, NULL);
 			lv_label_set_recolor(lbl, true);
@@ -3081,7 +3088,7 @@ lv_res_t create_window_partition_manager(bool emmc)
 			return LV_RES_OK;
 		}
 
-		if (emmc_initialize(false))
+		if (!emmc_initialize(false))
 		{
 			emmc_set_partition(EMMC_GPP);
 			emmc_size = emmc_storage.sec_cnt >> 11;
@@ -3090,7 +3097,7 @@ lv_res_t create_window_partition_manager(bool emmc)
 	}
 	else
 	{
-		if (!emmc_initialize(false))
+		if (emmc_initialize(false))
 		{
 			lv_obj_t *lbl = lv_label_create(h1, NULL);
 			lv_label_set_recolor(lbl, true);
@@ -3392,11 +3399,11 @@ lv_res_t create_window_partition_manager(bool emmc)
 		lv_obj_set_click(btn_flash_android, false);
 		lv_btn_set_state(btn_flash_android, LV_BTN_STATE_INA);
 		break;
-	case 1: // Android 10/11.
-		lv_label_set_static_text(label_btn, "Ⓐ 10-11");
+	case 1: // Android 11.
+		lv_label_set_static_text(label_btn, "Ⓐ 11");
 		break;
 	case 2: // Android 13+
-		lv_label_set_static_text(label_btn, "Ⓐ 13-15");
+		lv_label_set_static_text(label_btn, "Ⓐ 13+");
 		break;
 	}
 	lv_obj_align(btn_flash_android, btn_flash_l4t, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 3, 0);

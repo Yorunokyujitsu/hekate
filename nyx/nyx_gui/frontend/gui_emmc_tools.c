@@ -28,7 +28,6 @@
 #include "../hos/hos.h"
 #include <libs/fatfs/ff.h>
 
-extern boot_cfg_t b_cfg;
 extern lv_obj_t *autorcm_btn;
 
 extern char *emmcsn_path_impl(char *path, char *sub_dir, char *filename, sdmmc_storage_t *storage);
@@ -62,7 +61,7 @@ static void _create_window_backup_restore(emmcPartType_t type, const char* win_l
 
 	s_printf(win_label_full, "%s%s%s", emmc_btn_ctxt.restore ? SYMBOL_DOWNLOAD : SYMBOL_UPLOAD, label, emmc_btn_ctxt.restore ? " 복원" : " 백업");
 
-	lv_obj_t *win = nyx_create_standard_window(win_label_full);
+	lv_obj_t *win = nyx_create_standard_window(win_label_full, NULL);
 
 	//Disable buttons.
 	nyx_window_toggle_buttons(win, true);
@@ -313,9 +312,9 @@ lv_res_t create_window_backup_restore_tool(lv_obj_t *btn)
 		emmc_btn_ctxt.restore = true;
 
 	if (!emmc_btn_ctxt.restore)
-		win = nyx_create_standard_window(SYMBOL_UPLOAD"  낸드 백업");
+		win = nyx_create_standard_window(SYMBOL_UPLOAD"  낸드 백업", NULL);
 	else
-		win = nyx_create_standard_window(SYMBOL_DOWNLOAD"  낸드 복원");
+		win = nyx_create_standard_window(SYMBOL_DOWNLOAD"  낸드 복원", NULL);
 	
 	//===========================================================
 	//  ASAP: NAND manager - backup/restore NAND on,off toggle.
