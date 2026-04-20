@@ -53,7 +53,7 @@ static lv_res_t (*emummc_tools)(lv_obj_t *btn);
 
 static lv_res_t _action_emummc_window_close(lv_obj_t *btn)
 {
-	nyx_win_close_action_custom(btn);
+	nyx_win_close_action(btn);
 
 	// Delete and relaunch main emuMMC window.
 	lv_obj_del(emummc_manage_window);
@@ -68,9 +68,9 @@ static void _create_window_emummc()
 
 	lv_obj_t *win;
 	if (!mbr_ctx.part_idx)
-		win = nyx_create_window_custom_close_btn(SYMBOL_DRIVE"  파일 에뮤낸드 생성", _action_emummc_window_close);
+		win = nyx_create_standard_window(SYMBOL_DRIVE"  파일 에뮤낸드 생성", _action_emummc_window_close);
 	else
-		win = nyx_create_window_custom_close_btn(SYMBOL_DRIVE"  파티션 에뮤낸드 생성", _action_emummc_window_close);
+		win = nyx_create_standard_window(SYMBOL_DRIVE"  파티션 에뮤낸드 생성", _action_emummc_window_close);
 
 	//Disable buttons.
 	nyx_window_toggle_buttons(win, true);
@@ -155,7 +155,7 @@ static lv_res_t _create_emummc_raw_format(lv_obj_t * btns, const char * txt)
 	int btn_idx = lv_btnm_get_pressed(btns);
 
 	// Delete parent mbox.
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	// Create partition window.
 	if (!btn_idx)
@@ -201,7 +201,7 @@ static lv_res_t _create_emummc_raw_action(lv_obj_t * btns, const char * txt)
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -339,7 +339,7 @@ static lv_res_t _create_emummc_action(lv_obj_t * btns, const char * txt)
 		break;
 	}
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -386,7 +386,7 @@ static lv_res_t _save_emummc_cfg_mig_mbox_action(lv_obj_t *btns, const char *txt
 {
 	// Delete main emuMMC and popup windows and relaunch main emuMMC window.
 	lv_obj_del(emummc_manage_window);
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	(*emummc_tools)(NULL);
 
@@ -593,7 +593,7 @@ static lv_res_t _create_emummc_mig1_action(lv_obj_t * btns, const char * txt)
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -610,7 +610,7 @@ static lv_res_t _create_emummc_mig0_action(lv_obj_t * btns, const char * txt)
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -627,7 +627,7 @@ static lv_res_t _create_emummc_mig2_action(lv_obj_t * btns, const char * txt)
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -644,7 +644,7 @@ static lv_res_t _create_emummc_mig3_action(lv_obj_t * btns, const char * txt)
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -661,7 +661,7 @@ static lv_res_t _create_emummc_mig4_action(lv_obj_t * btns, const char * txt)
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -684,7 +684,7 @@ static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 	case 2:
 		break;
 	case 3:
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		return LV_RES_INV;
 	}
 
@@ -750,7 +750,7 @@ static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 	else
 	{
 		s_printf(txt_buf, "#008EED 낸드 매니저#\n에뮤낸드를 찾을 수 없습니다!\n");
-		lv_mbox_add_btns(mbox, mbox_btn_map3, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map3, nyx_mbox_action);
 	}
 
 	lv_mbox_set_text(mbox, txt_buf);
@@ -759,7 +759,7 @@ static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -924,7 +924,7 @@ static lv_res_t _save_emummc_cfg_mbox_action(lv_obj_t *btns, const char *txt)
 	free(emummc_img->dirlist);
 	free(emummc_img);
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	(*emummc_tools)(NULL);
 
@@ -1045,12 +1045,12 @@ static lv_res_t _action_win_change_emummc_close(lv_obj_t *btn)
 	free(emummc_img->dirlist);
 	free(emummc_img);
 
-	return nyx_win_close_action_custom(btn);
+	return nyx_win_close_action(btn);
 }
 
 static lv_res_t _create_change_emummc_window(lv_obj_t *btn_caller)
 {
-	lv_obj_t *win = nyx_create_window_custom_close_btn(SYMBOL_SETTINGS"  낸드 변경", _action_win_change_emummc_close);
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_SETTINGS"  낸드 변경", _action_win_change_emummc_close);
 	lv_win_add_btn(win, NULL, SYMBOL_POWER" 시스낸드", _save_disable_emummc_cfg_action);
 
 	sd_mount();

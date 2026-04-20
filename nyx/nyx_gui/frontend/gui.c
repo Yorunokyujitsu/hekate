@@ -139,7 +139,7 @@ lv_img_dsc_t *icon_lakka;
 
 const lv_img_dsc_t *hekate_bg;
 
-lv_style_t btn_transp_rel, btn_transp_pr, btn_transp_tgl_rel, btn_transp_tgl_pr;
+lv_style_t btn_transp_rel, btn_transp_pr, btn_transp_tgl_rel, btn_transp_tgl_pr, btn_transp_ina;
 lv_style_t ddlist_transp_bg, ddlist_transp_sel;
 
 lv_style_t mbox_darken;
@@ -190,6 +190,7 @@ static void _nyx_disp_init()
 
 	// Rotate and copy the first frame.
 	vic_compose();
+	vic_wait_idle();
 
 	// Switch to new window configuration.
 	display_init_window_a_pitch_vic();
@@ -413,19 +414,19 @@ static void _disp_fb_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const
 	lv_flush_ready();
 }
 
-static touch_event touchpad;
+static touch_event_t touchpad;
 static bool touch_enabled;
 static bool console_enabled = false;
 
 static bool _fts_touch_read(lv_indev_data_t *data)
 {
-	if (touch_enabled)
-		touch_poll(&touchpad);
-	else
+	if (!touch_enabled)
 		return false;
 
-	// Take a screenshot if 3 fingers.
-	if (touchpad.fingers > 2)
+	int res = touch_poll(&touchpad);
+
+	// Take a screenshot if 3rd finger.
+	if (touchpad.finger > 2)
 	{
 		_save_fb_to_bmp();
 
@@ -435,14 +436,18 @@ static bool _fts_touch_read(lv_indev_data_t *data)
 
 	if (console_enabled)
 	{
+		// If no event, keep last debug message.
+		if (res)
+			return false;
+
 		// Print input debugging in console.
 		gfx_con_getpos(&gfx_con.savedx, &gfx_con.savedy, &gfx_con.savedcol);
 		gfx_con_setpos(32, 638, GFX_COL_AUTO);
 		gfx_con.fntsz = 8;
 		gfx_printf("x: %4d, y: %4d | z: %3d | ", touchpad.x, touchpad.y, touchpad.z);
-		gfx_printf("1: %02X, 2: %02X, 3: %02X, ", touchpad.raw[1], touchpad.raw[2], touchpad.raw[3]);
-		gfx_printf("4: %02X, 5: %02X, 6: %02X, 7: %02X",
-			touchpad.raw[4], touchpad.raw[5], touchpad.raw[6], touchpad.raw[7]);
+		gfx_printf("0: %02X, 1: %02X, 2: %02X, ", touchpad.raw[0], touchpad.raw[1], touchpad.raw[2]);
+		gfx_printf("3: %02X, 4: %02X, 5: %02X, 6: %02X",
+			touchpad.raw[3], touchpad.raw[4], touchpad.raw[5], touchpad.raw[6]);
 		gfx_con_setpos(gfx_con.savedx, gfx_con.savedy, gfx_con.savedcol);
 		gfx_con.fntsz = 16;
 
@@ -454,23 +459,10 @@ static bool _fts_touch_read(lv_indev_data_t *data)
 	data->point.y = touchpad.y;
 
 	// Decide touch enable.
-	switch (touchpad.type & STMFTS_MASK_EVENT_ID)
-	{
-	case STMFTS_EV_MULTI_TOUCH_ENTER:
-	case STMFTS_EV_MULTI_TOUCH_MOTION:
+	if (touchpad.touch)
 		data->state = LV_INDEV_STATE_PR;
-		break;
-	case STMFTS_EV_MULTI_TOUCH_LEAVE:
+	else
 		data->state = LV_INDEV_STATE_REL;
-		break;
-	case STMFTS_EV_NO_EVENT:
-	default:
-		if (touchpad.touch)
-			data->state = LV_INDEV_STATE_PR;
-		else
-			data->state = LV_INDEV_STATE_REL;
-		break;
-	}
 
 	return false; // No buffering so no more data read.
 }
@@ -787,7 +779,7 @@ lv_img_dsc_t *bmp_to_lvimg_obj(const char *path)
 		}
 
 		lv_img_dsc_t *img_desc = (lv_img_dsc_t *)bitmap;
-		u32 offset_copy = ALIGN((u32)bitmap + sizeof(lv_img_dsc_t), 0x10);
+		uptr offset_copy = ALIGN((uptr)bitmap + sizeof(lv_img_dsc_t), 0x10);
 
 		img_desc->header.always_zero = 0;
 		img_desc->header.w = bmpData.size_x;
@@ -922,7 +914,7 @@ lv_res_t nyx_generic_onoff_toggle(lv_obj_t *btn)
 	return LV_RES_OK;
 }
 
-lv_res_t mbox_action(lv_obj_t *btns, const char *txt)
+lv_res_t nyx_mbox_action(lv_obj_t *btns, const char *txt)
 {
 	lv_obj_t *mbox = lv_mbox_get_from_btn(btns);
 	lv_obj_t *dark_bg = lv_obj_get_parent(mbox);
@@ -956,7 +948,7 @@ bool nyx_emmc_check_battery_enough()
 			"#FFBA00 안내#: 배터리 잔량이 부족하여 작업을 수행할 수 없습니다!\n"
 			"전압을 최소 #C7EA46 3650 mV# 이상 올린 후, 다시 시도하세요!");
 
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 		lv_obj_set_top(mbox, true);
@@ -983,7 +975,7 @@ static void _nyx_sd_card_issues_warning(void *param)
 		"#FF8000 커넥터가 분리되었거나 손상되었을 수 있습니다!#\n\n"
 		"#C7EA46 낸드 매니저#의 #C7EA46 Ⓝ#에서 정보를 확인하세요.");
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -1018,7 +1010,7 @@ void nyx_window_toggle_buttons(lv_obj_t *win, bool disable)
 	}
 }
 
-lv_res_t nyx_win_close_action_custom(lv_obj_t * btn)
+lv_res_t nyx_win_close_action(lv_obj_t * btn)
 {
 	autorcm_btn = NULL;
 	close_btn = NULL;
@@ -1048,14 +1040,25 @@ static lv_obj_t *_nyx_create_window(const char *win_title, lv_action_t close_act
 }
 //============================
 
-lv_obj_t *nyx_create_standard_window(const char *win_title)
+lv_obj_t *nyx_create_standard_window(const char *win_title, lv_action_t close_action)
 {
-	return _nyx_create_window(win_title, nyx_win_close_action_custom);
-}
+	static lv_style_t win_bg_style;
 
-lv_obj_t *nyx_create_window_custom_close_btn(const char *win_title, lv_action_t rel_action)
-{
-	return _nyx_create_window(win_title, rel_action);
+	lv_style_copy(&win_bg_style, &lv_style_plain);
+	win_bg_style.body.main_color = lv_theme_get_current()->bg->body.main_color;
+	win_bg_style.body.grad_color = win_bg_style.body.main_color;
+
+	lv_obj_t *win = lv_win_create(lv_scr_act(), NULL);
+	lv_win_set_title(win, win_title);
+	lv_win_set_style(win, LV_WIN_STYLE_BG, &win_bg_style);
+	lv_obj_set_size(win, LV_HOR_RES, LV_VER_RES);
+
+	if (!close_action)
+		close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", nyx_win_close_action);
+	else
+		close_btn = lv_win_add_btn(win, NULL, SYMBOL_CLOSE" 닫기", close_action);
+
+	return win;
 }
 
 //===============================================
@@ -1144,7 +1147,7 @@ static lv_res_t _removed_sd_action(lv_obj_t *btns, const char *txt)
 		break;
 	}
 
-	return mbox_action(btns, txt);
+	return nyx_mbox_action(btns, txt);
 }
 
 static void _check_sd_card_removed(void *params)
@@ -1206,7 +1209,7 @@ static void _nyx_emmc_issues_warning(void *params)
 			"#FF8000 하드웨어에 문제가 있을 수 있습니다!#\n\n"
 			"#C7EA46 낸드 매니저#의 #C7EA46 Ⓢ#에서 정보를 확인하세요.");
 
-		lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+		lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 		lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
 		lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 		lv_obj_set_top(mbox, true);
@@ -1214,7 +1217,7 @@ static void _nyx_emmc_issues_warning(void *params)
 }
 
 //==================================================================================
-//  ASAP: CFW/OFW/RCM boot, shutdown process - Updated hekate & nyx 6.5.1 & 1.9.1.
+//  ASAP: CFW/OFW/RCM boot, shutdown process - Updated hekate & nyx 6.5.2 & 1.9.2.
 //==================================================================================
 // Convert DRAM density to 0.5GB units.
 static u32 density_to_halfgb(u8 density)
@@ -1285,10 +1288,45 @@ static bool is_current_ram_mode(void)
 
 	bool has_ram_8gb_ini =
 		(f_stat("config/ultrahand/ram_8gb.ini", &fno) == FR_OK);
-	bool has_exosphere_8gb =
-		(f_stat("atmosphere/config/exosphere.bin", &fno) == FR_OK);
 
-	ret = has_ram_8gb_ini && has_exosphere_8gb;
+	bool enable_mem_mode = false;
+	const char *ini_path = NULL;
+
+	if (f_stat("atmosphere/config/exosphere.ini", &fno) == FR_OK)
+		ini_path = "atmosphere/config/exosphere.ini";
+	else if (f_stat("exosphere.ini", &fno) == FR_OK)
+		ini_path = "exosphere.ini";
+
+	if (ini_path)
+	{
+		LIST_INIT(ini_sections);
+
+		if (!ini_parse(&ini_sections, ini_path, false))
+		{
+			bool found = false;
+
+			LIST_FOREACH_ENTRY(ini_sec_t, sec, &ini_sections, link)
+			{
+				if (sec->type != INI_CHOICE || strcmp(sec->name, "exosphere"))
+					continue;
+
+				LIST_FOREACH_ENTRY(ini_kv_t, kv, &sec->kvs, link)
+				{
+					if (!strcmp(kv->key, "enable_mem_mode"))
+					{
+						enable_mem_mode = (atoi(kv->val) != 0);
+						found = true;
+						break;
+					}
+				}
+
+				if (found)
+					break;
+			}
+		}
+	}
+
+	ret = has_ram_8gb_ini && enable_mem_mode;
 
 out:
 	sd_unmount();
@@ -1343,66 +1381,120 @@ static bool sd_copy_file_mounted(const char *src, const char *dst)
 
 	return (fr == FR_OK);
 }
-// File - rename.
-static bool _rename_if_exists(const char *src, const char *dst)
+// Memory mode.
+static bool set_exosphere_mem_mode(int mode)
 {
+	FIL rfp, wfp;
+	FRESULT res;
+	UINT br, bw;
+	char *buf, *newbuf, *p, *line_end;
+	const size_t BUF_SIZE = 16 * 1024;
+
+	const char *ini_path = NULL;
 	FILINFO fno;
-	FRESULT fr;
 
-	fr = f_stat(src, &fno);
-	if (fr == FR_NO_FILE || fr == FR_NO_PATH)
-		return true;
+	if (f_stat("atmosphere/config/exosphere.ini", &fno) == FR_OK)
+		ini_path = "atmosphere/config/exosphere.ini";
+	else if (f_stat("exosphere.ini", &fno) == FR_OK)
+		ini_path = "exosphere.ini";
+	else
+		return false;
 
-	if (fr != FR_OK) {
-		g_restore_fr = fr;
-		g_restore_step = "파일을 찾을 수 없습니다!";
+	res = f_open(&rfp, ini_path, FA_READ);
+	if (res != FR_OK)
+		return false;
+
+	buf = malloc(BUF_SIZE);
+	if (!buf) {
+		f_close(&rfp);
 		return false;
 	}
 
-	f_unlink(dst);
+	f_read(&rfp, buf, BUF_SIZE - 1, &br);
+	buf[br] = '\0';
+	f_close(&rfp);
 
-	fr = f_rename(src, dst);
-	if (fr != FR_OK) {
-		g_restore_fr = fr;
-		g_restore_step = "파일 전환에 실패했습니다!";
-		return false;
+	p = strstr(buf, "[exosphere]");
+	if (p && (p = strstr(p, "enable_mem_mode="))) {
+
+		p += strlen("enable_mem_mode=");
+
+		line_end = p;
+		while (*line_end && *line_end != '\r' && *line_end != '\n')
+			line_end++;
+
+		newbuf = malloc(BUF_SIZE);
+		if (!newbuf) {
+			free(buf);
+			return false;
+		}
+
+		size_t prefix = p - buf;
+		memcpy(newbuf, buf, prefix);
+
+		s_printf(newbuf + prefix, "%d", mode);
+
+		strcpy(newbuf + prefix + strlen(newbuf + prefix), line_end);
+
+		res = f_open(&wfp, ini_path, FA_WRITE | FA_CREATE_ALWAYS);
+		if (res == FR_OK) {
+			f_write(&wfp, newbuf, strlen(newbuf), &bw);
+			f_close(&wfp);
+		}
+
+		free(newbuf);
+	}
+	else
+	{
+		newbuf = malloc(BUF_SIZE);
+		if (!newbuf) {
+			free(buf);
+			return false;
+		}
+
+		strcpy(newbuf, buf);
+
+		strcat(newbuf, "\n[exosphere]\n");
+
+		char tmp[64];
+		s_printf(tmp, "enable_mem_mode=%d\n", mode);
+		strcat(newbuf, tmp);
+
+		res = f_open(&wfp, ini_path, FA_WRITE | FA_CREATE_ALWAYS);
+		if (res == FR_OK) {
+			f_write(&wfp, newbuf, strlen(newbuf), &bw);
+			f_close(&wfp);
+		}
+
+		free(newbuf);
 	}
 
+	free(buf);
 	return true;
 }
 // Restore to a environment when a DRAM mismatch is detected.
 static bool _restore_ram_mode(ram_mode_t mode)
 {
 	const char *src_hekate;
-	const char *src_fusee;
-	const char *src_exosphere;
-	const char *dst_exosphere;
 	const char *src_ram_ini;
 	const char *dst_ram_ini;
 
 	const char *dst_payload = "payload.bin";
 	const char *dst_update  = "bootloader/update.bin";
-	const char *dst_fusee   = "bootloader/payloads/fusee.bin";
 
 	if (mode == RAM_MODE_4GB) {
 		src_hekate     = "switch/.packages/.offload/ram_expansion/hekate_4gb.bin";
-		src_fusee      = "switch/.packages/.offload/ram_expansion/fusee_4gb.bin";
-		src_exosphere  = "atmosphere/config/exosphere.bin";
-		dst_exosphere  = "atmosphere/config/exosphere_.bin";
 		src_ram_ini    = "config/ultrahand/ram_8gb.ini";
 		dst_ram_ini    = "config/ultrahand/ram_4gb.ini";
 	} else {
 		src_hekate     = "switch/.packages/.offload/ram_expansion/hekate_8gb.bin";
-		src_fusee      = "switch/.packages/.offload/ram_expansion/fusee_8gb.bin";
-		src_exosphere  = "atmosphere/config/exosphere_.bin";
-		dst_exosphere  = "atmosphere/config/exosphere.bin";
 		src_ram_ini    = "config/ultrahand/ram_4gb.ini";
 		dst_ram_ini    = "config/ultrahand/ram_8gb.ini";
 	}
 
 	bool ok = false;
 
-	if (!sd_mount()) {
+	if (sd_mount()) {
 		g_restore_fr = FR_NOT_READY;
 		g_restore_step = "SD 카드 마운트 실패!";
 		return false;
@@ -1420,17 +1512,34 @@ static bool _restore_ram_mode(ram_mode_t mode)
 	if (!sd_copy_file_mounted(src_hekate, dst_update))
 		goto out;
 
-	g_restore_step = "fusee 복원 실패!";
-	if (!sd_copy_file_mounted(src_fusee, dst_fusee))
-		goto out;
-
-	g_restore_step = "exosphere 전환 실패!";
-	if (!_rename_if_exists(src_exosphere, dst_exosphere))
+	g_restore_step = "exosphere 설정 전환 실패!";
+	if (!set_exosphere_mem_mode(mode == RAM_MODE_4GB ? 0 : 1))
 		goto out;
 
 	g_restore_step = "RAM 설정 전환 실패!";
-	if (!_rename_if_exists(src_ram_ini, dst_ram_ini))
+
+	FILINFO fno;
+
+	bool src_exists = (f_stat(src_ram_ini, &fno) == FR_OK);
+	bool dst_exists = (f_stat(dst_ram_ini, &fno) == FR_OK);
+
+	f_unlink(dst_ram_ini);
+
+	if (src_exists) {
+		if (f_rename(src_ram_ini, dst_ram_ini) != FR_OK)
+			goto out;
+	}
+	else if (dst_exists) {
+		if (f_rename(dst_ram_ini, src_ram_ini) != FR_OK)
+			goto out;
+
+		if (f_rename(src_ram_ini, dst_ram_ini) != FR_OK)
+			goto out;
+	}
+	else {
+		g_restore_step = "RAM ini 파일 없음!";
 		goto out;
+	}
 
 	ok = true;
 
@@ -1484,7 +1593,7 @@ static lv_res_t _mbox_ofw_dram_action(lv_obj_t *btns, const char *txt)
 
 	case 1: // Force Boot
 		g_ofw_dram_confirmed = true;
-		mbox_action(btns, txt);
+		nyx_mbox_action(btns, txt);
 		g_ofw_dram_warning = false;
 		_do_ofw_boot();
 		return LV_RES_OK;
@@ -1536,7 +1645,7 @@ static lv_res_t _create_mbox_ofw_warning(void)
 
 	if (g_ofw_fuse7_warning) {
 		btn_map = btn_fuse7;
-		action  = mbox_action;
+		action  = nyx_mbox_action;
 
 		text = "#FF0012 경고#\n\n"
 			   "#FFBA00 안내#: #FF8000 지원되지 않는 DRAM Fuse 구성입니다!#\n\n"
@@ -1717,11 +1826,25 @@ static lv_res_t _launch_action(lv_obj_t *btn)
 //=============================
 static lv_res_t _info_button_action(lv_obj_t *btn)
 {
-	if (_restore_ram_mode(is_current_ram_mode() ? RAM_MODE_4GB : RAM_MODE_8GB)) {
+	FILINFO fno;
+	bool is_8gb = false;
+
+	if (sd_mount())
+		return LV_RES_OK;
+
+	if (f_chdrive("sd:") == FR_OK) {
+		is_8gb = (f_stat("config/ultrahand/ram_8gb.ini", &fno) == FR_OK);
+	}
+
+	sd_unmount();
+
+	if (_restore_ram_mode(is_8gb ? RAM_MODE_4GB : RAM_MODE_8GB)) {
 		power_set_state(POWER_OFF_REBOOT);
 	}
+
 	return LV_RES_OK;
 }
+
 
 //===================
 //  ASAP: PIN LOCK.
@@ -1756,7 +1879,7 @@ static lv_res_t _unlock_action(lv_obj_t *btns, const char *txt)
 		break;
 	}
 
-	return mbox_action(btns, txt);
+	return nyx_mbox_action(btns, txt);
 }
 
 // PIN number del, refresh config.
@@ -1864,7 +1987,7 @@ void nyx_create_onoff_button(lv_theme_t *th, lv_obj_t *parent, lv_obj_t *btn, co
 		btn_onoff_pr_hos_style.body.opa = 35;
 	}
 	else
-		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D);
+		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D); // COLOR_HOS_BG_LIGHT.
 	btn_onoff_pr_hos_style.body.grad_color = btn_onoff_pr_hos_style.body.main_color;
 	btn_onoff_pr_hos_style.text.color = th->btn.pr->text.color;
 	btn_onoff_pr_hos_style.body.empty = 0;
@@ -1914,7 +2037,7 @@ static void _create_text_button(lv_theme_t *th, lv_obj_t *parent, lv_obj_t *btn,
 		btn_onoff_pr_hos_style.body.opa = 35;
 	}
 	else
-		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D);
+		btn_onoff_pr_hos_style.body.main_color = LV_COLOR_HEX(theme_bg_color ? (theme_bg_color + 0x101010) : 0x2D2D2D); // COLOR_HOS_BG_LIGHT
 	btn_onoff_pr_hos_style.body.grad_color = btn_onoff_pr_hos_style.body.main_color;
 	btn_onoff_pr_hos_style.text.color = th->btn.pr->text.color;
 	btn_onoff_pr_hos_style.body.empty = 0;
@@ -1938,7 +2061,7 @@ static void _create_text_button(lv_theme_t *th, lv_obj_t *parent, lv_obj_t *btn,
 
 static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 {
-	lv_obj_t * lbl_credits = lv_label_create(parent, NULL);
+	lv_obj_t *lbl_credits = lv_label_create(parent, NULL);
 
 	lv_obj_align(lbl_credits, NULL, LV_ALIGN_IN_TOP_LEFT, LV_DPI / 2, LV_DPI / 2);
 	lv_label_set_style(lbl_credits, &monospace_text);
@@ -1953,21 +2076,21 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 		"Greetings to: #FFFFFF fincs#, #FFFFFF hexkyz#, #FFFFFF SciresM#,\n"
 		"              #FFFFFF Shiny Quagsire#, #FFFFFF WinterMute#\n\n"
 		"Open source and free packages used:                                              \n" // Label width alignment padding.
+		" - Littlev Graphics Library,\n"
+		"   Copyright (c) 2016-2018, #FFFFFF Gabor Kiss-Vamosi#\n\n"
 		" - FatFs R0.13c,\n"
 		"   Copyright (c) 2006-2018, #FFFFFF ChaN#\n"
 		"   Copyright (c) 2018-2022, #FF0012 CTC##FFFFFF aer#\n\n"
+		" - bcl-1.2.0,\n"
+		"   Copyright (c) 2003-2006, #FFFFFF Marcus Geelnard#\n\n"
 		" - blz,\n"
 		"   Copyright (c) 2018, #FFFFFF SciresM#\n\n"
 		" - elfload,\n"
 		"   Copyright (c) 2014, #FFFFFF Owen Shepherd#\n"
-		"   Copyright (c) 2018, #FFFFFF M4xw#\n\n"
-		" - bcl-1.2.0,\n"
-		"   Copyright (c) 2003-2006, #FFFFFF Marcus Geelnard#\n\n"
-		" - Littlev Graphics Library,\n"
-		"   Copyright (c) 2016-2018, #FFFFFF Gabor Kiss-Vamosi#\n"
+		"   Copyright (c) 2018, #FFFFFF M4xw#"
 	);
 
-	lv_obj_t * asap_credits = lv_label_create(parent, NULL);
+	lv_obj_t *asap_credits = lv_label_create(parent, NULL);
 	lv_obj_align(asap_credits, lbl_credits, LV_ALIGN_IN_TOP_RIGHT, -LV_DPI / 8, 0);
 	lv_label_set_style(asap_credits, &monospace_text);
 	lv_label_set_recolor(asap_credits, true);
@@ -1976,24 +2099,30 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 		"- #C7EA46 Developer#: 2020-2024, #00FFCC Asa#\n"
 		"             2025-2026, #00FFCC Yorunokyujitsu#\n\n"
 		"Contents\n"
-		" #F3F3F3 Hekate#, #CBCBCB Atmosphère#, #F3F3F3 ATLAS#, #CBCBCB sys-patch#,\n"
-		" #CBCBCB Ultrahand#, #F3F3F3 ovlloader+#, #CBCBCB ovl-sysmodule#,\n"
-		" #F3F3F3 ASAP-Packages#, #CBCBCB EOS#, #F3F3F3 SaltyNX#, #CBCBCB sys-con#,\n"
-		" #CBCBCB MissionControl#, #F3F3F3 EdiZon#, #CBCBCB ReverseNX-RT#,\n"
-		" #F3F3F3 NX-FanControl#, #CBCBCB FPSLocker#, #F3F3F3 sys-clk-oc#,\n"
-		" #CBCBCB Status-Monitor#, #F3F3F3 emuiibo#, #CBCBCB ovlreloader#,\n"
-		" #F3F3F3 Sphaira#, #CBCBCB ASAP-Updater#, #F3F3F3 Daybreak#, #CBCBCB DBI#,\n"
-		" #CBCBCB Reboot_to_payload#, #F3F3F3 Linkalho#, #CBCBCB Tinfoil#,\n"
+		" #F3F3F3 Hekate#, #CBCBCB Atmosphère#, #F3F3F3 ATLAS#, #CBCBCB sys-patch# \n"
+		" #CBCBCB Ultrahand#, #F3F3F3 ovlloader+#, #CBCBCB ovl-sysmodule# \n"
+		" #F3F3F3 ASAP-Packages#, #CBCBCB EOS#, #F3F3F3 SaltyNX#, #CBCBCB sys-con# \n"
+		" #CBCBCB MissionControl#, #F3F3F3 EdiZon#, #CBCBCB ReverseNX-RT# \n"
+		" #F3F3F3 NX-FanControl#, #CBCBCB FPSLocker#, #F3F3F3 sys-clk-oc# \n"
+		" #CBCBCB Status-Monitor#, #F3F3F3 emuiibo#, #CBCBCB ovlreloader# \n"
+		" #F3F3F3 Sphaira#, #CBCBCB ASAP-Updater#, #F3F3F3 Daybreak#, #CBCBCB DBI# \n"
+		" #CBCBCB Reboot_to_payload#, #F3F3F3 Linkalho#, #CBCBCB Tinfoil# \n"
 		" #F3F3F3 AmiiboGenerator#\n\n"
 		"Credits\n"
-		" #00CCFF switchbrew#, #00E4FF ITotalJustice#, #00CCFF proferabg#,\n"
-		" #00E4FF shchmue#, #00CCFF SuchMemeManySkill#, #00E4FF rdmrocha#,\n"
-		" #00CCFF borntohonk#, #00E4FF ndeadly#, #00CCFF duckbill#, #00E4FF halop#,\n"
-		" #00E4FF HamletDuFromage#, #00CCFF ppkantorski#, #00E4FF blawar#,\n"
-		" #00CCFF masagrator#, #00E4FF yusufakg#, #00CCFF o0Zz#, #00E4FF XorTroll#,\n"
-		" #00E4FF Hwfly-nx#, #00CCFF Morce3232#, #00E4FF impeeza#, #00CCFF rehius#,\n"
-		" #00CCFF Zathawo#, #00E4FF sthetix#, #00CCFF mrdude2478#"
+		" #00CCFF switchbrew#, #00E4FF ITotalJustice#, #00CCFF proferabg# \n"
+		" #00E4FF shchmue#, #00CCFF SuchMemeManySkill#, #00E4FF rdmrocha# \n"
+		" #00CCFF borntohonk#, #00E4FF ndeadly#, #00CCFF duckbill#, #00E4FF halop# \n"
+		" #00E4FF HamletDuFromage#, #00CCFF ppkantorski#, #00E4FF blawar# \n"
+		" #00CCFF masagrator#, #00E4FF yusufakg#, #00CCFF o0Zz#, #00E4FF XorTroll# \n"
+		" #00E4FF Hwfly-nx#, #00CCFF Morce3232#, #00E4FF impeeza#, #00CCFF rehius# \n"
+		" #00CCFF Zathawo#, #00E4FF sthetix#, #00CCFF Nagaa95#"
 	);
+
+	lv_obj_t *asap_info = lv_label_create(parent, NULL);
+	lv_obj_align(asap_info, NULL, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI * 2.8, LV_DPI / 4);
+	lv_label_set_style(asap_info, &hint_small_style_white);
+	lv_label_set_recolor(asap_info, true);
+	lv_label_set_static_text(asap_info, "#CBCBCB Ｌ은 Asa의 프로젝트에서 포크되었으며, 개발자 본인의 사용만을 목적으로합니다.#");
 
 	lv_obj_t *hekate_img = lv_img_create(parent, NULL);
 	lv_img_set_src(hekate_img, &hekate_logo);
@@ -2112,7 +2241,7 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 	lv_obj_set_size(list, LV_HOR_RES * 3 / 7, LV_VER_RES * 3 / 7);
 	lv_list_set_single_mode(list, true);
 
-	if (!sd_mount())
+	if (sd_mount())
 	{
 		lv_mbox_set_text(mbox, "#FFBA00 SD 카드 초기화 실패!#");
 
@@ -2136,7 +2265,7 @@ static lv_res_t _create_mbox_payloads(lv_obj_t *btn)
 	}
 
 out_end:
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action);
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action);
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -2266,12 +2395,9 @@ static const char *get_asap_current_version(void)
 	if (ver[0])
 		return ver;
 
-	if (!sd_mount())
-		return NULL;
-
 	LIST_INIT(ini_sections);
 
-	if (ini_parse(&ini_sections, "atmosphere/config/version.inc", false)) {
+	if (!ini_parse(&ini_sections, "atmosphere/config/version.inc", false)) {
 		LIST_FOREACH_ENTRY(ini_sec_t, sec, &ini_sections, link) {
 			if (strcmp(sec->name, "ASAP") != 0)
 				continue;
@@ -2334,7 +2460,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	bool found_cfw   = false;
 	bool found_stock = false;
 
-	if (ini_parse(&ini_sections, "bootloader/ini", true)) {
+	if (!ini_parse(&ini_sections, "bootloader/ini", true)) {
 		LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_sections, link) {
 			if (e >= max_entries) break;
 			if (!strcmp(ini_sec->name, "config") || ini_sec->type != INI_CHOICE) continue;
@@ -2558,12 +2684,6 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_obj_align(label_autoboot, rcm_btn, LV_ALIGN_OUT_RIGHT_MID, 78, 0);
 
 	lv_obj_t *ddlist = lv_ddlist_create(win, NULL);
-	if (hekate_bg) {
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_BG,  &ddlist_transp_bg);
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_BGO, &ddlist_transp_bg);
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_PR,  &ddlist_transp_sel);
-		lv_ddlist_set_style(ddlist, LV_DDLIST_STYLE_SEL, &ddlist_transp_sel);
-	}
 	lv_obj_set_top(ddlist, true);
 	lv_ddlist_set_draw_arrow(ddlist, true);
 
@@ -2612,13 +2732,6 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_obj_align(bt_dly, ddlist, LV_ALIGN_OUT_RIGHT_MID, 42, 0);
 
 	lv_obj_t *ddlist2 = lv_ddlist_create(win, NULL);
-	if (hekate_bg)
-	{
-		lv_ddlist_set_style(ddlist2, LV_DDLIST_STYLE_BG, &ddlist_transp_bg);
-		lv_ddlist_set_style(ddlist2, LV_DDLIST_STYLE_BGO, &ddlist_transp_bg);
-		lv_ddlist_set_style(ddlist2, LV_DDLIST_STYLE_PR, &ddlist_transp_sel);
-		lv_ddlist_set_style(ddlist2, LV_DDLIST_STYLE_SEL, &ddlist_transp_sel);
-	}
 	lv_obj_set_top(ddlist2, true);
 	lv_ddlist_set_draw_arrow(ddlist2, true);
 	lv_ddlist_set_options(ddlist2,
@@ -2747,7 +2860,7 @@ static lv_res_t _btn_atlas_click_action(lv_obj_t *btn)
 {
 	FILINFO fno;
 
-	if (!sd_mount())
+	if (sd_mount())
 		return LV_RES_OK;
 
 	if (f_stat("bootloader/sys/module", &fno) == FR_OK) {
@@ -2993,9 +3106,9 @@ static void _nyx_set_default_styles(lv_theme_t * th)
 	hint_small_style_white.text.font = &interui_20;
 
 	lv_style_copy(&monospace_text, &lv_style_plain);
-	monospace_text.body.main_color = LV_COLOR_HEX(0x1B1B1B);
-	monospace_text.body.grad_color = LV_COLOR_HEX(0x1B1B1B);
-	monospace_text.body.border.color = LV_COLOR_HEX(0x1B1B1B);
+	monospace_text.body.main_color = COLOR_HOS_BG_DARKER;
+	monospace_text.body.grad_color = COLOR_HOS_BG_DARKER;
+	monospace_text.body.border.color = COLOR_HOS_BG_DARKER;
 	monospace_text.body.border.width = 0;
 	monospace_text.body.opa = LV_OPA_TRANSP;
 	monospace_text.text.color = LV_COLOR_HEX(0xD8D8D8);
@@ -3006,22 +3119,40 @@ static void _nyx_set_default_styles(lv_theme_t * th)
 	lv_style_copy(&btn_transp_rel, th->btn.rel);
 	btn_transp_rel.body.main_color = LV_COLOR_HEX(0x444444);
 	btn_transp_rel.body.grad_color = btn_transp_rel.body.main_color;
+	btn_transp_rel.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_rel.body.opa = LV_OPA_50;
 
 	lv_style_copy(&btn_transp_pr, th->btn.pr);
 	btn_transp_pr.body.main_color = LV_COLOR_HEX(0x888888);
 	btn_transp_pr.body.grad_color = btn_transp_pr.body.main_color;
+	btn_transp_pr.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_pr.body.opa = LV_OPA_50;
 
 	lv_style_copy(&btn_transp_tgl_rel, th->btn.tgl_rel);
 	btn_transp_tgl_rel.body.main_color = LV_COLOR_HEX(0x444444);
 	btn_transp_tgl_rel.body.grad_color = btn_transp_tgl_rel.body.main_color;
+	btn_transp_tgl_rel.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_tgl_rel.body.opa = LV_OPA_50;
 
 	lv_style_copy(&btn_transp_tgl_pr, th->btn.tgl_pr);
 	btn_transp_tgl_pr.body.main_color = LV_COLOR_HEX(0x888888);
 	btn_transp_tgl_pr.body.grad_color = btn_transp_tgl_pr.body.main_color;
+	btn_transp_tgl_pr.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
 	btn_transp_tgl_pr.body.opa = LV_OPA_50;
+
+	lv_style_copy(&btn_transp_ina, th->btn.ina);
+	btn_transp_ina.body.main_color = LV_COLOR_HEX(0x292929);
+	btn_transp_ina.body.grad_color = btn_transp_ina.body.main_color;
+	btn_transp_ina.body.border.color = LV_COLOR_HEX(0x444444);
+	btn_transp_ina.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
+	btn_transp_ina.body.opa = LV_OPA_50;
+
+	lv_style_copy(&btn_transp_ina, th->btn.ina);
+	btn_transp_ina.body.main_color = LV_COLOR_HEX(0x292929);
+	btn_transp_ina.body.grad_color = btn_transp_ina.body.main_color;
+	btn_transp_ina.body.border.color = LV_COLOR_HEX(0x444444);
+	btn_transp_ina.body.shadow.color = LV_COLOR_HEX(0x0F0F0F);
+	btn_transp_ina.body.opa = LV_OPA_50;
 
 	lv_style_copy(&ddlist_transp_bg, th->ddlist.bg);
 	ddlist_transp_bg.body.main_color = LV_COLOR_HEX(0x0E0E1A);
@@ -3031,7 +3162,7 @@ static void _nyx_set_default_styles(lv_theme_t * th)
 	lv_style_copy(&ddlist_transp_sel, th->ddlist.sel);
 	ddlist_transp_sel.body.main_color = LV_COLOR_HEX(0x4D4D4D);
 	ddlist_transp_sel.body.grad_color = ddlist_transp_sel.body.main_color;
-	ddlist_transp_sel.body.opa = 180;
+	ddlist_transp_sel.body.opa = 180; // 70.6%.
 
 	//=====================
 	//  ASAP: New transp.
@@ -3079,7 +3210,7 @@ void first_time_bpmp_clock(void *param)
 //===============================
 static lv_res_t _show_about_tab(lv_obj_t *obj)
 {
-	lv_obj_t *win = nyx_create_standard_window("Ｈ × Ｌ");
+	lv_obj_t *win = nyx_create_standard_window("Ｈ × Ｌ", NULL);
 	lv_win_add_btn(win, NULL, SYMBOL_HINT " 테마", _create_window_nyx_colors);
 	lv_obj_t *tab = lv_cont_create(win, NULL);
 	lv_cont_set_fit(tab, true, true);
@@ -3239,8 +3370,15 @@ static void _nyx_main_menu(lv_theme_t * th)
 	btn_emuenabled_obj = btn_emuenabled;
 
 	lv_obj_t *label_status = lv_btn_create(scr, NULL);
+	bool is_8gb = false;
+	if (!sd_mount()) {
+		if (f_chdrive("sd:") == FR_OK) {
+			is_8gb = (f_stat("config/ultrahand/ram_8gb.ini", &fno) == FR_OK);
+		}
+		sd_unmount();
+	}
 	s_printf(txt_buf, "%s Ｎ#", is_8gb_case() ? "#FFFFFF" : "#C02C1D");
-	_create_text_button(th, NULL, label_status, is_current_ram_mode() ? txt_buf : "Ｍ", NULL);
+	_create_text_button(th, NULL, label_status, is_8gb ? txt_buf : "Ｍ", NULL);
 	lv_btn_set_action(label_status, LV_BTN_ACTION_CLICK, _create_window_hw_info_status);
 	lv_btn_set_action(label_status, LV_BTN_ACTION_LONG_PR, _info_button_action);
 	lv_obj_align(label_status, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 30, 0);
@@ -3388,7 +3526,7 @@ void refresh_nand_info_label(void)
 
 	pkg1_buf = zalloc(BOOTLOADER_SIZE);
 	bool read_ok = false;
-	if (!emu_info.enabled && emmc_initialize(false)) {
+	if (!emu_info.enabled && !emmc_initialize(false)) {
 		emmc_set_partition(EMMC_BOOT0);
 		sdmmc_storage_read(&emmc_storage, BOOTLOADER_MAIN_OFFSET / EMMC_BLOCKSIZE,
 						   BOOTLOADER_SIZE / EMMC_BLOCKSIZE, pkg1_buf);
@@ -3446,17 +3584,18 @@ void refresh_nand_info_label(void)
 		case 20240207110330ULL: fusee_ver = "18.0.0 - 18.1.0"; prev_ver = "17.0.1"; break;
 		case 20240808143958ULL: fusee_ver = "19.0.0 - 19.0.1"; prev_ver = "18.1.0"; break;
 		case 20250206151829ULL: fusee_ver = "20.0.0 - 20.5.0"; prev_ver = "19.0.1"; break;
-		case 20251009153823ULL: fusee_ver = "21.0.0 - 21.2.0+"; prev_ver = "20.5.0"; break;
-		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "21.2.0"; break;
+		case 20251009153823ULL: fusee_ver = "21.0.0 - 21.2.0"; prev_ver = "20.5.0"; break;
+		case 20260123111804ULL: fusee_ver = "22.0.0 - 22.1.0"; prev_ver = "21.2.0"; break;
+		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "22.1.0"; break;
 	}
 
 	if (!id) {
 		if (!emu_info.enabled) {
-			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 ＡＳＡＰ 업데이트 필요#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
 		} else if (emu_info.sector) {
-			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 ＡＳＡＰ 업데이트 필요#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
 		} else {
-			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 ＡＳＡＰ 업데이트 필요#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
 		}
 		strcat(txt_buf, info_buf);
 	}
@@ -3499,7 +3638,7 @@ void nyx_load_and_run()
 	close_btn = NULL;
 
 	// Initialize touch.
-	touch_enabled = touch_power_on();
+	touch_enabled = !touch_power_on();
 	lv_indev_drv_t indev_drv_touch;
 	lv_indev_drv_init(&indev_drv_touch);
 	indev_drv_touch.type = LV_INDEV_TYPE_POINTER;
@@ -3511,7 +3650,7 @@ void nyx_load_and_run()
 	tmp451_init();
 
 	// Set hekate theme based on chosen hue.
-	lv_theme_t *th = lv_theme_hekate_init(0x0E0E1A, n_cfg.theme_color, NULL); // n_cfg.theme_bg
+	lv_theme_t *th = lv_theme_hekate_init(n_cfg.theme_bg, n_cfg.theme_color, NULL); // n_cfg.theme_bg 0x0E0E1A
 	lv_theme_set_current(th);
 
 	// Create main menu

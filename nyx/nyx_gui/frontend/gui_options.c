@@ -51,7 +51,7 @@ void nyx_options_clear_ini_changes_made()
 //==========================
 static lv_res_t _save_options_action(lv_obj_t *btn)
 {
-	if (sd_mount()) {
+	if (!sd_mount()) {
 		create_config_entry();
 	}
 	nyx_options_clear_ini_changes_made();
@@ -220,31 +220,40 @@ lv_res_t _data_verification_action(lv_obj_t *ddlist)
 	return LV_RES_OK;
 }
 
-void create_flat_button(lv_obj_t *parent, lv_obj_t *btn, lv_color_t color, lv_action_t action)
+void create_flat_button(lv_obj_t *btn, int color_idx, lv_action_t action)
 {
+	lv_color_t color = color_idx ? lv_color_hsv_to_rgb(color_idx, 100, 100) : lv_color_hsv_to_rgb(53, 8, 90);
 	lv_style_t *btn_onoff_rel_hos_style = malloc(sizeof(lv_style_t));
-	lv_style_t *btn_onoff_pr_hos_style = malloc(sizeof(lv_style_t));
+	lv_style_t *btn_onoff_pr_hos_style  = malloc(sizeof(lv_style_t));
 	lv_style_copy(btn_onoff_rel_hos_style, lv_theme_get_current()->btn.rel);
-	btn_onoff_rel_hos_style->body.main_color = color;
-	btn_onoff_rel_hos_style->body.grad_color = btn_onoff_rel_hos_style->body.main_color;
+	btn_onoff_rel_hos_style->body.main_color  = color;
+	btn_onoff_rel_hos_style->body.grad_color  = btn_onoff_rel_hos_style->body.main_color;
 	btn_onoff_rel_hos_style->body.padding.hor = 0;
-	btn_onoff_rel_hos_style->body.radius = 0;
+	btn_onoff_rel_hos_style->body.radius      = 0;
+
+	if (color_idx == 167)
+	{
+		btn_onoff_rel_hos_style->body.border.color = LV_COLOR_HEX(0x000000);
+		btn_onoff_rel_hos_style->body.border.opa = LV_OPA_20;
+		btn_onoff_rel_hos_style->body.border.width = 3;
+	}
 
 	lv_style_copy(btn_onoff_pr_hos_style, lv_theme_get_current()->btn.pr);
-	btn_onoff_pr_hos_style->body.main_color = color;
-	btn_onoff_pr_hos_style->body.grad_color = btn_onoff_pr_hos_style->body.main_color;
-	btn_onoff_pr_hos_style->body.padding.hor = 0;
-	btn_onoff_pr_hos_style->body.border.color = LV_COLOR_GRAY;
+	btn_onoff_pr_hos_style->body.main_color   = color;
+	btn_onoff_pr_hos_style->body.grad_color   = btn_onoff_pr_hos_style->body.main_color;
+	btn_onoff_pr_hos_style->body.padding.hor  = 0;
+	btn_onoff_pr_hos_style->body.border.color = LV_COLOR_HEX(0xFFFFFF);
+	btn_onoff_pr_hos_style->body.border.opa   = LV_OPA_50;
 	btn_onoff_pr_hos_style->body.border.width = 4;
-	btn_onoff_pr_hos_style->body.radius = 0;
+	btn_onoff_pr_hos_style->body.radius       = 0;
 
-	lv_btn_set_style(btn, LV_BTN_STYLE_REL, btn_onoff_rel_hos_style);
-	lv_btn_set_style(btn, LV_BTN_STYLE_PR, btn_onoff_pr_hos_style);
+	lv_btn_set_style(btn, LV_BTN_STYLE_REL,     btn_onoff_rel_hos_style);
+	lv_btn_set_style(btn, LV_BTN_STYLE_PR,      btn_onoff_pr_hos_style);
 	lv_btn_set_style(btn, LV_BTN_STYLE_TGL_REL, btn_onoff_rel_hos_style);
-	lv_btn_set_style(btn, LV_BTN_STYLE_TGL_PR, btn_onoff_pr_hos_style);
+	lv_btn_set_style(btn, LV_BTN_STYLE_TGL_PR,  btn_onoff_pr_hos_style);
 
-	lv_btn_set_fit(btn, false, true);
-	lv_obj_set_width(btn, lv_obj_get_height(btn));
+	lv_btn_set_fit(btn, false, false);
+	lv_obj_set_size(btn, LV_DPI * 7 / 11, LV_DPI * 7 / 11);
 	lv_btn_set_toggle(btn, true);
 
 	if (action)
@@ -253,7 +262,12 @@ void create_flat_button(lv_obj_t *parent, lv_obj_t *btn, lv_color_t color, lv_ac
 
 typedef struct _color_test_ctxt
 {
+	u32 bg;
 	u16 hue;
+	u8 r;
+	u8 g;
+	u8 b;
+
 	lv_obj_t *window;
 	lv_obj_t *header1;
 	lv_obj_t *header2;
@@ -263,12 +277,27 @@ typedef struct _color_test_ctxt
 	lv_obj_t *button;
 	lv_obj_t *hue_slider;
 	lv_obj_t *hue_label;
+
+	lv_obj_t *r_slider;
+	lv_obj_t *r_label;
+	lv_obj_t *g_slider;
+	lv_obj_t *g_label;
+	lv_obj_t *b_slider;
+	lv_obj_t *b_label;
+
+	lv_style_t box_style;
+	lv_obj_t *box;
+
+	lv_obj_t *btn_reset;
+	lv_obj_t *btn_apply;
+	lv_obj_t *btn_black;
 } color_test_ctxt;
 
 color_test_ctxt color_test;
 
-static lv_res_t _save_theme_color_action(lv_obj_t *btn)
+static lv_res_t _action_win_nyx_colors_save(lv_obj_t *btn)
 {
+	n_cfg.theme_bg    = color_test.bg;
 	n_cfg.theme_color = color_test.hue;
 
 	// Save nyx config.
@@ -279,48 +308,100 @@ static lv_res_t _save_theme_color_action(lv_obj_t *btn)
 	return LV_RES_OK;
 }
 
-static void _show_new_nyx_color(u16 hue)
+static void _show_new_nyx_color(bool update_bg)
 {
-	lv_color_t color = lv_color_hsv_to_rgb(hue, 100, 100);
+	u32 bg = color_test.bg;
+	u16 hue = color_test.hue;
 
-	// Text, icons
-	static lv_style_t txt_test;
-	lv_style_copy(&txt_test, lv_label_get_style(color_test.label));
-	txt_test.text.color = color;
-	lv_obj_set_style(color_test.label, &txt_test);
-	lv_obj_set_style(color_test.icons, &txt_test);
-	
-	// Buttons
+	lv_color_t bgc       = LV_COLOR_HEX(bg);                              // COLOR_HOS_BG.
+	lv_color_t bgc_light = LV_COLOR_HEX(bg ? (bg + 0x101010) : 0x2D2D2D); // COLOR_HOS_BG_LIGHT.
+	lv_color_t bgc_press = LV_COLOR_HEX(bg ? (bg + 0x232323) : 0x404040); // 0x505050.
+	lv_color_t bg_border = LV_COLOR_HEX(bg ? (bg + 0x202020) : 0x3D3D3D); // COLOR_HOS_BG_LIGHTER.
+	lv_color_t color     = hue ? lv_color_hsv_to_rgb(hue, 100, 100) : lv_color_hsv_to_rgb(53, 8, 90);
+
 	static lv_style_t btn_tgl_pr_test;
 	lv_style_copy(&btn_tgl_pr_test, lv_btn_get_style(color_test.button, LV_BTN_STATE_TGL_PR));
+	btn_tgl_pr_test.body.main_color = bgc_press;
+	btn_tgl_pr_test.body.grad_color = btn_tgl_pr_test.body.main_color;
 	btn_tgl_pr_test.body.border.color = color;
 	btn_tgl_pr_test.text.color = color;
+
+	if (update_bg)
+	{
+		static lv_style_t win_bg_test;
+		lv_style_copy(&win_bg_test, lv_win_get_style(color_test.window, LV_WIN_STYLE_BG));
+		win_bg_test.body.main_color = bgc;
+		win_bg_test.body.grad_color = win_bg_test.body.main_color;
+		lv_win_set_style(color_test.window, LV_WIN_STYLE_BG, &win_bg_test);
+
+		static lv_style_t win_hdr_test;
+		lv_style_copy(&win_hdr_test, lv_win_get_style(color_test.window, LV_WIN_STYLE_HEADER));
+		win_hdr_test.body.main_color = bgc;
+		win_hdr_test.body.grad_color = win_hdr_test.body.main_color;
+		lv_win_set_style(color_test.window, LV_WIN_STYLE_HEADER, &win_hdr_test);
+
+		static lv_style_t hdr1_bg_test;
+		lv_style_copy(&hdr1_bg_test, lv_cont_get_style(color_test.header1));
+		hdr1_bg_test.body.main_color = bgc;
+		hdr1_bg_test.body.grad_color = hdr1_bg_test.body.main_color;
+		lv_cont_set_style(color_test.header1, &hdr1_bg_test);
+
+		static lv_style_t hdr2_bg_test;
+		lv_style_copy(&hdr2_bg_test, lv_cont_get_style(color_test.header2));
+		hdr2_bg_test.body.main_color = bgc;
+		hdr2_bg_test.body.grad_color = hdr2_bg_test.body.main_color;
+		lv_cont_set_style(color_test.header2, &hdr2_bg_test);
+
+		static lv_style_t btn_tgl_rel_test;
+		lv_style_copy(&btn_tgl_rel_test, lv_btn_get_style(color_test.btn_reset, LV_BTN_STATE_REL));
+		btn_tgl_rel_test.body.main_color = bgc_light;
+		btn_tgl_rel_test.body.grad_color = btn_tgl_rel_test.body.main_color;
+		lv_btn_set_style(color_test.btn_reset, LV_BTN_STATE_REL, &btn_tgl_rel_test);
+		lv_btn_set_style(color_test.btn_reset, LV_BTN_STATE_PR, &btn_tgl_pr_test);
+		lv_btn_set_style(color_test.btn_apply, LV_BTN_STATE_REL, &btn_tgl_rel_test);
+		lv_btn_set_style(color_test.btn_apply, LV_BTN_STATE_PR, &btn_tgl_pr_test);
+		lv_btn_set_style(color_test.btn_black, LV_BTN_STATE_REL, &btn_tgl_rel_test);
+		lv_btn_set_style(color_test.btn_black, LV_BTN_STATE_PR, &btn_tgl_pr_test);
+
+		static lv_style_t slider_bg;
+		lv_style_copy(&slider_bg, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_BG));
+		slider_bg.body.main_color = bg_border;
+		slider_bg.body.grad_color = slider_bg.body.main_color;
+		lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_BG, &slider_bg);
+		lv_slider_set_style(color_test.slider,     LV_SLIDER_STYLE_BG, &slider_bg);
+		lv_slider_set_style(color_test.r_slider,   LV_SLIDER_STYLE_BG, &slider_bg);
+		lv_slider_set_style(color_test.g_slider,   LV_SLIDER_STYLE_BG, &slider_bg);
+		lv_slider_set_style(color_test.b_slider,   LV_SLIDER_STYLE_BG, &slider_bg);
+	}
+	else
+	{
+		static lv_style_t txt_test;
+		lv_style_copy(&txt_test, lv_label_get_style(color_test.label));
+		txt_test.text.color = color;
+		lv_obj_set_style(color_test.label, &txt_test);
+
+		static lv_style_t slider_knb;
+		lv_style_copy(&slider_knb, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_KNOB));
+		slider_knb.body.main_color = color;
+		slider_knb.body.grad_color = slider_knb.body.main_color;
+		lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_KNOB, &slider_knb);
+		lv_slider_set_style(color_test.slider,     LV_SLIDER_STYLE_KNOB, &slider_knb);
+		lv_slider_set_style(color_test.r_slider,   LV_SLIDER_STYLE_KNOB, &slider_knb);
+		lv_slider_set_style(color_test.g_slider,   LV_SLIDER_STYLE_KNOB, &slider_knb);
+		lv_slider_set_style(color_test.b_slider,   LV_SLIDER_STYLE_KNOB, &slider_knb);
+
+		static lv_style_t slider_ind;
+		lv_style_copy(&slider_ind, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_INDIC));
+		slider_ind.body.main_color = hue ? lv_color_hsv_to_rgb(hue, 100, 72) : lv_color_hsv_to_rgb(53, 8, 65);
+		slider_ind.body.grad_color = slider_ind.body.main_color;
+		lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_INDIC, &slider_ind);
+		lv_slider_set_style(color_test.slider,     LV_SLIDER_STYLE_INDIC, &slider_ind);
+		lv_slider_set_style(color_test.r_slider,   LV_SLIDER_STYLE_INDIC, &slider_ind);
+		lv_slider_set_style(color_test.g_slider,   LV_SLIDER_STYLE_INDIC, &slider_ind);
+		lv_slider_set_style(color_test.b_slider,   LV_SLIDER_STYLE_INDIC, &slider_ind);
+	}
+
 	lv_btn_set_style(color_test.button, LV_BTN_STATE_TGL_PR, &btn_tgl_pr_test);
-
-	// Slider
-	static lv_style_t slider_bg, slider_test, slider_ind;
-	lv_style_copy(&slider_bg, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_BG));
-	lv_style_copy(&slider_test, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_KNOB));
-	lv_style_copy(&slider_ind, lv_slider_get_style(color_test.slider, LV_SLIDER_STYLE_INDIC));
-	slider_test.body.main_color = color;
-	slider_test.body.grad_color = slider_test.body.main_color;
-	slider_ind.body.main_color = lv_color_hsv_to_rgb(hue, 100, 72);
-	slider_ind.body.grad_color = slider_ind.body.main_color;
-	lv_slider_set_style(color_test.slider, LV_SLIDER_STYLE_BG, &slider_bg);
-	lv_slider_set_style(color_test.slider, LV_SLIDER_STYLE_KNOB, &slider_test);
-	lv_slider_set_style(color_test.slider, LV_SLIDER_STYLE_INDIC, &slider_ind);
-
-	static lv_style_t hue_bg, hue_knob, hue_ind;
-	lv_style_copy(&hue_bg, lv_slider_get_style(color_test.hue_slider, LV_SLIDER_STYLE_BG));
-	lv_style_copy(&hue_knob, lv_slider_get_style(color_test.hue_slider, LV_SLIDER_STYLE_KNOB));
-	lv_style_copy(&hue_ind, lv_slider_get_style(color_test.hue_slider, LV_SLIDER_STYLE_INDIC));
-	hue_knob.body.main_color = color;
-	hue_knob.body.grad_color = color;
-	hue_ind.body.main_color = lv_color_hsv_to_rgb(hue, 100, 72);
-	hue_ind.body.grad_color = hue_ind.body.main_color;
-	lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_BG, &hue_bg);
-	lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_KNOB, &hue_knob);
-	lv_slider_set_style(color_test.hue_slider, LV_SLIDER_STYLE_INDIC, &hue_ind);
 }
 
 static lv_res_t _slider_hue_action(lv_obj_t *slider)
@@ -328,11 +409,108 @@ static lv_res_t _slider_hue_action(lv_obj_t *slider)
 	if (color_test.hue != lv_slider_get_value(slider))
 	{
 		color_test.hue = lv_slider_get_value(slider);
-		_show_new_nyx_color(color_test.hue);
+
+		_show_new_nyx_color(false);
+
 		char hue[8];
 		s_printf(hue, "%03d", color_test.hue);
 		lv_label_set_text(color_test.hue_label, hue);
 	}
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _slider_r_action(lv_obj_t *slider)
+{
+	if (color_test.r != lv_slider_get_value(slider))
+	{
+		color_test.r = lv_slider_get_value(slider);
+		color_test.box_style.body.main_color = LV_COLOR_HEX((color_test.r << 16) | (color_test.g << 8) | color_test.b);
+		color_test.box_style.body.grad_color = color_test.box_style.body.main_color;
+		lv_obj_set_style(color_test.box, &color_test.box_style);
+
+		char shade[8];
+		s_printf(shade, "%03d", color_test.r);
+		lv_label_set_text(color_test.r_label, shade);
+	}
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _slider_g_action(lv_obj_t *slider)
+{
+	if (color_test.g != lv_slider_get_value(slider))
+	{
+		color_test.g = lv_slider_get_value(slider);
+		color_test.box_style.body.main_color = LV_COLOR_HEX((color_test.r << 16) | (color_test.g << 8) | color_test.b);
+		color_test.box_style.body.grad_color = color_test.box_style.body.main_color;
+		lv_obj_set_style(color_test.box, &color_test.box_style);
+
+		char shade[8];
+		s_printf(shade, "%03d", color_test.g);
+		lv_label_set_text(color_test.g_label, shade);
+	}
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _slider_b_action(lv_obj_t *slider)
+{
+	if (color_test.b != lv_slider_get_value(slider))
+	{
+		color_test.b = lv_slider_get_value(slider);
+		color_test.box_style.body.main_color = LV_COLOR_HEX((color_test.r << 16) | (color_test.g << 8) | color_test.b);
+		color_test.box_style.body.grad_color = color_test.box_style.body.main_color;
+		lv_obj_set_style(color_test.box, &color_test.box_style);
+
+		char shade[8];
+		s_printf(shade, "%03d", color_test.b);
+		lv_label_set_text(color_test.b_label, shade);
+	}
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _preset_bg_apply(lv_obj_t *btn)
+{
+	color_test.bg = (color_test.r << 16) | (color_test.g << 8) | color_test.b;
+
+	_show_new_nyx_color(true);
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _preset_bg_black(lv_obj_t *btn)
+{
+	color_test.bg = 0;
+
+	_show_new_nyx_color(true);
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _preset_bg_reset(lv_obj_t *btn)
+{
+	color_test.r = 0x2D;
+	color_test.g = 0x2D;
+	color_test.b = 0x2D;
+	color_test.bg = 0x2D2D2D;
+
+	color_test.box_style.body.main_color = LV_COLOR_HEX(color_test.bg);
+	color_test.box_style.body.grad_color = color_test.box_style.body.main_color;
+	lv_obj_set_style(color_test.box, &color_test.box_style);
+
+	lv_bar_set_value(color_test.r_slider, color_test.r);
+	lv_bar_set_value(color_test.g_slider, color_test.g);
+	lv_bar_set_value(color_test.b_slider, color_test.b);
+
+	char shade[8];
+	s_printf(shade, "%03d", color_test.r);
+	lv_label_set_text(color_test.r_label, shade);
+	lv_label_set_text(color_test.g_label, shade);
+	lv_label_set_text(color_test.b_label, shade);
+
+	_show_new_nyx_color(true);
 
 	return LV_RES_OK;
 }
@@ -344,84 +522,202 @@ static lv_res_t _preset_hue_action(lv_obj_t *btn)
 	if (color_test.hue != ext->idx)
 	{
 		color_test.hue = ext->idx;
-		_show_new_nyx_color(color_test.hue);
+
 		char hue[8];
 		s_printf(hue, "%03d", color_test.hue);
 		lv_label_set_text(color_test.hue_label, hue);
 		lv_bar_set_value(color_test.hue_slider, color_test.hue);
+
+		_show_new_nyx_color(false);
 	}
 
 	return LV_RES_OK;
 }
 
-static const u16 theme_colors[17] = {
-	4, 13, 23, 33, 43, 54, 66, 89, 124, 167, 187, 200, 208, 231, 261, 291, 341
+static const u16 theme_colors[18] = {
+	0, 4, 13, 23, 33, 43, 54, 66, 89, 124, 167, 187, 200, 208, 231, 261, 291, 341
 };
 
 lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_HINT"  테마 색상 & 화면 밝기");
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_HINT"  테마 색상 & 화면 밝기", NULL);
 	if (close_btn)
 	{
 		lv_obj_del(close_btn);
 		close_btn = NULL;
 	}
-	lv_win_add_btn(win, NULL, SYMBOL_SAVE" 저장 및 적용", _save_theme_color_action);
+	lv_win_add_btn(win, NULL, SYMBOL_SAVE" 저장 및 적용", _action_win_nyx_colors_save);
 	color_test.window = win;
 
 	// Set current theme colors.
+	color_test.bg  = n_cfg.theme_bg;
 	color_test.hue = n_cfg.theme_color;
+	u32 bg = n_cfg.theme_bg ? n_cfg.theme_bg : 0x2D2D2D;
+	color_test.r = (bg >> 16) & 0xFF;
+	color_test.g = (bg >>  8) & 0xFF;
+	color_test.b = (bg >>  0) & 0xFF;
 
-	lv_obj_t *sep = lv_label_create(win, NULL);
-	lv_label_set_static_text(sep, "");
-	lv_obj_align(sep, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+	lv_style_copy(&color_test.box_style, &lv_style_plain_color);
+	color_test.box_style.body.main_color = LV_COLOR_HEX(color_test.bg);
+	color_test.box_style.body.grad_color = color_test.box_style.body.main_color;
+	color_test.box_style.body.border.color = LV_COLOR_HEX(0xFFFFFF);
+	color_test.box_style.body.border.opa   = LV_OPA_20;
+	color_test.box_style.body.border.width = 2;
 
 	// Create container to keep content inside.
 	lv_obj_t *h1 = lv_cont_create(win, NULL);
-	lv_obj_set_size(h1, LV_HOR_RES - (LV_DPI * 8 / 10), LV_VER_RES / 7);
+	lv_obj_set_size(h1, LV_DPI * 299 / 25, LV_DPI * 27 / 26);
 	color_test.header1 = h1;
+
+	lv_obj_t *acc_label = lv_label_create(h1, NULL);
+	lv_label_set_static_text(acc_label, "하이라이트 색상:");
 
 	// Create color preset buttons.
 	lv_obj_t *color_btn = lv_btn_create(h1, NULL);
 	lv_btn_ext_t *ext = lv_obj_get_ext_attr(color_btn);
 	ext->idx = theme_colors[0];
-	create_flat_button(h1, color_btn, lv_color_hsv_to_rgb(theme_colors[0], 100, 100), _preset_hue_action);
+	create_flat_button(color_btn, ext->idx, _preset_hue_action);
+	lv_obj_align(color_btn, acc_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
 	lv_obj_t *color_btn2;
 
-	for (u32 i = 1; i < 17; i++)
+	for (u32 i = 1; i < ARRAY_SIZE(theme_colors); i++)
 	{
 		color_btn2 = lv_btn_create(h1, NULL);
 		ext = lv_obj_get_ext_attr(color_btn2);
 		ext->idx = theme_colors[i];
-		create_flat_button(h1, color_btn2, lv_color_hsv_to_rgb(theme_colors[i], 100, 100), _preset_hue_action);
+		create_flat_button(color_btn2, ext->idx, _preset_hue_action);
 		lv_obj_align(color_btn2, color_btn, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 		color_btn = color_btn2;
 	}
 
-	lv_obj_align(h1, sep, LV_ALIGN_OUT_BOTTOM_MID, 0, LV_DPI / 4);
+	lv_obj_align(h1, NULL, LV_ALIGN_IN_TOP_MID, 0, LV_DPI / 5);
 
 	// Create hue slider.
-	lv_obj_t * slider = lv_slider_create(win, NULL);
-	lv_obj_set_width(slider, 1070);
-	lv_obj_set_height(slider, LV_DPI * 4 / 10);
-	lv_bar_set_range(slider, 0, 359);
-	lv_bar_set_value(slider, color_test.hue);
-	lv_slider_set_action(slider, _slider_hue_action);
-	lv_obj_align(slider, h1, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
-	color_test.hue_slider = slider;
+	lv_obj_t *h_slider = lv_slider_create(win, NULL);
+	lv_obj_set_width(h_slider, LV_DPI * 213 / 20);
+	lv_obj_set_height(h_slider, LV_DPI * 3.5 / 10);
+	lv_bar_set_range(h_slider, 0, 359);
+	lv_bar_set_value(h_slider, color_test.hue);
+	lv_slider_set_action(h_slider, _slider_hue_action);
+	lv_obj_align(h_slider, h1, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
+	color_test.hue_slider = h_slider;
 
 	// Create hue label.
 	lv_obj_t *hue_text_label = lv_label_create(win, NULL);
-	lv_obj_align(hue_text_label, slider, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 24 / 100, 0);
-	char hue[8];
-	s_printf(hue, "%03d", color_test.hue);
-	lv_label_set_text(hue_text_label, hue);
+	lv_obj_align(hue_text_label, h_slider, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 24 / 100, 0);
+	char txt[8];
+	s_printf(txt, "%03d", color_test.hue);
+	lv_label_set_text(hue_text_label, txt);
 	color_test.hue_label = hue_text_label;
+
+	lv_obj_t *bg_label = lv_label_create(win, NULL);
+	lv_label_set_static_text(bg_label, "배경 색상:");
+	lv_obj_align(bg_label, h_slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 6 / 25);
+
+	// Create red slider.
+	lv_obj_t *r_slider = lv_slider_create(win, NULL);
+	lv_obj_set_width(r_slider, LV_DPI * 85 / 16);
+	lv_obj_set_height(r_slider, LV_DPI * 3.5 / 10);
+	lv_bar_set_range(r_slider, 11, 100);
+	lv_bar_set_value(r_slider, color_test.r);
+	lv_slider_set_action(r_slider, _slider_r_action);
+	lv_obj_align(r_slider, bg_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 21);
+	color_test.r_slider = r_slider;
+
+	// Create red label.
+	lv_obj_t *r_text_label = lv_label_create(win, NULL);
+	lv_obj_align(r_text_label, r_slider, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 24 / 100, 0);
+	s_printf(txt, "%03d", color_test.r);
+	lv_label_set_text(r_text_label, txt);
+	color_test.r_label = r_text_label;
+
+	// Create green slider.
+	lv_obj_t *g_slider = lv_slider_create(win, r_slider);
+	lv_bar_set_value(g_slider, color_test.g);
+	lv_slider_set_action(g_slider, _slider_g_action);
+	lv_obj_align(g_slider, r_slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 7);
+	color_test.g_slider = g_slider;
+
+	// Create green label.
+	lv_obj_t *g_text_label = lv_label_create(win, NULL);
+	lv_obj_align(g_text_label, g_slider, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 24 / 100, 0);
+	s_printf(txt, "%03d", color_test.g);
+	lv_label_set_text(g_text_label, txt);
+	color_test.g_label = g_text_label;
+
+	// Create blue slider.
+	lv_obj_t *b_slider = lv_slider_create(win, r_slider);
+	lv_bar_set_value(b_slider, color_test.b);
+	lv_slider_set_action(b_slider, _slider_b_action);
+	lv_obj_align(b_slider, g_slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 7);
+	color_test.b_slider = b_slider;
+
+	// Create blue label.
+	lv_obj_t *b_text_label = lv_label_create(win, NULL);
+	lv_obj_align(b_text_label, b_slider, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 24 / 100, 0);
+	s_printf(txt, "%03d", color_test.b);
+	lv_label_set_text(b_text_label, txt);
+	color_test.b_label = b_text_label;
+
+	// Create theme color box.
+	lv_obj_t * bg_box = lv_obj_create(win, NULL);
+	lv_obj_set_size(bg_box, LV_DPI * 10 / 7, LV_DPI * 17 / 13);
+	lv_obj_align(bg_box, r_text_label, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI / 4, 0);
+	lv_obj_set_style(bg_box, &color_test.box_style);
+	color_test.box = bg_box;
+
+	// Create theme color buttons.
+	lv_obj_t *btn_reset = lv_btn_create(win, NULL);
+	lv_obj_t *label_btn = lv_label_create(btn_reset, NULL);
+	lv_label_set_static_text(label_btn, "그레이");
+	lv_btn_set_fit(btn_reset, false, true);
+	lv_obj_set_width(btn_reset, LV_DPI * 5 / 3);
+	lv_btn_set_action(btn_reset, LV_BTN_ACTION_CLICK, _preset_bg_reset);
+	lv_obj_align(btn_reset, bg_box, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI / 5, 0);
+	color_test.btn_reset = btn_reset;
+
+	lv_obj_t *btn_black = lv_btn_create(win, btn_reset);
+	label_btn = lv_label_create(btn_black, NULL);
+	lv_label_set_static_text(label_btn, "블랙");
+	lv_btn_set_action(btn_black, LV_BTN_ACTION_CLICK, _preset_bg_black);
+	lv_obj_align(btn_black, btn_reset, LV_ALIGN_OUT_RIGHT_TOP, LV_DPI / 5, 0);
+	color_test.btn_black = btn_black;
+
+	lv_obj_t *btn_apply = lv_btn_create(win, btn_reset);
+	label_btn = lv_label_create(btn_apply, NULL);
+	lv_label_set_static_text(label_btn, "배경 색상 미리보기");
+	lv_obj_set_width(btn_apply, LV_DPI * 10 / 3 + LV_DPI / 5);
+	lv_btn_set_action(btn_apply, LV_BTN_ACTION_CLICK, _preset_bg_apply);
+	lv_obj_align(btn_apply, btn_reset, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 10);
+	color_test.btn_apply = btn_apply;
+
+	// Create Backlight slider.
+	lv_obj_t *backlight_text = lv_label_create(win, NULL);
+	lv_label_set_static_text(backlight_text, "화면 밝기:");
+	lv_obj_align(backlight_text, b_slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 1 / 5);
+
+	lv_obj_t *backlight_slider = lv_slider_create(win, NULL);
+	lv_obj_set_width(backlight_slider, LV_DPI * 85 / 16);
+	lv_obj_set_height(backlight_slider, LV_DPI * 3.5 / 10);
+	lv_bar_set_range(backlight_slider, 30, 220);
+	lv_bar_set_value(backlight_slider, h_cfg.backlight);
+	lv_slider_set_action(backlight_slider, _slider_brightness_action);
+	lv_obj_align(backlight_slider, backlight_text, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 21);
+	color_test.slider = backlight_slider;
+
+	// Create Theme image info.
+	lv_obj_t *tp_txt = lv_label_create(win, NULL);
+	lv_label_set_static_text(tp_txt, "배경 & 프로필 이미지 경로:");
+	lv_obj_align(tp_txt, b_text_label, LV_ALIGN_OUT_BOTTOM_LEFT, 65, LV_DPI * 2 / 7);
+
+	lv_obj_t *lbl_image = lv_label_create(win, NULL);
+	lv_label_set_static_text(lbl_image, "bootloader/res/background, profile.bmp");
+	lv_obj_align(lbl_image, tp_txt, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 21);
 
 	// Create sample text.
 	lv_obj_t *h2 = lv_cont_create(win, NULL);
-	lv_obj_set_size(h2, LV_HOR_RES - (LV_DPI * 8 / 10), LV_VER_RES / 2);
-	lv_obj_align(h2, slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2);
+	lv_obj_set_size(h2, LV_DPI * 12, LV_DPI * 14 / 10);
+	lv_obj_align(h2, backlight_slider, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 6 / 25);
 	color_test.header2 = h2;
 
 	lv_obj_t *lbl_sample = lv_label_create(h2, NULL);
@@ -430,42 +726,19 @@ lv_res_t _create_window_nyx_colors(lv_obj_t *btn)
 	lv_obj_t *lbl_test = lv_label_create(h2, NULL);
 	lv_label_set_long_mode(lbl_test, LV_LABEL_LONG_BREAK);
 	lv_label_set_static_text(lbl_test,
-		"현재 Ｌ은 Asa의 프로젝트에서 포크되었습니다.\n"
-		"Mariko 전용으로 설계되었으며, 개인 사용만을 목적으로합니다.\n"
-		"이를 어기고 무단 사용으로 인해 발생한 문제에 대하여 일절 책임지지 않습니다.\n\n"
 		"3초 이상 입력을 유지하여 숨겨진 메뉴를 사용 가능합니다.\n"
 		"포맷·분할:  eMMC 분할 모드   |   Ｘ:  RAM 전환   |   Ｅ:  페이로드 부팅   |   Ｕ:  HID 모드");
 	lv_obj_set_width(lbl_test, lv_obj_get_width(h2) - LV_DPI * 6 / 10);
 	lv_obj_align(lbl_test, lbl_sample, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
 	color_test.label = lbl_test;
 
-	// Create sample icons.
-	lv_obj_t *lbl_icons = lv_label_create(h2, NULL);
-	lv_label_set_static_text(lbl_icons,
-		SYMBOL_BRIGHTNESS SYMBOL_CHARGE SYMBOL_FILE SYMBOL_DRIVE SYMBOL_FILE_CODE
-		SYMBOL_EDIT SYMBOL_HINT SYMBOL_DRIVE SYMBOL_KEYBOARD SYMBOL_POWER);
-	lv_obj_align(lbl_icons, lbl_test, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 2 / 5);
-	color_test.icons = lbl_icons;
-
-	// Create Backlight slider.
-	lv_obj_t *label_txt = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_txt, SYMBOL_BRIGHTNESS" 화면 밝기:");
-	lv_obj_align(label_txt, lbl_icons, LV_ALIGN_OUT_RIGHT_MID, 100, 0);
-
-	// Create sample slider.
-	lv_obj_t *slider_bl = lv_slider_create(h2, NULL);
-	lv_bar_set_range(slider_bl, 30, 220);
-	lv_bar_set_value(slider_bl, h_cfg.backlight);
-	lv_slider_set_action(slider_bl, _slider_brightness_action);
-	lv_obj_align(slider_bl, label_txt, LV_ALIGN_OUT_RIGHT_MID, 30, 0);
-	color_test.slider = slider_bl;
-
 	// Create sample button.
 	lv_obj_t *btn_test = lv_btn_create(h2, NULL);
 	lv_btn_set_state(btn_test, LV_BTN_STATE_TGL_PR);
-	lv_obj_align(btn_test, lbl_test, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, LV_DPI / 5);
+	lv_obj_align(btn_test, lbl_sample, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, 0);
 	lv_label_create(btn_test, NULL);
 	lv_obj_set_click(btn_test, false);
+	lv_obj_set_hidden(btn_test, true);
 	color_test.button = btn_test;
 
 	_show_new_nyx_color(color_test.hue);
@@ -549,7 +822,7 @@ static lv_res_t _action_clock_edit(lv_obj_t *btns, const char * txt)
 
 	timeoffset_backup_valid = false;
 
-	mbox_action(btns, txt);
+	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
 }
@@ -775,7 +1048,7 @@ lv_res_t _joycon_info_dump_action(lv_obj_t * btn)
 	jc_pad->bt_conn_r.type = is_r_hos ? jc_pad->bt_conn_r.type : 0;
 
 save_data:
-	error = !sd_mount() ? 5 : 0;
+	error = sd_mount() ? 5 : 0;
 
 	if (!error)
 	{
@@ -995,7 +1268,7 @@ disabled_or_cal0_issue:;
 
 	lv_mbox_set_text(mbox, txt_buf);
 
-	lv_mbox_add_btns(mbox, mbox_btn_map, mbox_action); // Important. After set_text.
+	lv_mbox_add_btns(mbox, mbox_btn_map, nyx_mbox_action); // Important. After set_text.
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
@@ -1053,7 +1326,7 @@ static lv_res_t _set_passwd_action(lv_obj_t *btns, const char *txt)
 		break;
 	}
 
-	return mbox_action(btns, txt);
+	return nyx_mbox_action(btns, txt);
 }
 
 static lv_res_t _pinlock_edit_save(lv_obj_t *btns, const char * txt)
