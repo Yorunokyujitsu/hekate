@@ -2107,7 +2107,7 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 		" #CBCBCB Status-Monitor#, #F3F3F3 emuiibo#, #CBCBCB ovlreloader# \n"
 		" #F3F3F3 Sphaira#, #CBCBCB ASAP-Updater#, #F3F3F3 Daybreak#, #CBCBCB DBI# \n"
 		" #CBCBCB Reboot_to_payload#, #F3F3F3 Linkalho#, #CBCBCB Tinfoil# \n"
-		" #F3F3F3 AmiiboGenerator#\n\n"
+		" #F3F3F3 AmiiboGenerator#, #CBCBCB HOC#\n\n"
 		"Credits\n"
 		" #00CCFF switchbrew#, #00E4FF ITotalJustice#, #00CCFF proferabg# \n"
 		" #00E4FF shchmue#, #00CCFF SuchMemeManySkill#, #00E4FF rdmrocha# \n"
@@ -2115,7 +2115,7 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 		" #00E4FF HamletDuFromage#, #00CCFF ppkantorski#, #00E4FF blawar# \n"
 		" #00CCFF masagrator#, #00E4FF yusufakg#, #00CCFF o0Zz#, #00E4FF XorTroll# \n"
 		" #00E4FF Hwfly-nx#, #00CCFF Morce3232#, #00E4FF impeeza#, #00CCFF rehius# \n"
-		" #00CCFF Zathawo#, #00E4FF sthetix#, #00CCFF Nagaa95#"
+		" #00CCFF Zathawo#, #00E4FF sthetix#, #00CCFF Horizon-OC#"
 	);
 
 	lv_obj_t *asap_info = lv_label_create(parent, NULL);
