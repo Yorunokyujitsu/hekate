@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2026 CTCaer
- * Copyright (c) 2019 Atmosphère-NX
+ * Copyright (c) 2019-2026 Atmosphère-NX
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -208,7 +208,8 @@ void config_exosphere(launch_ctxt_t *ctxt, u32 warmboot_base)
 	if (!ctxt->stock)
 	{
 		LIST_INIT(ini_exo_sections);
-		if (!ini_parse(&ini_exo_sections, "exosphere.ini", false))
+		if (!ini_parse(&ini_exo_sections, "exosphere.ini", false) ||
+			!ini_parse(&ini_exo_sections, "atmosphere/config/exosphere.ini", false))
 		{
 			LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_exo_sections, link)
 			{
@@ -226,7 +227,9 @@ void config_exosphere(launch_ctxt_t *ctxt, u32 warmboot_base)
 						exo_cfg->uart_invert = atoi(kv->val);
 					else if (!strcmp("log_baud_rate", kv->key))
 						exo_cfg->uart_baudrate = atoi(kv->val);
-					else if (!strcmp("enable_mem_mode", kv->key))
+					else if (!strcmp("enable_40mb_mem_mode", kv->key))
+						bc_mem_mode = atoi(kv->val);
+					else if (!strcmp("enable_8gb_mem_mode", kv->key))
 						bc_mem_mode = atoi(kv->val);
 					else if (emu_cfg.enabled && !h_cfg.emummc_force_disable)
 					{
@@ -431,6 +434,5 @@ void secmon_exo_check_panic()
 	display_backlight_brightness(150, 1000);
 	msleep(1000);
 
-	while (!(btn_wait() & BTN_POWER))
-		;
+	while (!(btn_wait() & BTN_POWER));
 }
