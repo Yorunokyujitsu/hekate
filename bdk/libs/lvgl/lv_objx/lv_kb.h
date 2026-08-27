@@ -203,6 +203,9 @@ lv_action_t lv_kb_get_hide_action(const lv_obj_t * kb);
  */
 lv_style_t * lv_kb_get_style(const lv_obj_t *kb, lv_kb_style_t type);
 
+/* ASAP - gui_tools_files.c */
+void lv_kb_cycle_map(lv_obj_t *kb);
+
 /**********************
  *      MACROS
  **********************/

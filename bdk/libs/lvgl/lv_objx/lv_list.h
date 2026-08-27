@@ -110,6 +110,9 @@ void lv_list_clean(lv_obj_t *obj);
  */
 lv_obj_t * lv_list_add(lv_obj_t * list, const void * img_src, const char * txt, lv_action_t rel_action);
 
+/* ASAP - gui_tools_files.c */
+lv_obj_t * _fm_list_add(lv_obj_t *list, const char *icon, const char *name, const char *size, const char *date, lv_action_t rel_action);
+
 /**
  * Remove the index of the button in the list
  * @param list pointer to a list object

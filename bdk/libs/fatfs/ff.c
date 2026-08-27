@@ -6594,7 +6594,7 @@ static void putc_bfd (		/* Buffered write with code conversion */
 	WCHAR hs, wc;
 #if FF_LFN_UNICODE == 2
 	DWORD dc;
-	TCHAR *tp;
+	const TCHAR *tp;
 #endif
 #endif
 

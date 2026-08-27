@@ -877,5 +877,15 @@ static uint16_t get_button_text(lv_obj_t * btnm, uint16_t btn_id)
     return txt_i;
 }
 
+/* ASAP - filebrowser button control and focus. */
+void lv_btnm_control(lv_obj_t *btnm, char key)
+{
+    lv_btnm_signal(btnm, LV_SIGNAL_CONTROLL, &key);
+}
+
+void lv_btnm_focus(lv_obj_t *btnm)
+{
+    lv_btnm_signal(btnm, LV_SIGNAL_FOCUS, NULL);
+}
 
 #endif

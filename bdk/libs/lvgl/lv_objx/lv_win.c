@@ -84,6 +84,9 @@ lv_obj_t * lv_win_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->style_btn_pr = &lv_style_btn_pr;
     ext->btn_size = (LV_DPI) / 2;
 
+    /* ASAP - Initialize the file browser path */
+    ext->file_browser_path = NULL;
+
     /*Init the new window object*/
     if(copy == NULL) {
         lv_obj_set_size(new_win, LV_HOR_RES, LV_VER_RES);
@@ -239,6 +242,30 @@ void lv_win_set_title(lv_obj_t * win, const char * title)
 
     lv_label_set_text(ext->title, title);
     lv_win_realign(win);
+}
+
+/* ASAP - Path title */
+void lv_win_set_file_browser_title(lv_obj_t *win, const char *path)
+{
+    lv_win_ext_t *ext = lv_obj_get_ext_attr(win);
+
+    /* Set the fixed file browser title */
+    lv_label_set_text(ext->title, SYMBOL_DIRECTORY "  sdmc:/");
+
+    /* Create the file browser path label */
+    if (!ext->file_browser_path) {
+        ext->file_browser_path = lv_label_create(ext->header, ext->title);
+        lv_label_set_long_mode(ext->file_browser_path, LV_LABEL_LONG_ROLL);
+        lv_obj_set_width(ext->file_browser_path, LV_DPI * 13 / 2);
+    }
+
+    lv_win_realign(win);
+
+    /* Set the file browser path last */
+    if (path[1] == 0)
+        lv_label_set_text(ext->file_browser_path, "");
+    else
+        lv_label_set_text(ext->file_browser_path, path + 1);
 }
 
 /**
@@ -580,6 +607,11 @@ static void lv_win_realign(lv_obj_t * win)
 
 
     lv_obj_align(ext->title, NULL, LV_ALIGN_IN_LEFT_MID, ext->style_header->body.padding.hor, 0);
+
+    /* ASAP - Align the file browser path */
+    if (ext->file_browser_path) {
+        lv_obj_align(ext->file_browser_path, ext->title, LV_ALIGN_OUT_RIGHT_MID, 5, 18);
+    }
 
     lv_obj_set_pos(ext->header, 31, 0);
 

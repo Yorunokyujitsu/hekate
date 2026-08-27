@@ -266,6 +266,99 @@ lv_obj_t * lv_list_add(lv_obj_t * list, const void * img_src, const char * txt, 
     return liste;
 }
 
+/* ASAP - Filebrowser custom list. */
+lv_obj_t * _fm_list_add(lv_obj_t *list, const char *icon, const char *name, const char *size, const char *date, lv_action_t rel_action)
+{
+    lv_style_t *style = lv_obj_get_style(list);
+    lv_list_ext_t *ext = lv_obj_get_ext_attr(list);
+    ext->size++;
+
+    lv_obj_t *liste = lv_btn_create(list, NULL);
+
+    if (ancestor_btn_signal == NULL)
+        ancestor_btn_signal = lv_obj_get_signal_func(liste);
+
+    lv_btn_set_style(liste, LV_BTN_STYLE_REL,     ext->styles_btn[LV_BTN_STATE_REL]);
+    lv_btn_set_style(liste, LV_BTN_STYLE_PR,      ext->styles_btn[LV_BTN_STATE_PR]);
+    lv_btn_set_style(liste, LV_BTN_STYLE_TGL_REL, ext->styles_btn[LV_BTN_STATE_TGL_REL]);
+    lv_btn_set_style(liste, LV_BTN_STYLE_TGL_PR,  ext->styles_btn[LV_BTN_STATE_TGL_PR]);
+    lv_btn_set_style(liste, LV_BTN_STYLE_INA,     ext->styles_btn[LV_BTN_STATE_INA]);
+
+    lv_btn_set_action(liste, LV_BTN_ACTION_CLICK, rel_action);
+    lv_page_glue_obj(liste, true);
+    lv_btn_set_layout(liste, LV_LAYOUT_OFF);
+    lv_btn_set_fit(liste, false, true);
+    lv_obj_set_protect(liste, LV_PROTECT_PRESS_LOST);
+    lv_obj_set_signal_func(liste, lv_list_btn_signal);
+
+    lv_coord_t w = lv_obj_get_width(list);
+    lv_style_t *style_scrl = lv_obj_get_style(lv_page_get_scrl(list));
+    lv_coord_t pad_hor_tot = style->body.padding.hor + style_scrl->body.padding.hor;
+    w -= pad_hor_tot * 2;
+    lv_obj_set_width(liste, w);
+
+    // Anchor
+    lv_obj_t *lbl_anchor = lv_label_create(liste, NULL);
+    lv_label_set_text(lbl_anchor, "");
+    lv_obj_set_click(lbl_anchor, false);
+    lv_obj_align(lbl_anchor, NULL, LV_ALIGN_CENTER, 0, 0);
+
+    // Symbol
+    lv_obj_t *lbl_icon = lv_label_create(liste, NULL);
+    lv_label_set_text(lbl_icon, icon);
+    lv_obj_set_click(lbl_icon, false);
+    if (label_signal == NULL)
+        label_signal = lv_obj_get_signal_func(lbl_icon);
+    bool is_file = !strcmp(icon, SYMBOL_FILE) || !strcmp(icon, SYMBOL_FILE_ARC) || !strcmp(icon, SYMBOL_FILE_ALT);
+    lv_obj_align(lbl_icon, lbl_anchor, LV_ALIGN_OUT_LEFT_MID, is_file ? -LV_DPI * 28 / 5 + 1 : -LV_DPI * 28 / 5 + 5, 0);
+
+    // Name container
+    lv_obj_t *cont_name = lv_obj_create(liste, NULL);
+    lv_cont_set_fit(cont_name, false, false);
+    lv_obj_set_size(cont_name, LV_DPI * 13 / 2 + 5, lv_font_get_height(lv_obj_get_style(liste)->text.font));
+    lv_obj_set_style(cont_name, &lv_style_transp);
+    lv_obj_set_click(cont_name, false);
+    lv_obj_set_protect(cont_name, LV_PROTECT_CLICK_FOCUS);
+    lv_obj_align(cont_name, lbl_anchor, LV_ALIGN_IN_LEFT_MID, -LV_DPI * 27 / 5 + 5, 0);
+
+    // Name
+    lv_obj_t *lbl_name = lv_label_create(cont_name, NULL);
+    lv_label_set_long_mode(lbl_name, LV_LABEL_LONG_ROLL);
+    lv_obj_set_width(lbl_name, LV_DPI * 13 / 2 + 5);
+    lv_label_set_text(lbl_name, name);
+    lv_obj_align(lbl_name, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0);
+
+    // Date
+    lv_obj_t *lbl_date = lv_label_create(liste, NULL);
+    lv_label_set_text(lbl_date, date);
+    lv_obj_set_click(lbl_date, false);
+    lv_obj_align(lbl_date, lbl_anchor, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 8 / 5 + 2, 0);
+
+    // Separate
+    lv_obj_t *lbl_line1 = lv_label_create(liste, NULL);
+    lv_label_set_recolor(lbl_line1, true);
+    lv_label_set_text(lbl_line1, "#888888  |#");
+    lv_obj_set_click(lbl_line1, false);
+    lv_obj_align(lbl_line1, lbl_date, LV_ALIGN_OUT_LEFT_MID, -18, 0);
+
+    lv_obj_t *lbl_line2 = lv_label_create(liste, NULL);
+    lv_label_set_recolor(lbl_line2, true);
+    lv_label_set_text(lbl_line2, is_file ? "#888888 |#" : "");
+    lv_obj_set_click(lbl_line2, false);
+    lv_obj_align(lbl_line2, lbl_anchor, LV_ALIGN_OUT_RIGHT_MID, LV_DPI * 9 / 2 - 4, 0);
+
+    // Size
+    if (size && size[0])
+    {
+        lv_obj_t *lbl_size = lv_label_create(liste, NULL);
+        lv_label_set_text(lbl_size, size);
+        lv_obj_set_click(lbl_size, false);
+        lv_obj_align(lbl_size, lbl_line2, LV_ALIGN_IN_RIGHT_MID, LV_DPI * 13 / 10, 0);
+    }
+
+    return liste;
+}
+
 /**
  * Remove the index of the button in the list
  * @param list pointer to a list object

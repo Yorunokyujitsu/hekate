@@ -48,36 +48,36 @@ static lv_res_t lv_kb_def_action(lv_obj_t * kb, const char * txt);
 static lv_signal_func_t ancestor_signal;
 
 static const char * kb_map_lc[] = {
-    "\2051#", "\204q", "\204w", "\204e", "\204r", "\204t", "\204y", "\204u", "\204i", "\204o", "\204p", "\207Bksp", "\n",
+    "\2051#", "\204q", "\204w", "\204e", "\204r", "\204t", "\204y", "\204u", "\204i", "\204o", "\204p", "\207Ｄ", "\n",
     "\226ABC", "\203a", "\203s", "\203d", "\203f", "\203g", "\203h", "\203j", "\203k", "\203l", "\207Enter", "\n",
     "_", "-", "z", "x", "c", "v", "b", "n", "m", ".", ",", ":", "\n",
-    "\202"SYMBOL_CLOSE, "\202"SYMBOL_LEFT, "\206 ", "\202"SYMBOL_RIGHT, "\202"SYMBOL_OK, ""
+    "\202"SYMBOL_KEYBOARD, "\202"SYMBOL_LEFT, "\206 ", "\202"SYMBOL_RIGHT, "\202"SYMBOL_OK, ""
 };
 
 static const char * kb_map_uc[] = {
-    "\2051#", "\204Q", "\204W", "\204E", "\204R", "\204T", "\204Y", "\204U", "\204I", "\204O", "\204P", "\207Bksp", "\n",
+    "\2051#", "\204Q", "\204W", "\204E", "\204R", "\204T", "\204Y", "\204U", "\204I", "\204O", "\204P", "\207Ｄ", "\n",
     "\226abc", "\203A", "\203S", "\203D", "\203F", "\203G", "\203H", "\203J", "\203K", "\203L", "\207Enter", "\n",
     "_", "-", "Z", "X", "C", "V", "B", "N", "M", ".", ",", ":", "\n",
-    "\202"SYMBOL_CLOSE, "\202"SYMBOL_LEFT, "\206 ", "\202"SYMBOL_RIGHT, "\202"SYMBOL_OK, ""
+    "\202"SYMBOL_KEYBOARD, "\202"SYMBOL_LEFT, "\206 ", "\202"SYMBOL_RIGHT, "\202"SYMBOL_OK, ""
 };
 
 static const char * kb_map_spec[] = {
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\202Bksp", "\n",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\202Ｄ", "\n",
     "\222abc", "+", "-", "/", "*", "=", "%", "!", "?", "#", "<", ">", "\n",
     "\\", "@", "$", "(", ")", "{", "}", "[", "]", ";", "\"", "'", "\n",
-    "\202"SYMBOL_CLOSE, "\202"SYMBOL_LEFT, "\206 ", "\202"SYMBOL_RIGHT, "\202"SYMBOL_OK, ""
+    "\202"SYMBOL_KEYBOARD, "\202"SYMBOL_LEFT, "\206 ", "\202"SYMBOL_RIGHT, "\202"SYMBOL_OK, ""
 };
 
 static const char * kb_map_num[] = {
     "1", "2", "3", "\202"SYMBOL_CLOSE, "\n",
     "4", "5", "6", "\202"SYMBOL_OK, "\n",
-    "7", "8", "9", "\202Bksp", "\n",
+    "7", "8", "9", "\202Ｄ", "\n",
     "+/-", "0", ".", SYMBOL_LEFT, SYMBOL_RIGHT, ""
 };
 
 static const char * kb_map_hex[] = {
 	"1", "2", "3", "A", "D", "\212", "\n",
-	"4", "5", "6", "B", "E", "\202Bksp", "\n",
+	"4", "5", "6", "B", "E", "\202Ｄ", "\n",
 	"7", "8", "9", "C", "F", "\202"SYMBOL_OK, "\n",
 	"\211", "0", "\213", SYMBOL_LEFT, SYMBOL_RIGHT, ""
 };
@@ -436,7 +436,7 @@ static lv_res_t lv_kb_def_action(lv_obj_t * kb, const char * txt)
     } else if(strcmp(txt, "1#") == 0) {
         lv_btnm_set_map(kb, kb_map_spec);
         return LV_RES_OK;
-    } else if(strcmp(txt, SYMBOL_CLOSE) == 0) {
+    } else if(strcmp(txt, SYMBOL_KEYBOARD) == 0) {
         if(ext->hide_action) res = ext->hide_action(kb);
         else {
             lv_kb_set_ta(kb, NULL);         /*De-assign the text area  to hide it cursor if needed*/
@@ -460,7 +460,7 @@ static lv_res_t lv_kb_def_action(lv_obj_t * kb, const char * txt)
     if(strcmp(txt, "Enter") == 0)lv_ta_add_char(ext->ta, '\n');
     else if(strcmp(txt, SYMBOL_LEFT) == 0) lv_ta_cursor_left(ext->ta);
     else if(strcmp(txt, SYMBOL_RIGHT) == 0) lv_ta_cursor_right(ext->ta);
-    else if(strcmp(txt, "Bksp") == 0)  lv_ta_del_char(ext->ta);
+    else if(strcmp(txt, "Ｄ") == 0)  lv_ta_del_char(ext->ta);
     else if(strcmp(txt, "+/-") == 0) {
         uint16_t cur = lv_ta_get_cursor_pos(ext->ta);
         const char * ta_txt = lv_ta_get_text(ext->ta);
@@ -483,6 +483,19 @@ static lv_res_t lv_kb_def_action(lv_obj_t * kb, const char * txt)
         lv_ta_add_text(ext->ta, txt);
     }
     return LV_RES_OK;
+}
+
+/* ASAP - Keyboard map cycle. */
+void lv_kb_cycle_map(lv_obj_t *kb)
+{
+    const char **map = lv_btnm_get_map(kb);
+
+    if (map == kb_map_lc)
+        lv_btnm_set_map(kb, kb_map_uc);
+    else if (map == kb_map_uc)
+        lv_btnm_set_map(kb, kb_map_spec);
+    else
+        lv_btnm_set_map(kb, kb_map_lc);
 }
 
 #endif

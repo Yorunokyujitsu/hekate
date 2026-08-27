@@ -184,6 +184,10 @@ lv_style_t * lv_btnm_get_style(const lv_obj_t *btnm, lv_btnm_style_t type);
  */
 bool lv_btnm_get_recolor(const lv_obj_t * btnm);
 
+/* ASAP - gui_tools_files.c */
+void lv_btnm_control(lv_obj_t *btnm, char key);
+void lv_btnm_focus(lv_obj_t *btnm);
+
 /**********************
  *      MACROS
  **********************/

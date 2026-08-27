@@ -78,6 +78,7 @@ typedef struct
     lv_obj_t * page;                /*Pointer to a page which holds the content*/
     lv_obj_t * header;              /*Pointer to the header container of the window*/
     lv_obj_t * title;               /*Pointer to the title label of the window*/
+    lv_obj_t * file_browser_path;   /*Pointer to the file browser path label*/
     lv_style_t * style_header;      /*Style of the header container*/
     lv_style_t * style_btn_rel;    /*Control button releases style*/
     lv_style_t * style_btn_pr;     /*Control button pressed style*/
@@ -143,6 +144,9 @@ lv_res_t lv_win_close_action(lv_obj_t * btn);
  * @param title string of the new title
  */
 void lv_win_set_title(lv_obj_t * win, const char * title);
+
+/* ASAP - gui_tools_files.c */
+void lv_win_set_file_browser_title(lv_obj_t *win, const char *path);
 
 /**
  * Set the control button size of a window
