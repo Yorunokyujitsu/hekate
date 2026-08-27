@@ -23,6 +23,17 @@
 #include "gui_tools_partition_manager.h"
 #include <libs/fatfs/ff.h>
 
+//===================================================================
+//  ASAP: Additional NAND-related includes and extern declarations.
+//===================================================================
+#include "gui_info.h"
+#include "gui_options.h"
+#include "gui_tools.h"
+#include "gui_emmc_tools.h"
+#include "../config.h"
+extern nyx_config n_cfg;
+//===================================================================
+
 extern char *emmcsn_path_impl(char *path, char *sub_dir, char *filename, sdmmc_storage_t *storage);
 
 typedef struct _mbr_ctxt_t
@@ -57,9 +68,9 @@ static void _create_window_emummc()
 
 	lv_obj_t *win;
 	if (!mbr_ctx.part_idx)
-		win = nyx_create_standard_window(SYMBOL_DRIVE"  Create SD File emuMMC", _action_emummc_window_close);
+		win = nyx_create_standard_window(SYMBOL_DRIVE"  파일 에뮤낸드 생성", _action_emummc_window_close);
 	else
-		win = nyx_create_standard_window(SYMBOL_DRIVE"  Create SD Partition emuMMC", _action_emummc_window_close);
+		win = nyx_create_standard_window(SYMBOL_DRIVE"  파티션 에뮤낸드 생성", _action_emummc_window_close);
 
 	//Disable buttons.
 	nyx_window_toggle_buttons(win, true);
@@ -73,7 +84,7 @@ static void _create_window_emummc()
 
 	static lv_style_t h_style;
 	lv_style_copy(&h_style, lv_cont_get_style(h1));
-	h_style.body.main_color = LV_COLOR_HEX(0x1d1d1d);
+	h_style.body.main_color = LV_COLOR_HEX(0x151524);
 	h_style.body.grad_color = h_style.body.main_color;
 	h_style.body.opa = LV_OPA_COVER;
 
@@ -201,8 +212,8 @@ static void _create_mbox_emummc_raw()
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_format[] = { "\222Continue", "\222Cancel", "" };
-	static char *mbox_btn_parts[] = { "\262Part 1", "\262Part 2", "\262Part 3", "\222Cancel", "" };
+	static const char *mbox_btn_format[] = { "\222확인", "\222취소", "" };
+	static char *mbox_btn_parts[] = { "\262파티션 1", "\262파티션 2", "\262파티션 3", "\222취소", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
@@ -253,32 +264,32 @@ static void _create_mbox_emummc_raw()
 	if (mbr_ctx.available)
 	{
 		s_printf(txt_buf,
-			"#C7EA46 Found applicable partition(s)!#\n"
-			"#FF8000 Choose a partition to continue:#\n\n");
+			"#008EED 파티션 매니저#\n\n"
+			"#FFBA00 안내#: 생성하려는 #C7EA46 파티션 번호#를 선택하세요.\n");
+
+		if (mbr_ctx.resized_cnt[0] || mbr_ctx.resized_cnt[1] || mbr_ctx.resized_cnt[2]) {
+			strcat(txt_buf, "사용 가능한 파티션이 활성화됩니다.\n\n");
+		}
 	}
 	else
-		s_printf(txt_buf, "#FFDD00 Failed to find applicable partition!#\n\n");
+		s_printf(txt_buf,
+			"#008EED 파티션 매니저#\n\n"
+			"#FFBA00 안내#: 생성 가능한 파티션이 없습니다!\n"
+			"SD 카드를 파티션 분할하시겠습니까?\n\n");
 
 	s_printf(txt_buf + strlen(txt_buf),
-		"Partition table:\n"
-		"#C0C0C0 Part 0: Type: %02x, Start: %08x, Size: %08x#\n"
-		"#%s Part 1: Type: %02x, Start: %08x, Size: %08x#\n"
-		"#%s Part 2: Type: %02x, Start: %08x, Size: %08x#\n"
-		"#%s Part 3: Type: %02x, Start: %08x, Size: %08x#",
+		"- #C7EA46 파티션 테이블# -\n"
+		"#C0C0C0 파티션 0: 유형: %02x, 섹터: %08x, 크기: %08x#\n"
+		"#%s 파티션 1: 유형: %02x, 섹터: %08x, 크기: %08x#\n"
+		"#%s 파티션 2: 유형: %02x, 섹터: %08x, 크기: %08x#\n"
+		"#%s 파티션 3: 유형: %02x, 섹터: %08x, 크기: %08x#",
 		mbr->partitions[0].type, mbr->partitions[0].start_sct, mbr->partitions[0].size_sct,
-		(mbr_ctx.available & BIT(0)) ? (mbr_ctx.resized_cnt[0] ? "FFDD00" : "C7EA46") : "C0C0C0",
+		(mbr_ctx.available & BIT(0)) ? (mbr_ctx.resized_cnt[0] ? "FFBA00" : "C7EA46") : "C0C0C0",
 		 mbr->partitions[1].type, mbr->partitions[1].start_sct, mbr->partitions[1].size_sct,
-		(mbr_ctx.available & BIT(1)) ? (mbr_ctx.resized_cnt[1] ? "FFDD00" : "C7EA46") : "C0C0C0",
+		(mbr_ctx.available & BIT(1)) ? (mbr_ctx.resized_cnt[1] ? "FFBA00" : "C7EA46") : "C0C0C0",
 		 mbr->partitions[2].type, mbr->partitions[2].start_sct, mbr->partitions[2].size_sct,
-		(mbr_ctx.available & BIT(2)) ? (mbr_ctx.resized_cnt[2] ? "FFDD00" : "C7EA46") : "C0C0C0",
+		(mbr_ctx.available & BIT(2)) ? (mbr_ctx.resized_cnt[2] ? "FFBA00" : "C7EA46") : "C0C0C0",
 		 mbr->partitions[3].type, mbr->partitions[3].start_sct, mbr->partitions[3].size_sct);
-
-	if (mbr_ctx.resized_cnt[0] || mbr_ctx.resized_cnt[1] || mbr_ctx.resized_cnt[2])
-		strcat(txt_buf, "\n\n#FFDD00 Note:# Yellow entries have USER partition resized.");
-
-	if (!mbr_ctx.available)
-		strcat(txt_buf, "\n#FF8000 Do you want to partition the SD card?#\n"
-						  "#FF8000 (You will be asked on how to proceed)#");
 
 	lv_mbox_set_text(mbox, txt_buf);
 	free(txt_buf);
@@ -342,16 +353,17 @@ static lv_res_t _create_mbox_emummc_create(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char * mbox_btn_map[] = { "\222SD File", "\222SD Partition", "\222Cancel", "" };
+	static const char * mbox_btn_map[] = { "\222파일", "\222파티션", "\222취소", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
 	lv_mbox_set_text(mbox,
-		"Welcome to #C7EA46 emuMMC# creation tool!\n\n"
-		"Please choose what type of emuMMC you want to create.\n"
-		"#FF8000 SD File# is saved as files in the FAT partition.\n"
-		"#FF8000 SD Partition# is saved as raw image in an available partition.");
+		"#008EED 낸드 매니저#\n\n"
+		"#FFBA00 안내#: 생성하려는 낸드 #C7EA46 유형#을 선택하세요.\n\n"
+		"#FF8000 주의:#\n#FF8000 유형 상관 없이, FAT32 시스템을 권장합니다.#\n"
+		"#FF8000 exFAT은 백업 테이블이 없으므로, 유저 환경에 따라,#\n"
+		"#FF8000 시스템 파일이 손상될 수 있습니다.#");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_action);
 
@@ -387,19 +399,38 @@ static void _create_emummc_migrated_mbox()
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 4);
 
 	lv_mbox_set_text(mbox,
-		"#FF8000 emuMMC Configuration#\n\n"
-		"#96FF00 The emuMMC configuration#\n#96FF00 was saved to sd card!#");
+		"#008EED 낸드 매니저#\n\n"
+		"선택한 구성이 #96FF00 기본 낸드#로 저장되었습니다.");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, _save_emummc_cfg_mig_mbox_action);
 
 	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_top(mbox, true);
+}
+
+static void _migrate_sd_raw_based()
+{
+	mbr_ctx.sector_start = 2;
+
+	sd_mount();
+	f_mkdir("emuMMC");
+	f_mkdir("emuMMC/ER00");
+
+	f_rename("Emutendo", "emuMMC/ER00/Nintendo");
+	FIL fp;
+	f_open(&fp, "emuMMC/ER00/raw_based", FA_CREATE_ALWAYS | FA_WRITE);
+	f_write(&fp, &mbr_ctx.sector_start, 4, NULL);
+	f_close(&fp);
+
+	save_emummc_cfg(1, mbr_ctx.sector_start, "emuMMC/ER00");
+	_create_emummc_migrated_mbox();
+	sd_unmount();
 }
 
 static void _migrate_sd_raw_emummc_based()
@@ -427,6 +458,43 @@ static void _migrate_sd_raw_emummc_based()
 	_create_emummc_migrated_mbox();
 	free(tmp);
 
+	sd_unmount();
+}
+
+static void _migrate_sd_file_based()
+{
+	sd_mount();
+	f_mkdir("emuMMC");
+	f_mkdir("emuMMC/EF00");
+
+	f_rename("Emutendo", "emuMMC/EF00/Nintendo");
+	FIL fp;
+	f_open(&fp, "emuMMC/EF00/file_based", FA_CREATE_ALWAYS | FA_WRITE);
+	f_close(&fp);
+
+	char *path = (char *)malloc(128);
+	char *path2 = (char *)malloc(128);
+	s_printf(path, "%c%c%c%c%s", 's', 'x', 'o', 's', "/emunand");
+	f_rename(path, "emuMMC/EF00/eMMC");
+
+	for (int i = 0; i < 2; i++)
+	{
+		s_printf(path, "emuMMC/EF00/eMMC/boot%d.bin", i);
+		s_printf(path2, "emuMMC/EF00/eMMC/BOOT%d", i);
+		f_rename(path, path2);
+	}
+	for (int i = 0; i < 8; i++)
+	{
+		s_printf(path, "emuMMC/EF00/eMMC/full.%02d.bin", i);
+		s_printf(path2, "emuMMC/EF00/eMMC/%02d", i);
+		f_rename(path, path2);
+	}
+
+	free(path);
+	free(path2);
+
+	save_emummc_cfg(0, 0, "emuMMC/EF00");
+	_create_emummc_migrated_mbox();
 	sd_unmount();
 }
 
@@ -510,7 +578,61 @@ static void _migrate_sd_backup_file_based()
 	sd_unmount();
 }
 
+static lv_res_t _create_emummc_mig1_action(lv_obj_t * btns, const char * txt)
+{
+	switch (lv_btnm_get_pressed(btns))
+	{
+	case 0:
+		_migrate_sd_file_based();
+		break;
+	case 1:
+		_migrate_sd_raw_based();
+		break;
+	}
+
+	mbr_ctx.part_idx = 0;
+	mbr_ctx.sector_start = 0;
+
+	nyx_mbox_action(btns, txt);
+
+	return LV_RES_INV;
+}
+
 static lv_res_t _create_emummc_mig0_action(lv_obj_t * btns, const char * txt)
+{
+	switch (lv_btnm_get_pressed(btns))
+	{
+	case 0:
+		_migrate_sd_file_based();
+		break;
+	}
+
+	mbr_ctx.part_idx = 0;
+	mbr_ctx.sector_start = 0;
+
+	nyx_mbox_action(btns, txt);
+
+	return LV_RES_INV;
+}
+
+static lv_res_t _create_emummc_mig2_action(lv_obj_t * btns, const char * txt)
+{
+	switch (lv_btnm_get_pressed(btns))
+	{
+	case 0:
+		_migrate_sd_raw_based();
+		break;
+	}
+
+	mbr_ctx.part_idx = 0;
+	mbr_ctx.sector_start = 0;
+
+	nyx_mbox_action(btns, txt);
+
+	return LV_RES_INV;
+}
+
+static lv_res_t _create_emummc_mig3_action(lv_obj_t * btns, const char * txt)
 {
 	switch (lv_btnm_get_pressed(btns))
 	{
@@ -527,7 +649,7 @@ static lv_res_t _create_emummc_mig0_action(lv_obj_t * btns, const char * txt)
 	return LV_RES_INV;
 }
 
-static lv_res_t _create_emummc_mig1_action(lv_obj_t * btns, const char * txt)
+static lv_res_t _create_emummc_mig4_action(lv_obj_t * btns, const char * txt)
 {
 	switch (lv_btnm_get_pressed(btns))
 	{
@@ -544,6 +666,8 @@ static lv_res_t _create_emummc_mig1_action(lv_obj_t * btns, const char * txt)
 	return LV_RES_INV;
 }
 
+bool em_raw;
+bool em_file;
 static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 {
 	bool backup = false;
@@ -558,6 +682,8 @@ static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 		emummc = true;
 		break;
 	case 2:
+		break;
+	case 3:
 		nyx_mbox_action(btns, txt);
 		return LV_RES_INV;
 	}
@@ -566,8 +692,9 @@ static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\222Continue", "\222Cancel", "" };
-	static const char *mbox_btn_map1[] = { "\251", "OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\222예", "\222아니오", "" };
+	static const char *mbox_btn_map1[] = { "\222파일", "\222파티션", "\222취소", "" };
+	static const char *mbox_btn_map3[] = { "\251", "확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
@@ -578,25 +705,52 @@ static lv_res_t _create_emummc_migrate_action(lv_obj_t * btns, const char * txt)
 	{
 		if (!emummc_backup)
 			s_printf(txt_buf,
-				"#C7EA46 Found suitable eMMC backup!#\n\n"
-				"#FF8000 Do you want to migrate it?#\n");
+				"#008EED 낸드 매니저#\n\n"
+				"백업된 #C7EA46 파티션# 낸드를 찾았습니다!\n"
+				"#FF8000 파일# 에뮤낸드로 이사하시겠습니까?\n");
 		else
 			s_printf(txt_buf,
-				"#C7EA46 Found suitable emuMMC backup!#\n\n"
-				"#FF8000 Do you want to migrate it?#\n");
-		lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_mig1_action);
+				"#008EED 낸드 매니저#\n\n"
+				"백업된 #C7EA46 파티션# 에뮤낸드를 찾았습니다!\n"
+				"#FF8000 파일# 에뮤낸드로 이사하시겠습니까?\n");
+		lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_mig4_action);
 	}
 	else if (emummc)
 	{
 		s_printf(txt_buf,
-			"#C7EA46 Found SD Partition based emuMMC!#\n\n"
-			"#FF8000 Do you want to repair the config and partition type for it?#\n");
+			"#008EED 낸드 매니저#\n\n"
+			"#C7EA46 파티션# 에뮤낸드를 찾았습니다!\n"
+			"올바른 #FF8000 섹터#로 수정하시겠습니까?\n");
+		lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_mig3_action);
+	}
+	else if (em_raw && em_file)
+	{
+		s_printf(txt_buf,
+			"#008EED 낸드 매니저#\n\n"
+			"#C7EA46 SXOS# 파티션 및 파일 에뮤낸드를 찾았습니다!\n"
+			"#FF8000 Hekate# 기반으로 이사할 유형 선택:\n");
+		lv_mbox_add_btns(mbox, mbox_btn_map1, _create_emummc_mig1_action);
+	}
+	else if (em_raw)
+	{
+		s_printf(txt_buf,
+			"#008EED 낸드 매니저#\n\n"
+			"#C7EA46 SXOS# 파티션 에뮤낸드를 찾았습니다!\n"
+			"#FF8000 Hekate# 기반으로 이사하시겠습니까?\n");
+		lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_mig2_action);
+	}
+	else if (em_file)
+	{
+		s_printf(txt_buf,
+			"#008EED 낸드 매니저#\n\n"
+			"#C7EA46 SXOS# 파일 에뮤낸드를 찾았습니다!\n"
+			"#FF8000 Hekate# 기반으로 이사하시겠습니까?\n");
 		lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_mig0_action);
 	}
 	else
 	{
-		s_printf(txt_buf, "No emuMMC found!\n");
-		lv_mbox_add_btns(mbox, mbox_btn_map1, nyx_mbox_action);
+		s_printf(txt_buf, "#008EED 낸드 매니저#\n에뮤낸드를 찾을 수 없습니다!\n");
+		lv_mbox_add_btns(mbox, mbox_btn_map3, nyx_mbox_action);
 	}
 
 	lv_mbox_set_text(mbox, txt_buf);
@@ -626,15 +780,16 @@ static lv_res_t _create_mbox_emummc_migrate(lv_obj_t *btn)
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static char *mbox_btn_map[] = { "\262Backup", "\262Fix RAW", "\222Cancel", "" };
+	static char *mbox_btn_map[] = { "\262파일", "\262파티션", "\262SXOS", "\222취소", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
 
 	lv_mbox_set_text(mbox,
-		"Welcome to #C7EA46 emuMMC# migration tool!\n\n"
-		"Please choose what type of migration you want to do.\n"
-		"Anything that was not found will have the button disabled.");
+		"#008EED 마이그레이션 매니저#\n\n"
+		"#00DDFF 파일#: 백업한 #C7EA46 파티션# 에뮤낸드를 #C7EA46 파일# 에뮤낸드로 이사합니다.   \n"
+		"#00DDFF 파티션#: 복원한 #C7EA46 파티션# 에뮤낸드의 #C7EA46 섹터#를 수정합니다.          \n"
+		"#00DDFF SXOS#: #FF8000 SX 낸드#, #FF8000 Emutendo#를 #C7EA46 Hekate# 기반으로 이사합니다.");
 
 	char *path_buf = (char *)malloc(0x512);
 	mbr_t *mbr = (mbr_t *)malloc(sizeof(mbr_t));
@@ -645,6 +800,8 @@ static lv_res_t _create_mbox_emummc_migrate(lv_obj_t *btn)
 
 	emmc_initialize(false);
 
+	em_raw = false;
+	em_file = false;
 	bool backup = false;
 	bool emummc = false;
 	bool rawnand_backup = false;
@@ -679,6 +836,18 @@ static lv_res_t _create_mbox_emummc_migrate(lv_obj_t *btn)
 			}
 		}
 	}
+
+	if (!mbr_ctx.part_idx)
+	{
+		sdmmc_storage_read(&sd_storage, 0x4003, 1, efi_part);
+		if (!memcmp(efi_part, "EFI PART", 8))
+			em_raw = true;
+	}
+
+	s_printf(path_buf, "%c%c%c%c%s", 's', 'x', 'o','s', "/emunand/boot0.bin");
+
+	if (!f_stat(path_buf, NULL))
+		em_file = true;
 
 	emummc_backup = false;
 
@@ -728,6 +897,10 @@ static lv_res_t _create_mbox_emummc_migrate(lv_obj_t *btn)
 		mbox_btn_map[1][0] = '\222';
 	else
 		mbox_btn_map[1][0] = '\262';
+	if (em_raw || em_file)
+		mbox_btn_map[2][0] = '\222';
+	else
+		mbox_btn_map[2][0] = '\262';
 
 	free(path_buf);
 	free(mbr);
@@ -764,14 +937,14 @@ static void _create_emummc_saved_mbox()
 	lv_obj_set_style(dark_bg, &mbox_darken);
 	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
 
-	static const char *mbox_btn_map[] = { "\251", "OK", "\251", "" };
+	static const char *mbox_btn_map[] = { "\251", "확인", "\251", "" };
 	lv_obj_t * mbox = lv_mbox_create(dark_bg, NULL);
 	lv_mbox_set_recolor_text(mbox, true);
 	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 4);
 
 	lv_mbox_set_text(mbox,
-		"#FF8000 emuMMC Configuration#\n\n"
-		"#96FF00 The emuMMC configuration#\n#96FF00 was saved to sd card!#");
+		"#008EED 낸드 매니저#\n\n"
+		"선택한 구성이 #96FF00 기본 낸드#로 저장되었습니다.");
 
 	lv_mbox_add_btns(mbox, mbox_btn_map, _save_emummc_cfg_mbox_action);
 
@@ -801,14 +974,62 @@ static lv_res_t _save_raw_emummc_cfg_action(lv_obj_t * btn)
 	return LV_RES_INV;
 }
 
-static lv_res_t _save_disable_emummc_cfg_action(lv_obj_t * btn)
+//=====================================================
+//  ASAP: NAND change option - emuMMC enabled toggle.
+//=====================================================
+static lv_res_t _save_disable_emummc_cfg_action(lv_obj_t *btn)
 {
-	save_emummc_cfg(0, 0, NULL);
-	_create_emummc_saved_mbox();
-	sd_unmount();
+	FIL rfp, wfp;
+	FRESULT res;
+	UINT br, bw;
+	char *buf, *newbuf, *p, *line_end;
+	const size_t BUF_SIZE = 16 * 1024;
 
-	return LV_RES_INV;
+	sd_mount();
+
+	res = f_open(&rfp, "emuMMC/emummc.ini", FA_READ);
+	if (res != FR_OK) {
+		sd_unmount();
+		return LV_RES_OK;
+	}
+
+	buf = malloc(BUF_SIZE);
+	f_read(&rfp, buf, BUF_SIZE - 1, &br);
+	buf[br] = '\0';
+	f_close(&rfp);
+
+	p = strstr(buf, "[emummc]");
+	if (p && (p = strstr(p, "enabled="))) {
+		p += strlen("enabled=");
+		int curr = atoi(p);
+		
+		if (curr == 1) {
+			line_end = p;
+			while (*line_end && *line_end != '\r' && *line_end != '\n') {
+				line_end++;
+			}
+
+			newbuf = malloc(BUF_SIZE);
+			size_t prefix = p - buf;
+			memcpy(newbuf, buf, prefix);
+			s_printf(newbuf + prefix, "%d", 0);
+			strcpy(newbuf + prefix + strlen(newbuf + prefix), line_end);
+
+			res = f_open(&wfp, "emuMMC/emummc.ini", FA_WRITE | FA_CREATE_ALWAYS);
+			if (res == FR_OK) {
+				f_write(&wfp, newbuf, strlen(newbuf), &bw);
+				f_close(&wfp);
+			}
+			free(newbuf);
+		}
+	}
+	_create_emummc_saved_mbox();
+
+	free(buf);
+	sd_unmount();
+	return LV_RES_OK;
 }
+//=====================================================
 
 static lv_res_t _save_file_emummc_cfg_action(lv_obj_t *btn)
 {
@@ -829,8 +1050,8 @@ static lv_res_t _action_win_change_emummc_close(lv_obj_t *btn)
 
 static lv_res_t _create_change_emummc_window(lv_obj_t *btn_caller)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_SETTINGS"  Change emuMMC", _action_win_change_emummc_close);
-	lv_win_add_btn(win, NULL, SYMBOL_POWER"  Disable", _save_disable_emummc_cfg_action);
+	lv_obj_t *win = nyx_create_standard_window(SYMBOL_SETTINGS"  낸드 변경", _action_win_change_emummc_close);
+	lv_win_add_btn(win, NULL, SYMBOL_POWER" 시스낸드", _save_disable_emummc_cfg_action);
 
 	sd_mount();
 
@@ -936,7 +1157,7 @@ out0:;
 	lv_label_set_static_text(label_sep, "");
 
 	lv_obj_t *label_txt = lv_label_create(h1, NULL);
-	lv_label_set_static_text(label_txt, "SD Raw Partitions");
+	lv_label_set_static_text(label_txt, "파티션 에뮤낸드");
 	lv_obj_set_style(label_txt, lv_theme_get_current()->label.prim);
 	lv_obj_align(label_txt, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -(LV_DPI / 2));
 
@@ -993,7 +1214,7 @@ out0:;
 		lv_label_set_recolor(lv_desc, true);
 		lv_obj_set_style(lv_desc, &hint_small_style);
 
-		s_printf(txt_buf, "Sector start: 0x%08X\nFolder: %s", emummc_img->part_sector[raw_btn_idx], &emummc_img->part_path[raw_btn_idx * 128]);
+		s_printf(txt_buf, "섹터: 0x%08X\n폴더: %s", emummc_img->part_sector[raw_btn_idx], &emummc_img->part_path[raw_btn_idx * 128]);
 		lv_label_set_text(lv_desc, txt_buf);
 		lv_obj_align(lv_desc, btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 5);
 	}
@@ -1012,7 +1233,7 @@ out0:;
 	lv_label_set_static_text(label_sep, "");
 
 	lv_obj_t *label_txt3 = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_txt3, "SD File Based");
+	lv_label_set_static_text(label_txt3, "파일 에뮤낸드");
 	lv_obj_set_style(label_txt3, lv_theme_get_current()->label.prim);
 	lv_obj_align(label_txt3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 7);
 
@@ -1050,7 +1271,13 @@ out1:
 
 lv_res_t create_win_emummc_tools(lv_obj_t *btn)
 {
-	lv_obj_t *win = nyx_create_standard_window(SYMBOL_EDIT"  emuMMC Manage", NULL);
+	lv_obj_t *win = nyx_create_nand_manager_window(SYMBOL_SETTINGS"  낸드 매니저");
+	//==================================================
+	//  ASAP: PIN Lock setup, Package1/2 dump buttons.
+	//==================================================
+	lv_win_add_btn(win, NULL, "Ｏ PIN", _action_win_nyx_options_passwd);
+	lv_win_add_btn(win, NULL, SYMBOL_SAVE" PKG1/2", _create_window_dump_pk12_tool);
+	//==================================================
 
 	// Set resources to be managed by other windows.
 	emummc_manage_window = win;
@@ -1081,9 +1308,9 @@ lv_res_t create_win_emummc_tools(lv_obj_t *btn)
 	lv_label_set_static_text(label_sep, "");
 
 	lv_obj_t *label_txt = lv_label_create(h1, NULL);
-	lv_label_set_static_text(label_txt, "emuMMC Info & Selection");
+	lv_label_set_static_text(label_txt, SYMBOL_INFO"  낸드 저장소 상태 "SYMBOL_DOT" 정보 "SYMBOL_DOT" 변경");
 	lv_obj_set_style(label_txt, lv_theme_get_current()->label.prim);
-	lv_obj_align(label_txt, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 11);
+	lv_obj_align(label_txt, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, -LV_DPI / 9);
 
 	lv_obj_t *line_sep = lv_line_create(h1, NULL);
 	static const lv_point_t line_pp[] = { {0, 0}, { LV_HOR_RES - (LV_DPI - (LV_DPI / 4)) * 2, 0} };
@@ -1091,11 +1318,45 @@ lv_res_t create_win_emummc_tools(lv_obj_t *btn)
 	lv_line_set_style(line_sep, lv_theme_get_current()->line.decor);
 	lv_obj_align(line_sep, label_txt, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 8);
 
-	// Create emuMMC info labels.
+	// Create NAND info labels.
 	lv_obj_t *label_btn = lv_label_create(h1, NULL);
 	lv_label_set_recolor(label_btn, true);
-	lv_label_set_static_text(label_btn, emu_info.enabled ? "#96FF00 "SYMBOL_OK"  Enabled!#" : "#FF8000 "SYMBOL_CLOSE"  Disabled!#");
+	lv_label_set_static_text(label_btn, "");
 	lv_obj_align(label_btn, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
+
+	//================================================
+	//  ASAP: NAND informations toggle label button.
+	//================================================
+	lv_obj_t *btn_nandinfo = lv_btn_create(h1, NULL);
+	lv_btn_set_fit(btn_nandinfo, true, true);
+	label_btn = lv_label_create(btn_nandinfo, NULL);
+	lv_label_set_static_text(label_btn, "            ");
+	lv_obj_align(btn_nandinfo, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
+	lv_btn_set_action(btn_nandinfo, LV_BTN_ACTION_CLICK, emu_info.enabled ? _create_window_sdcard_info_status : _create_window_emmc_info_status);
+	lv_obj_t *lbl_nandinfo = lv_label_create(h1, NULL);
+	lv_label_set_recolor(lbl_nandinfo, true);
+	lv_label_set_static_text(lbl_nandinfo, emu_info.enabled ? "#00FFCC Ⓢ 에뮤낸드#" : "#FF8000 Ⓝ 시스낸드#");
+	lv_obj_align(lbl_nandinfo, btn_nandinfo, LV_ALIGN_CENTER, 0, 0);
+
+	lv_obj_t *btn_elnandinfo = lv_btn_create(h1, NULL);
+	label_btn = lv_label_create(btn_elnandinfo, NULL);
+	lv_btn_set_fit(btn_elnandinfo, true, true);
+	lv_label_set_static_text(label_btn, "    ");
+	lv_obj_align(btn_elnandinfo, btn_nandinfo, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_elnandinfo, LV_BTN_ACTION_CLICK, emu_info.enabled ? _create_window_emmc_info_status : _create_window_sdcard_info_status);
+	lv_obj_t *lbl_elnandinfo = lv_label_create(h1, NULL);
+	lv_label_set_recolor(lbl_elnandinfo, true);
+	lv_label_set_static_text(lbl_elnandinfo, emu_info.enabled ? "Ⓝ" : "Ⓢ");
+	lv_obj_align(lbl_elnandinfo, btn_elnandinfo, LV_ALIGN_CENTER, 0, 0);
+
+	// Create Change NAND button.
+	lv_obj_t *btn_change_nand = lv_btn_create(h1, NULL);
+	label_btn = lv_label_create(btn_change_nand, NULL);
+	lv_btn_set_fit(btn_change_nand, true, true);
+	lv_label_set_static_text(label_btn, SYMBOL_REFRESH" 변경");
+	lv_obj_align(btn_change_nand, btn_elnandinfo, LV_ALIGN_OUT_RIGHT_MID, 30, 0);
+	lv_btn_set_action(btn_change_nand, LV_BTN_ACTION_CLICK, _create_change_emummc_window);
+	//================================================
 
 	lv_obj_t *label_txt2 = lv_label_create(h1, NULL);
 	lv_label_set_recolor(label_txt2, true);
@@ -1104,47 +1365,87 @@ lv_res_t create_win_emummc_tools(lv_obj_t *btn)
 	if (emu_info.enabled)
 	{
 		if (emu_info.sector)
-			s_printf(txt_buf, "#00DDFF Type:# SD Raw Partition\n#00DDFF Sector:# 0x%08X\n#00DDFF Nintendo folder:# %s\n",
-				emu_info.sector, emu_info.nintendo_path ? emu_info.nintendo_path : "");
+			s_printf(txt_buf, "#00DDFF 유형:# 파티션 (0x%08X)\n#00DDFF 경로:# sdmc:/%s",
+				emu_info.sector, emu_info.path ? emu_info.path : "");
 		else
-			s_printf(txt_buf, "#00DDFF Type:# SD File\n#00DDFF Base folder:# %s\n#00DDFF Nintendo folder:# %s\n",
-				emu_info.path ? emu_info.path : "", emu_info.nintendo_path ? emu_info.nintendo_path : "");
+			s_printf(txt_buf, "#00DDFF 유형:# 파일\n#00DDFF 경로:# sdmc:/%s",
+				emu_info.path ? emu_info.path : "");
 
 		lv_label_set_text(label_txt2, txt_buf);
 	}
 	else
 	{
-		lv_label_set_static_text(label_txt2, "emuMMC is disabled and eMMC will be used for boot.\n\n\n");
+		lv_label_set_static_text(label_txt2, "#00DDFF 유형:# eMMC\n#00DDFF 경로:# sdmc:/Nintendo");
 	}
 
 	if (emu_info.path)
 		free(emu_info.path);
-	if (emu_info.nintendo_path)
-		free(emu_info.nintendo_path);
+	// Nintendo folder path.
+	/* if (emu_info.nintendo_path)
+		free(emu_info.nintendo_path); */
 	free(txt_buf);
 
+	//============================
+	//  ASAP: Change info label.
+	//============================
 	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, label_btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
+	lv_obj_align(label_txt2, btn_nandinfo, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 
-	// Create Change emuMMC button.
-	lv_obj_t *btn2 = lv_btn_create(h1, NULL);
-	lv_btn_set_fit(btn2, true, true);
-	label_btn = lv_label_create(btn2, NULL);
-	lv_label_set_static_text(label_btn, SYMBOL_SETTINGS"  Change emuMMC");
-	lv_obj_align(btn2, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI * 6 / 10);
-	lv_btn_set_action(btn2, LV_BTN_ACTION_CLICK, _create_change_emummc_window);
+	lv_obj_t *label_txt3 = lv_label_create(h1, NULL);
+	lv_label_set_recolor(label_txt3, true);
+	lv_label_set_static_text(label_txt3, "#00DDFF 변경:# 사용하려는 #C7EA46 낸드 유형#을 변경합니다.");
+	lv_obj_set_style(label_txt3, &hint_small_style);
+	lv_obj_align(label_txt3, label_txt2, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+
+	//===========================================================
+	//  ASAP: New Header: Partition, Create, Migration manager.
+	//===========================================================
+	lv_obj_t *pcm_manager = lv_label_create(h1, NULL);
+	lv_label_set_static_text(pcm_manager, SYMBOL_DRIVE"  시스·에뮤낸드 - 포맷·분할 "SYMBOL_DOT" 생성 "SYMBOL_DOT" 이사");
+	lv_obj_set_style(pcm_manager, lv_theme_get_current()->label.prim);
+	lv_obj_align(pcm_manager, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI * 2.6);
+	line_sep = lv_line_create(h1, line_sep);
+	lv_obj_align(line_sep, pcm_manager, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 8);
+
+	// Create Partition Manager button.
+	lv_obj_t *btn_part_mng = lv_btn_create(h1, NULL);
+	label_btn = lv_label_create(btn_part_mng, NULL);
+	lv_btn_set_fit(btn_part_mng, true, true);
+	lv_label_set_static_text(label_btn, SYMBOL_COPY" 포맷·분할");
+	lv_obj_align(btn_part_mng, pcm_manager, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2.5);
+	lv_btn_set_action(btn_part_mng, LV_BTN_ACTION_CLICK, create_window_sd_partition_manager);
+	lv_btn_set_action(btn_part_mng, LV_BTN_ACTION_LONG_PR, create_window_emmc_partition_manager);
+
+	// Create emuMMC Manager button.
+	lv_obj_t *btn_mmc_crt_mng = lv_btn_create(h1, NULL);
+	label_btn = lv_label_create(btn_mmc_crt_mng, NULL);
+	lv_btn_set_fit(btn_mmc_crt_mng, true, true);
+	lv_label_set_static_text(label_btn, SYMBOL_SD" 생성");
+	lv_obj_align(btn_mmc_crt_mng, btn_part_mng, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_mmc_crt_mng, LV_BTN_ACTION_CLICK, _create_mbox_emummc_create);
+
+	// Create Migration Manager button.
+	lv_obj_t *btn_mig_mng = lv_btn_create(h1, NULL);
+	label_btn = lv_label_create(btn_mig_mng, NULL);
+	lv_btn_set_fit(btn_mig_mng, true, true);
+	lv_label_set_static_text(label_btn, SYMBOL_SHUFFLE" 이사");
+	lv_obj_align(btn_mig_mng, btn_mmc_crt_mng, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_mig_mng, LV_BTN_ACTION_CLICK, _create_mbox_emummc_migrate);
 
 	label_txt2 = lv_label_create(h1, NULL);
 	lv_label_set_recolor(label_txt2, true);
 	lv_label_set_static_text(label_txt2,
-		"Choose between images created in the emuMMC folder\n"
-		"or in SD card partitions. You can have at most 3 partition\n"
-		"based and countless file based.");
+		"#00DDFF 포맷·분할:# #C7EA46 eMMC#, #C7EA46 SD FAT32# 포맷 혹은 #C7EA46 L4T#용 파티션을 분할합니다.\n"
+		"#FF8000            3초 이상 입력 유지 시, eMMC를 분할 가능하나 모두 포맷됩니다.#\n\n"
+		"#00DDFF 생성:# #C7EA46 파티션# 혹은 #C7EA46 파일# 에뮤낸드를 생성합니다.\n"
+		"#00DDFF 이사:# 백업한 #C7EA46 파티션#을 #C7EA46 파일#로 변경하거나, #FF8000 SXOS#에서 이사합니다.");
 
 	lv_obj_set_style(label_txt2, &hint_small_style);
-	lv_obj_align(label_txt2, btn2, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
+	lv_obj_align(label_txt2, btn_part_mng, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 
-	// Create emuMMC Tools container.
+	//=================================================================================
+	//  ASAP: Create NAND Backup & Restore & Data verification, Connection container.
+	//=================================================================================
 	lv_obj_t *h2 = lv_cont_create(win, NULL);
 	lv_cont_set_style(h2, &h_style);
 	lv_cont_set_fit(h2, false, true);
@@ -1156,45 +1457,127 @@ lv_res_t create_win_emummc_tools(lv_obj_t *btn)
 	label_sep = lv_label_create(h2, NULL);
 	lv_label_set_static_text(label_sep, "");
 
-	lv_obj_t *label_txt3 = lv_label_create(h2, NULL);
-	lv_label_set_static_text(label_txt3, "emuMMC Tools");
-	lv_obj_set_style(label_txt3, lv_theme_get_current()->label.prim);
-	lv_obj_align(label_txt3, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 5);
+	lv_obj_t *label_txt4 = lv_label_create(h2, NULL);
+	lv_label_set_static_text(label_txt4, SYMBOL_TOOLS"  백업·복원 "SYMBOL_DOT" 데이터 검사 "SYMBOL_DOT" PC 연결");
+	lv_obj_set_style(label_txt4, lv_theme_get_current()->label.prim);
+	lv_obj_align(label_txt4, label_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, 0);
 
 	line_sep = lv_line_create(h2, line_sep);
-	lv_obj_align(line_sep, label_txt3, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 8);
+	lv_obj_align(line_sep, label_txt4, LV_ALIGN_OUT_BOTTOM_LEFT, -(LV_DPI / 4), LV_DPI / 8);
 
-	// Create Create emuMMC button.
-	lv_obj_t *btn3 = lv_btn_create(h2, btn2);
-	label_btn = lv_label_create(btn3, NULL);
-	lv_btn_set_fit(btn3, true, true);
-	lv_label_set_static_text(label_btn, SYMBOL_DRIVE"  Create emuMMC");
-	lv_obj_align(btn3, line_sep, LV_ALIGN_OUT_BOTTOM_LEFT, LV_DPI / 4, LV_DPI / 4);
-	lv_btn_set_action(btn3, LV_BTN_ACTION_CLICK, _create_mbox_emummc_create);
+	// Create Backup NAND button.
+	lv_obj_t *btn_bkupmmc = lv_btn_create(h2, NULL);
+	label_btn = lv_label_create(btn_bkupmmc, NULL);
+	lv_btn_set_fit(btn_bkupmmc, true, true);
+	lv_label_set_static_text(label_btn, SYMBOL_UPLOAD" 낸드 백업");
+	lv_obj_align(btn_bkupmmc, label_txt4, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2.5);
+	lv_btn_set_action(btn_bkupmmc, LV_BTN_ACTION_CLICK, create_window_backup_restore_tool);
 
-	lv_obj_t *label_txt4 = lv_label_create(h2, NULL);
-	lv_label_set_recolor(label_txt4, true);
-	lv_label_set_static_text(label_txt4,
-		"Allows you to create a new #C7EA46 SD File# or #C7EA46 SD Raw Partition#\n"
-		"emuMMC. You can create it from eMMC or a eMMC Backup.\n");
+	// Create Restore NAND button.
+	lv_obj_t *btn_rstrmmc = lv_btn_create(h2, NULL);
+	label_btn = lv_label_create(btn_rstrmmc, NULL);
+	lv_btn_set_fit(btn_rstrmmc, true, true);
+	lv_label_set_static_text(label_btn, SYMBOL_DOWNLOAD" 낸드 복원");
+	lv_obj_align(btn_rstrmmc, btn_bkupmmc, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_rstrmmc, LV_BTN_ACTION_CLICK, create_window_backup_restore_tool);
+	
+	// Data verification dropdown list and info label.
+	lv_obj_t *ddlist = lv_ddlist_create(h2, NULL);
+	lv_obj_set_top(ddlist, true);
+	lv_ddlist_set_draw_arrow(ddlist, true);
+	lv_ddlist_set_options(ddlist,
+		"스킵    \n"
+		"부분\n"
+		"전체\n"
+		"해시");
+	lv_ddlist_set_selected(ddlist, n_cfg.verification);
+	lv_obj_align(ddlist, btn_rstrmmc, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_ddlist_set_action(ddlist, _data_verification_action);
 
-	lv_obj_set_style(label_txt4, &hint_small_style);
-	lv_obj_align(label_txt4, btn3, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
+	lv_obj_t *label_txt5 = lv_label_create(h2, NULL);
+	lv_label_set_recolor(label_txt5, true);
+	lv_label_set_static_text(label_txt5,
+		"낸드의 #C7EA46 BOOT0#, #C7EA46 BOOT1#, #C7EA46 RAW GPP# 파티션을 백업·복원합니다.\n"
+		"#C7EA46 FAT32#, #C7EA46 exFAT#으로 포맷된 최소 #FF8000 4GB# 이상의 SD 카드가 필요합니다.\n"
+		"#00DDFF 데이터 검사 (속도):# 스킵 (#0098FE 고속#), 부분 (#C7EA46 빠름#), 전체 (#FF8000 보통#), 해시 (#FF8000 느림#)");
 
-	// Create Migrate emuMMC button.
-	lv_obj_t *btn4 = lv_btn_create(h2, btn2);
-	label_btn = lv_label_create(btn4, NULL);
-	lv_label_set_static_text(label_btn, SYMBOL_SHUFFLE"  Migrate emuMMC");
-	lv_obj_align(btn4, label_txt4, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2);
-	lv_btn_set_action(btn4, LV_BTN_ACTION_CLICK, NULL);
-	lv_btn_set_action(btn4, LV_BTN_ACTION_CLICK, _create_mbox_emummc_migrate);
+	lv_obj_set_style(label_txt5, &hint_small_style);
+	lv_obj_align(label_txt5, btn_bkupmmc, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
 
-	label_txt4 = lv_label_create(h2, NULL);
-	lv_label_set_recolor(label_txt4, true);
-	lv_label_set_static_text(label_txt4,
-		"Migrate a backup to a #C7EA46 SD File emuMMC# or repair an existing\n#C7EA46 SD Raw Partition emuMMC#.\n");
-	lv_obj_set_style(label_txt4, &hint_small_style);
-	lv_obj_align(label_txt4, btn4, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
+	// Create eMMC GPP UMS buttons.
+	lv_obj_t *btn_sys_gpp = lv_btn_create(h2, btn_mig_mng);
+	label_btn = lv_label_create(btn_sys_gpp, NULL);
+	lv_label_set_static_text(label_btn, SYMBOL_USB" 시스낸드");
+	lv_obj_align(btn_sys_gpp, label_txt5, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 2.5);
+	lv_btn_set_action(btn_sys_gpp, LV_BTN_ACTION_CLICK, _action_ums_emmc_gpp);
+
+	// Create eMMC BOOT0 UMS button.
+	lv_obj_t *btn_boot0 = lv_btn_create(h2, btn_mig_mng);
+	label_btn = lv_label_create(btn_boot0, NULL);
+	lv_label_set_static_text(label_btn, "BOOT0");
+	lv_obj_align(btn_boot0, btn_sys_gpp, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_boot0, LV_BTN_ACTION_CLICK, _action_ums_emmc_boot0);
+
+	// Create eMMC BOOT1 UMS button.
+	lv_obj_t *btn_boot1 = lv_btn_create(h2, btn_mig_mng);
+	label_btn = lv_label_create(btn_boot1, NULL);
+	lv_label_set_static_text(label_btn, "BOOT1");
+	lv_obj_align(btn_boot1, btn_boot0, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_boot1, LV_BTN_ACTION_CLICK, _action_ums_emmc_boot1);
+
+	// Create emuMMC RAW GPP UMS button.
+	lv_obj_t *btn_emu_gpp = lv_btn_create(h2, btn_mig_mng);
+	label_btn = lv_label_create(btn_emu_gpp, NULL);
+	lv_label_set_static_text(label_btn, SYMBOL_USB" 에뮤낸드");
+	lv_obj_align(btn_emu_gpp, btn_sys_gpp, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 15);
+	lv_btn_set_action(btn_emu_gpp, LV_BTN_ACTION_CLICK, _action_ums_emuemmc_gpp);
+
+	// Create emuMMC BOOT0 UMS button.
+	lv_obj_t *btn_emu_boot0 = lv_btn_create(h2, btn_mig_mng);
+	label_btn = lv_label_create(btn_emu_boot0, NULL);
+	lv_label_set_static_text(label_btn, "BOOT0");
+	lv_obj_align(btn_emu_boot0, btn_emu_gpp, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_emu_boot0, LV_BTN_ACTION_CLICK, _action_ums_emuemmc_boot0);
+
+	// Create emuMMC BOOT1 UMS button.
+	lv_obj_t *btn_emu_boot1 = lv_btn_create(h2, btn_mig_mng);
+	label_btn = lv_label_create(btn_emu_boot1, NULL);
+	lv_label_set_static_text(label_btn, "BOOT1");
+	lv_obj_align(btn_emu_boot1, btn_emu_boot0, LV_ALIGN_OUT_RIGHT_MID, 15, 0);
+	lv_btn_set_action(btn_emu_boot1, LV_BTN_ACTION_CLICK, _action_ums_emuemmc_boot1);
+
+	// PC Connection info label.
+	lv_obj_t *label_txt6 = lv_label_create(h2, NULL);
+	lv_label_set_recolor(label_txt6, true);
+	lv_label_set_static_text(label_txt6,
+		"#C7EA46 Linux#, #C7EA46 HacDiskMount#, #C7EA46 NxNandManager# 등을 이용하여\n"
+		"낸드의 #C7EA46 RAW GPP#, #C7EA46 BOOT0#, #C7EA46 BOOT1# 파티션을 #FF8000 PC#에 마운트합니다.\n");
+	lv_obj_set_style(label_txt6, &hint_small_style);
+	lv_obj_align(label_txt6, btn_emu_gpp, LV_ALIGN_OUT_BOTTOM_LEFT, 0, LV_DPI / 3);
+
+	// Create read/write access toggle button and info label.
+	lv_obj_t *label_txt7 = lv_label_create(h2, NULL);
+	lv_label_set_recolor(label_txt7, true);
+	lv_label_set_static_text(label_txt7,
+		"#00DDFF 읽기:# 쓰기 보호 #0098FE ON#\n"
+		"#00DDFF 쓰기:# 쓰기 보호 OFF             ");
+	lv_obj_set_style(label_txt7, &hint_small_style);
+	lv_obj_align(label_txt7, label_txt6, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 5);
+
+	lv_obj_t *h_write = lv_cont_create(win, NULL);
+	lv_cont_set_style(h_write, &h_style);
+	lv_cont_set_fit(h_write, false, true);
+	lv_obj_set_width(h_write, (LV_HOR_RES / 9) * 2);
+	lv_obj_set_click(h_write, false);
+	lv_cont_set_layout(h_write, LV_LAYOUT_OFF);
+	lv_obj_align(h_write, label_txt7, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 10, 0);
+
+	lv_obj_t *btn_write_access = lv_btn_create(h_write, NULL);
+	nyx_create_onoff_button(lv_theme_get_current(), h_write,
+		btn_write_access, SYMBOL_EDIT" 쓰기 보호", _emmc_read_only_toggle, false);
+	if (!n_cfg.ums_emmc_rw)
+		lv_btn_set_state(btn_write_access, LV_BTN_STATE_TGL_REL);
+	_emmc_read_only_toggle(btn_write_access);
 
 	return LV_RES_OK;
 }

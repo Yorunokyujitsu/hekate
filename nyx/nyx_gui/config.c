@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -29,13 +29,14 @@ void set_default_configuration()
 
 	h_cfg.autoboot      = 0;
 	h_cfg.autoboot_list = 0;
-	h_cfg.bootwait      = 3;
-	h_cfg.noticker      = 0; //! TODO: Add GUI option.
-	h_cfg.backlight     = 100;
-	h_cfg.autohosoff    = h_cfg.t210b01 ? 1 : 0;
+	h_cfg.bootwait      = 1;
+	//h_cfg.noticker      = 0; //! TODO: Add GUI option.
+	h_cfg.backlight     = 80;
+	h_cfg.autohosoff    = h_cfg.t210b01 ? 2 : 0;
 	h_cfg.autonogc      = 1;
-	h_cfg.updater2p     = 0;
+	//h_cfg.updater2p     = 0;
 	h_cfg.bootprotect   = 0;
+	h_cfg.display_rate  = 60;
 
 	h_cfg.errors = 0;
 	h_cfg.eks = NULL;
@@ -48,17 +49,25 @@ void set_default_configuration()
 
 void set_nyx_default_configuration()
 {
-	n_cfg.theme_bg       = 0x2D2D2D;
-	n_cfg.theme_color    = 167;
-	n_cfg.entries_5_col  = 0;
+	n_cfg.theme_bg       = 0x0E0E1A;
+	n_cfg.theme_color    = 204;
+	//n_cfg.entries_5_col  = 0;
 	n_cfg.timeoffset     = 0;
-	n_cfg.timedst        = 1;
-	n_cfg.home_screen    = 0;
+	n_cfg.timedst        = 0;
+	//n_cfg.home_screen    = 0;
 	n_cfg.verification   = 1;
+	//====================================================
+	//  ASAP: Advanced settings lock. (parental control)
+	//====================================================
+	n_cfg.pinlock[0]    = '\0';
+	//====================================================
 	n_cfg.ums_emmc_rw    = 0;
 	n_cfg.jc_disable     = 0;
-	n_cfg.jc_force_right = 0;
+	//n_cfg.jc_force_right = 0;
+	n_cfg.show_fps       = 0;
 	n_cfg.bpmp_clock     = 0;
+	n_cfg.train_mode     = 0;
+	n_cfg.rcm_button     = !h_cfg.rcm_patched ? 1 : 0;
 }
 
 int create_config_entry()
@@ -115,9 +124,9 @@ int create_config_entry()
 	itoa(h_cfg.backlight, lbuf, 10);
 	f_puts(lbuf, &fp);
 
-	f_puts("\nnoticker=", &fp);
+	/* f_puts("\nnoticker=", &fp);
 	itoa(h_cfg.noticker, lbuf, 10);
-	f_puts(lbuf, &fp);
+	f_puts(lbuf, &fp); */
 
 	f_puts("\nautohosoff=", &fp);
 	itoa(h_cfg.autohosoff, lbuf, 10);
@@ -127,12 +136,18 @@ int create_config_entry()
 	itoa(h_cfg.autonogc, lbuf, 10);
 	f_puts(lbuf, &fp);
 
-	f_puts("\nupdater2p=", &fp);
+	/* f_puts("\nupdater2p=", &fp);
 	itoa(h_cfg.updater2p, lbuf, 10);
-	f_puts(lbuf, &fp);
+	f_puts(lbuf, &fp); */
 
 	f_puts("\nbootprotect=", &fp);
 	itoa(h_cfg.bootprotect, lbuf, 10);
+	f_puts(lbuf, &fp);
+
+	if (h_cfg.display_rate < DI_REFRESH_RATE_MIN || h_cfg.display_rate > DI_REFRESH_RATE_MAX)
+		h_cfg.display_rate = 60;
+	f_puts("\ndisplay_rate=", &fp);
+	itoa(h_cfg.display_rate, lbuf, 10);
 	f_puts(lbuf, &fp);
 
 	f_puts("\n", &fp);
@@ -209,9 +224,9 @@ int create_nyx_config_entry(bool force_unmount)
 	itoa(n_cfg.theme_color, lbuf, 10);
 	f_puts(lbuf, &fp);
 
-	f_puts("\nentries5col=", &fp);
+	/* f_puts("\nentries5col=", &fp);
 	itoa(n_cfg.entries_5_col, lbuf, 10);
-	f_puts(lbuf, &fp);
+	f_puts(lbuf, &fp); */
 
 	f_puts("\ntimeoffset=", &fp);
 	itoa(n_cfg.timeoffset, lbuf, 16);
@@ -221,13 +236,22 @@ int create_nyx_config_entry(bool force_unmount)
 	itoa(n_cfg.timedst, lbuf, 10);
 	f_puts(lbuf, &fp);
 
-	f_puts("\nhomescreen=", &fp);
+	/* f_puts("\nhomescreen=", &fp);
 	itoa(n_cfg.home_screen, lbuf, 10);
-	f_puts(lbuf, &fp);
+	f_puts(lbuf, &fp); */
 
 	f_puts("\nverification=", &fp);
 	itoa(n_cfg.verification, lbuf, 10);
 	f_puts(lbuf, &fp);
+
+	//====================================================
+	//  ASAP: Advanced settings lock. (parental control)
+	//====================================================
+	if (n_cfg.pinlock[0] != '\0') {
+		f_puts("\npinlock=", &fp);
+		f_puts(n_cfg.pinlock, &fp);
+	}
+	//====================================================
 
 	f_puts("\numsemmcrw=", &fp);
 	itoa(n_cfg.ums_emmc_rw, lbuf, 10);
@@ -237,12 +261,27 @@ int create_nyx_config_entry(bool force_unmount)
 	itoa(n_cfg.jc_disable, lbuf, 10);
 	f_puts(lbuf, &fp);
 
-	f_puts("\njcforceright=", &fp);
+	/* f_puts("\njcforceright=", &fp);
 	itoa(n_cfg.jc_force_right, lbuf, 10);
+	f_puts(lbuf, &fp); */
+
+	f_puts("\nshowfps=", &fp);
+	itoa(n_cfg.show_fps, lbuf, 10);
 	f_puts(lbuf, &fp);
 
 	f_puts("\nbpmpclock=", &fp);
 	itoa(n_cfg.bpmp_clock, lbuf, 10);
+	f_puts(lbuf, &fp);
+
+	if (h_cfg.t210b01)
+	{
+		f_puts("\ntrainmode=", &fp);
+		itoa(n_cfg.train_mode, lbuf, 10);
+		f_puts(lbuf, &fp);
+	}
+
+	f_puts("\nrcmbutton=", &fp);
+	itoa(n_cfg.rcm_button, lbuf, 10);
 	f_puts(lbuf, &fp);
 
 	f_puts("\n", &fp);

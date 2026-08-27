@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018 Rajko Stojadinovic
- * Copyright (c) 2018 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -36,5 +36,11 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 void update_emummc_base_folder(char *outFilename, u32 sdPathLen, u32 currPartIdx);
 
 int  emummc_raw_derive_bis_keys();
+
+//============================================
+//  ASAP: Quick Toggle NAND changer. (gui.c)
+//============================================
+lv_res_t _toggle_mmc_action(lv_obj_t *btn);
+//============================================
 
 #endif

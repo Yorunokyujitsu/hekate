@@ -14,23 +14,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _GUI_INFO_H_
-#define _GUI_INFO_H_
+#ifndef _GUI_TOOLS_FILES_H_
+#define _GUI_TOOLS_FILES_H_
 
 #include <libs/lvgl/lvgl.h>
 
-int dump_cal0();
-
-//=========================================================
-//  ASAP: NAND info, Quick lockpick. (gui_emummc_tools.c)
-//=========================================================
-lv_res_t _create_window_sdcard_info_status(lv_obj_t *btn);
-lv_res_t _create_window_emmc_info_status(lv_obj_t *btn);
-//========================================
-//  ASAP: Battery info, HW info. (gui.c)
-//========================================
-lv_res_t _create_window_battery_status(lv_obj_t *btn);
-lv_res_t _create_window_hw_info_status(lv_obj_t *btn);
-//=========================================================
+//==============================
+//  ASAP: Filebrowser. (gui.c)
+//==============================
+lv_res_t create_file_browser(lv_obj_t *btn);
+//==============================
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 CTCaer
+ * Copyright (c) 2018-2026 CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -27,12 +27,13 @@ typedef struct _hekate_config
 	u32 autoboot;
 	u32 autoboot_list;
 	u32 bootwait;
-	u32 noticker;
+	//u32 noticker;
 	u32 backlight;
 	u32 autohosoff;
 	u32 autonogc;
-	u32 updater2p;
+	//u32 updater2p;
 	u32 bootprotect;
+	u32 display_rate;
 	// Global temporary config.
 	bool t210b01;
 	bool devmode;
@@ -43,19 +44,33 @@ typedef struct _hekate_config
 	hos_eks_mbr_t *eks;
 } hekate_config;
 
+enum
+{
+	TRAIN_MODE_DISABLE = 0, // No training.
+	TRAIN_MODE_ENABLE  = 1, // Training (default).
+};
+
 typedef struct _nyx_config
 {
-	u32 theme_bg; // COLOR_BG_BASE_MIN - COLOR_BG_BASE_MAX.
+	u32 theme_bg;
 	u32 theme_color;
-	u32 entries_5_col;
+	//u32 entries_5_col;
 	u32 timeoffset;
 	u32 timedst;
-	u32 home_screen;
+	//u32 home_screen;
 	u32 verification;
+	//====================================================
+	//  ASAP: Advanced settings lock. (parental control)
+	//====================================================
+	char pinlock[9];
+	//====================================================
 	u32 ums_emmc_rw;
 	u32 jc_disable;
-	u32 jc_force_right;
+	//u32 jc_force_right;
+	u32 show_fps;
 	u32 bpmp_clock;
+	u32 train_mode;
+	u32 rcm_button;
 } nyx_config;
 
 extern hekate_config h_cfg;

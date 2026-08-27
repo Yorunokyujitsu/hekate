@@ -29,7 +29,7 @@ TRACK_LDFLAGS = $(BUILDDIR)/.ldflags
 # Main and graphics.
 OBJS =  start exception_handlers nyx heap gfx \
 		gui gui_info gui_tools gui_options gui_emmc_tools gui_emummc_tools gui_tools_partition_manager \
-		fe_emummc_tools fe_emmc_tools
+		gui_tools_files gui_l4t_oc fe_emummc_tools fe_emmc_tools
 
 # Hardware.
 OBJS += actmon bpmp ccplex clock di vic i2c irq timer \
@@ -40,7 +40,7 @@ OBJS += actmon bpmp ccplex clock di vic i2c irq timer \
 		bm92t36 bq24193 max17050 max7762x max77620-rtc regulator_5v \
 		touch joycon tmp451 fan \
 		usbd xusbd usb_descriptors usb_gadget_ums usb_gadget_hid \
-		hw_init
+		hw_init mariko_mtc mtc_uncompress
 
 # Utilities.
 OBJS += btn dirlist ianos ini util config sprintf
@@ -57,7 +57,7 @@ OBJS += diskio ff ffunicode ffsystem \
 		lv_hal_disp lv_hal_indev lv_hal_tick \
 		interui_20 interui_30 ubuntu_mono hekate_symbol_20 hekate_symbol_30 hekate_symbol_120 lv_font_builtin \
 		lv_anim lv_area lv_circ lv_color lv_font lv_ll lv_math lv_mem lv_task lv_txt lv_gc \
-		lv_bar lv_btn lv_btnm lv_cb lv_cont lv_ddlist lv_img lv_label lv_line lv_list lv_lmeter lv_mbox \
+		lv_bar lv_btn lv_btnm lv_cb lv_cont lv_ddlist lv_img lv_kb lv_label lv_line lv_list lv_lmeter lv_mbox \
 		lv_page lv_roller lv_slider lv_sw lv_tabview lv_ta lv_win lv_log lv_imgbtn \
 		lv_theme lv_theme_hekate
 
@@ -123,7 +123,7 @@ $(TARGET).bin: $(BUILDDIR)/$(TARGET).elf
 
 $(BUILDDIR)/$(TARGET).elf: $(OBJS) $(TRACK_LDFLAGS)
 	@echo -ne "\r[100%] Linking $(TARGET).elf\033[K"
-	@$(CC) $(LDFLAGS) -T $(SOURCEDIR)/link.ld $(OBJS) -o $@
+	@$(CC) $(LDFLAGS) -T $(SOURCEDIR)/link.ld $(OBJS) -lm -o $@
 	@printf "\n$(TARGET) was built with the following flags:\nCFLAGS:  $(CFLAGS)\nLDFLAGS: $(LDFLAGS)\n"
 
 $(BUILDDIR)/%.o: %.c $(TRACK_CFLAGS) | $(BUILDDIR)
