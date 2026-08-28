@@ -6014,6 +6014,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 
 	bool found_cfw   = false;
 	bool found_stock = false;
+	bool found_l4t_entry = false;
 
 	if (!ini_parse(&ini_sections, "bootloader/ini", true)) {
 		LIST_FOREACH_ENTRY(ini_sec_t, ini_sec, &ini_sections, link) {
@@ -6073,6 +6074,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 				strncpy(entries[e].ini_name, ini_sec->name, sizeof(entries[e].ini_name) - 1);
 				entries[e].ini_name[sizeof(entries[e].ini_name) - 1] = 0;
 				ddlabels[e] = "Ⓐ";
+				found_l4t_entry = true;
 				e++;
 				continue;
 			}
@@ -6081,6 +6083,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 				strncpy(entries[e].ini_name, ini_sec->name, sizeof(entries[e].ini_name) - 1);
 				entries[e].ini_name[sizeof(entries[e].ini_name) - 1] = 0;
 				ddlabels[e] = "Ⓛ";
+				found_l4t_entry = true;
 				e++;
 				continue;
 			}
@@ -6090,6 +6093,7 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 				strncpy(entries[e].ini_name, ini_sec->name, sizeof(entries[e].ini_name) - 1);
 				entries[e].ini_name[sizeof(entries[e].ini_name) - 1] = 0;
 				ddlabels[e] = "Ⓤ";
+				found_l4t_entry = true;
 				e++;
 				continue;
 			}
@@ -6217,12 +6221,15 @@ static lv_res_t _create_window_home_launch(lv_obj_t *btn)
 	lv_line_set_style(line_sep, lv_theme_get_current()->line.decor);
 	lv_obj_align(line_sep, NULL, LV_ALIGN_CENTER, -30, 23);
 
-	lv_obj_t *l4t_oc_notice = lv_label_create(win, NULL);
-	lv_obj_align(l4t_oc_notice, line_sep, LV_ALIGN_OUT_TOP_LEFT, LV_DPI * 2, -1);
-	lv_label_set_style(l4t_oc_notice, &hint_small_style_white);
-	lv_obj_set_opa_scale_enable(l4t_oc_notice, true);
-	lv_obj_set_opa_scale(l4t_oc_notice, LV_OPA_30);
-	lv_label_set_static_text(l4t_oc_notice, "L4T RAM 오버클럭을 적용하려면 Ⓐ · Ⓛ · Ⓤ 아이콘을 1초 이상 입력 유지하세요.");
+	if (found_l4t_entry)
+	{
+		lv_obj_t *l4t_oc_notice = lv_label_create(win, NULL);
+		lv_obj_align(l4t_oc_notice, line_sep, LV_ALIGN_OUT_TOP_LEFT, LV_DPI * 2, -1);
+		lv_label_set_style(l4t_oc_notice, &hint_small_style_white);
+		lv_obj_set_opa_scale_enable(l4t_oc_notice, true);
+		lv_obj_set_opa_scale(l4t_oc_notice, LV_OPA_30);
+		lv_label_set_static_text(l4t_oc_notice, "L4T RAM 오버클럭을 적용하려면 Ⓐ · Ⓛ · Ⓤ 아이콘을 1초 이상 입력 유지하세요.");
+	}
 
 	// Create AutoRCM On/Off button.
 	lv_obj_t *rcm_btn = lv_btn_create(win, NULL);
