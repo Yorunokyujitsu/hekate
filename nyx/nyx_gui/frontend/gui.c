@@ -43,6 +43,8 @@
 #include "../gfx/asap_custom.h"
 #define PROFILE_SIZE 365
 #define MAX_HOME_ENTRIES 5
+#define FIRST_RUN_NOTE_PATH "atmosphere/config/release_note.inc"
+#define FIRST_RUN_NOTE_MAX_SIZE SZ_16K
 // hocate
 #include "gui_tools_files.h"
 #include "gui_l4t_oc.h"
@@ -63,6 +65,10 @@ extern lv_res_t reload_action(lv_obj_t *btns);
 static void _do_ofw_boot(void);
 static lv_res_t _reboot_ofw_action(lv_obj_t *btn);
 static lv_res_t _create_mbox_ofw_warning(void);
+static const char *get_asap_current_version(void);
+static void _show_first_run_note(void);
+static void _create_first_run_note_labels(lv_obj_t *page, char *source);
+static lv_res_t _first_run_note_action(lv_obj_t *btns, const char *txt);
 static FRESULT g_restore_fr = FR_OK;
 
 static const char *g_restore_step = NULL;
@@ -71,6 +77,7 @@ static bool g_ofw_fuse7_warning = false;
 static bool g_ofw_dram_confirmed = false;
 static bool g_ofw_stock_launch = false;
 static int g_pending_launch_idx = -1;
+static bool g_first_run_note_shown = false;
 
 typedef enum {
 	RAM_MODE_4GB,
@@ -4321,6 +4328,244 @@ lv_res_t nyx_mbox_action(lv_obj_t *btns, const char *txt)
 	return LV_RES_INV;
 }
 
+// Deletes note.ini and opens the initial clock setup after closing the changelog.
+static lv_res_t _first_run_note_action(lv_obj_t *btns, const char *txt)
+{
+	lv_obj_t *mbox = lv_mbox_get_from_btn(btns);
+	lv_obj_t *dark_bg = lv_obj_get_parent(mbox);
+
+	// Delete note.ini so the changelog is not shown again.
+	if (!sd_mount()) {
+		f_unlink(FIRST_RUN_NOTE_PATH);
+		sd_unmount();
+	}
+
+	// Close the changelog message box.
+	lv_obj_del(dark_bg);
+	g_first_run_note_shown = false;
+
+	// Open the initial clock setup after the changelog is closed.
+	if (!n_cfg.timeoffset) {
+		lv_task_t *task_run_clock = lv_task_create(
+			first_time_clock_edit,
+			LV_TASK_ONESHOT,
+			LV_TASK_PRIO_MID,
+			NULL
+		);
+		lv_task_once(task_run_clock);
+	}
+
+	return LV_RES_INV;
+}
+
+// Parses note.ini and creates a separate label for each line.
+static void _create_first_run_note_labels(lv_obj_t *page, char *source)
+{
+	char *line = source;
+
+	while (*line) {
+		// Split the source text into individual lines.
+		char *line_end = strchr(line, '\n');
+
+		if (line_end)
+			*line_end = 0;
+
+		size_t line_len = strlen(line);
+
+		// Remove the carriage return from CRLF line endings.
+		if (line_len && line[line_len - 1] == '\r')
+			line[--line_len] = 0;
+
+		// Preserve empty lines as vertical spacing.
+		if (!line_len) {
+			lv_obj_t *blank_label = lv_label_create(page, NULL);
+			lv_obj_set_style(blank_label, &hint_small_style_white);
+			lv_label_set_text(blank_label, " ");
+		}
+		// Format [section] lines as colored section headers.
+		else if (line_len >= 2 && line[0] == '[' && line[line_len - 1] == ']') {
+			char *section_text = malloc(line_len + 32);
+
+			if (section_text) {
+				// Remove the closing bracket.
+				line[line_len - 1] = 0;
+
+				s_printf(
+					section_text,
+					"#008EED " SYMBOL_DOT "  %s#",
+					line + 1
+				);
+
+				lv_obj_t *section_label = lv_label_create(page, NULL);
+				lv_label_set_recolor(section_label, true);
+				lv_label_set_long_mode(
+					section_label,
+					LV_LABEL_LONG_BREAK
+				);
+				lv_obj_set_width(
+					section_label,
+					LV_HOR_RES * 5 / 9 - 40
+				);
+				lv_label_set_text(section_label, section_text);
+
+				free(section_text);
+			}
+		}
+		// Format lines beginning with a space as nested items.
+		else if (line[0] == ' ') {
+			char *content_text = malloc(line_len + 8);
+
+			if (content_text) {
+				// Remove the leading space and add a nested bullet.
+				s_printf(
+					content_text,
+					"  " SYMBOL_DOT " %s",
+					line + 1
+				);
+
+				lv_obj_t *content_label = lv_label_create(page, NULL);
+				lv_obj_set_style(content_label, &hint_small_style_white);
+				lv_label_set_long_mode(
+					content_label,
+					LV_LABEL_LONG_BREAK
+				);
+				lv_obj_set_width(
+					content_label,
+					LV_HOR_RES * 5 / 9 - 40
+				);
+				lv_label_set_text(content_label, content_text);
+
+				free(content_text);
+			}
+		}
+		// Format all other non-empty lines as standard items.
+		else {
+			char *content_text = malloc(line_len + 4);
+
+			if (content_text) {
+				s_printf(content_text, "- %s", line);
+
+				lv_obj_t *content_label = lv_label_create(page, NULL);
+				lv_obj_set_style(content_label, &hint_small_style_white);
+				lv_label_set_long_mode(
+					content_label,
+					LV_LABEL_LONG_BREAK
+				);
+				lv_obj_set_width(
+					content_label,
+					LV_HOR_RES * 5 / 9 - 40
+				);
+				lv_label_set_text(content_label, content_text);
+
+				free(content_text);
+			}
+		}
+
+		if (!line_end)
+			break;
+
+		// Continue with the next line.
+		line = line_end + 1;
+	}
+}
+
+// Loads note.ini and displays it in a scrollable changelog message box.
+static void _show_first_run_note(void)
+{
+	FIL file;
+	UINT br;
+	FSIZE_t size;
+	char *text;
+
+	// Do nothing if the SD card cannot be mounted.
+	if (sd_mount())
+		return;
+
+	// Do not show the changelog if note.ini does not exist.
+	if (f_open(&file, FIRST_RUN_NOTE_PATH, FA_READ) != FR_OK) {
+		sd_unmount();
+		return;
+	}
+
+	size = f_size(&file);
+
+	// Reject empty or excessively large note files.
+	if (!size || size >= FIRST_RUN_NOTE_MAX_SIZE) {
+		f_close(&file);
+		sd_unmount();
+		return;
+	}
+
+	// Allocate space for the note text and its null terminator.
+	text = malloc(size + 1);
+	if (!text) {
+		f_close(&file);
+		sd_unmount();
+		return;
+	}
+
+	// Read the complete note file.
+	if (f_read(&file, text, size, &br) != FR_OK || br != size) {
+		free(text);
+		f_close(&file);
+		sd_unmount();
+		return;
+	}
+
+	text[br] = 0;
+	f_close(&file);
+
+	// Read the current ASAP version while the SD card is still mounted.
+	const char *ver = get_asap_current_version();
+
+	sd_unmount();
+
+	// Prevent the initial clock setup from opening over the changelog.
+	g_first_run_note_shown = true;
+
+	// Create the darkened full-screen background.
+	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
+	lv_obj_set_style(dark_bg, &mbox_darken);
+	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
+
+	static const char *mbox_btn_map[] = {
+		"\251", "\222확인", "\251", ""
+	};
+
+	// Create the changelog message box and its version-based title.
+	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
+	char title_buf[24];
+
+	if (ver)
+		s_printf(title_buf, "Ｌ-%s 변경 내역", ver);
+	else
+		strcpy(title_buf, "Ｌ 변경 내역");
+
+	lv_mbox_set_recolor_text(mbox, true);
+	lv_mbox_set_text(mbox, title_buf);
+	lv_obj_set_width(mbox, LV_HOR_RES * 6 / 9);
+
+	// Create a fixed-size scrollable area for the changelog content.
+	lv_obj_t *text_page = lv_page_create(mbox, NULL);
+	lv_obj_set_size(
+		text_page,
+		LV_HOR_RES * 5 / 9,
+		LV_VER_RES * 5 / 9
+	);
+	lv_page_set_sb_mode(text_page, LV_SB_MODE_AUTO);
+	lv_page_set_scrl_layout(text_page, LV_LAYOUT_COL_L);
+	lv_page_set_scrl_fit(text_page, false, true);
+
+	// Convert each note line into a styled label.
+	_create_first_run_note_labels(text_page, text);
+	free(text);
+
+	// Add the confirmation button and center the message box.
+	lv_mbox_add_btns(mbox, mbox_btn_map, _first_run_note_action);
+	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_top(mbox, true);
+}
+
 bool nyx_emmc_check_battery_enough()
 {
 	if (h_cfg.devmode)
@@ -5962,7 +6207,6 @@ static const char *get_asap_current_version(void)
 	}
 
 	ini_free(&ini_sections);
-	sd_unmount();
 
 	return ver[0] ? ver : NULL;
 }
@@ -7060,7 +7304,9 @@ static void _nyx_main_menu(lv_theme_t * th)
 	else if (0)
 		_create_window_home_launch(NULL);
 
-	if (!n_cfg.timeoffset)
+	_show_first_run_note();
+
+	if (!n_cfg.timeoffset && !g_first_run_note_shown)
 	{
 		lv_task_t *task_run_clock = lv_task_create(first_time_clock_edit, LV_TASK_ONESHOT, LV_TASK_PRIO_MID, NULL);
 		lv_task_once(task_run_clock);
