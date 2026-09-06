@@ -5854,7 +5854,7 @@ static void _create_tab_about(lv_theme_t * th, lv_obj_t * parent)
 		" #CBCBCB SaltyNX#, #F3F3F3 MissionControl#, #CBCBCB ovlreloader# \n"
 		" #F3F3F3 sys-con#, #CBCBCB NX-FanControl#, #F3F3F3 ASAP-Updater# \n"
 		" #CBCBCB Status-Monitor#, #F3F3F3 EdiZon#, #CBCBCB emuiibo#, #F3F3F3 DBI# \n"
-		" #F3F3F3 Sphaira#, #CBCBCB Linkalho#, #F3F3F3 Daybreak#, #CBCBCB Tinfoil# \n"
+		" #F3F3F3 Sphaira#, #CBCBCB Linkalho#, #F3F3F3 Daybreak#, #CBCBCB TitleDB# \n"
 		" #CBCBCB Reboot_to_payload#, #F3F3F3 Benchmark-Toolbox# \n"
 		" #F3F3F3 FPSLocker#, #CBCBCB AmiiboGenerator#\n\n"
 		"Credits\n"
