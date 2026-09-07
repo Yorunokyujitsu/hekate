@@ -47,6 +47,15 @@
 #define EMU_SLIDER_1X_FULL EMU_SLIDER_1X_MAX
 #define EMU_SLIDER_2X_MIN  (EMU_SLIDER_1X_MAX + 1)
 #define EMU_SLIDER_2X_FULL EMU_SLIDER_MAX
+
+// Additional full-size options for upgraded eMMC.
+#define EMU_SLIDER_UPGRADED_1X_32GB 22
+#define EMU_SLIDER_UPGRADED_1X_64GB 23
+#define EMU_SLIDER_UPGRADED_2X_MIN  24
+#define EMU_SLIDER_UPGRADED_2X_32GB 45
+#define EMU_SLIDER_UPGRADED_2X_64GB 46
+#define EMU_SLIDER_UPGRADED_MAX     EMU_SLIDER_UPGRADED_2X_64GB
+
 #define EMU_SLIDER_OFFSET  3 // Min 4GB.
 #define EMU_RSVD_MB        (4 + 4 + 16 + 8) // BOOT0 + BOOT1 + 16MB offset + 8MB alignment.
 
@@ -2277,6 +2286,9 @@ static lv_res_t _action_slider_emu(lv_obj_t *slider)
 	char lbl_text[64];
 	bool prev_emu_double = part_info.emu_double;
 	int slide_val = lv_slider_get_value(slider);
+
+	// Use the installed eMMC capacity instead of the original hardware model.
+	bool emmc_upgraded = part_info.emmc_size_mb > EMU_64GB_FULL;
 	u32 max_emmc_size = !part_info.emmc_is_64gb ? EMU_32GB_FULL : EMU_64GB_FULL;
 
 	part_info.emu_double = false;
@@ -2288,41 +2300,65 @@ static lv_res_t _action_slider_emu(lv_obj_t *slider)
 		return LV_RES_OK;
 	}
 
-	// In case of upgraded eMMC, do not allow FULL sizes. Max size is always bigger than official eMMCs.
-	if (max_emmc_size < part_info.emmc_size_mb)
+	if (emmc_upgraded)
 	{
+		// Handle additional full-size options for upgraded eMMC.
+		if (slide_val == EMU_SLIDER_UPGRADED_1X_32GB)
+			size = EMU_32GB_FULL;
+		else if (slide_val == EMU_SLIDER_UPGRADED_1X_64GB)
+			size = EMU_64GB_FULL;
+		else if (slide_val == EMU_SLIDER_UPGRADED_2X_32GB)
+		{
+			size = 2 * EMU_32GB_FULL;
+			part_info.emu_double = true;
+		}
+		else if (slide_val == EMU_SLIDER_UPGRADED_2X_64GB)
+		{
+			size = 2 * EMU_64GB_FULL;
+			part_info.emu_double = true;
+		}
+		else
+		{
+			int size_val = slide_val;
+
+			// Convert the upgraded 2x slider range back to 1x values.
+			if (slide_val >= EMU_SLIDER_UPGRADED_2X_MIN)
+			{
+				size_val -= EMU_SLIDER_UPGRADED_1X_64GB;
+				part_info.emu_double = true;
+			}
+
+			size  = size_val + EMU_SLIDER_OFFSET;
+			size *= 1024;        // Convert to GB.
+			size += EMU_RSVD_MB; // Add reserved size.
+
+			if (slide_val == EMU_SLIDER_MIN)
+				size = 0;
+			else if (part_info.emu_double)
+				size *= 2;
+		}
+	}
+	else
+	{
+		// Keep the original behavior for standard 32 GB and 64 GB eMMC.
+		size  = (slide_val > EMU_SLIDER_1X_MAX ? (slide_val - EMU_SLIDER_1X_MAX) : slide_val) + EMU_SLIDER_OFFSET;
+		size *= 1024;        // Convert to GB.
+		size += EMU_RSVD_MB; // Add reserved size.
+
+		if (slide_val == EMU_SLIDER_MIN)
+			size = 0; // Reset if 0.
+		else if (slide_val >= EMU_SLIDER_2X_MIN)
+		{
+			size *= 2;
+			part_info.emu_double = true;
+		}
+
+		// Handle standard full-size options.
 		if (slide_val == EMU_SLIDER_1X_FULL)
-		{
-			if (prev_emu_double)
-				slide_val--;
-			else
-				slide_val++;
-			lv_slider_set_value(slider, slide_val);
-		}
+			size = max_emmc_size;
 		else if (slide_val == EMU_SLIDER_2X_FULL)
-		{
-			slide_val--;
-			lv_slider_set_value(slider, slide_val);
-		}
+			size = 2 * max_emmc_size;
 	}
-
-	size  = (slide_val > EMU_SLIDER_1X_MAX ? (slide_val - EMU_SLIDER_1X_MAX) : slide_val) + EMU_SLIDER_OFFSET;
-	size *= 1024;        // Convert to GB.
-	size += EMU_RSVD_MB; // Add reserved size.
-
-	if (slide_val == EMU_SLIDER_MIN)
-		size = 0; // Reset if 0.
-	else if (slide_val >= EMU_SLIDER_2X_MIN)
-	{
-		size *= 2;
-		part_info.emu_double = true;
-	}
-
-	// Handle special cases. 2nd value is for 64GB Aula. Values already include reserved space.
-	if (slide_val == EMU_SLIDER_1X_FULL)
-		size = max_emmc_size;
-	else if (slide_val == EMU_SLIDER_2X_FULL)
-		size = 2 * max_emmc_size;
 
 	// Sanitize sizes based on new HOS size.
 	s32 hos_size = (part_info.total_sct >> 11) - 16 - size - part_info.l4t_size - part_info.and_size;
@@ -2335,7 +2371,16 @@ static lv_res_t _action_slider_emu(lv_obj_t *slider)
 		lv_label_set_text(part_info.lbl_hos, lbl_text);
 		lv_bar_set_value(part_info.slider_bar_hos, hos_size >> 10);
 
-		if (!part_info.emu_double)
+		if (emmc_upgraded && !part_info.emu_double)
+		{
+			if (slide_val == EMU_SLIDER_UPGRADED_1X_32GB || slide_val == EMU_SLIDER_UPGRADED_1X_64GB)
+				s_printf(lbl_text, "#FF3C28 %d 기본#", size >> 10);
+			else if (slide_val == 9)
+				s_printf(lbl_text, "#FF3C28 %d 권장#", size >> 10);
+			else
+				s_printf(lbl_text, "#FF3C28 %4d GiB#", size >> 10);
+		}
+		else if (!part_info.emu_double)
 		{
 			if (slide_val == 9)
 				s_printf(lbl_text, "#FF3C28 %d 권장#", size >> 10);
@@ -2351,25 +2396,56 @@ static lv_res_t _action_slider_emu(lv_obj_t *slider)
 	else
 	{
 		u32 emu_size = part_info.emu_size;
+		int new_slider_val = 0;
 
-		if (emu_size == max_emmc_size)
-			emu_size = EMU_SLIDER_1X_FULL;
-		else if (emu_size == 2 * max_emmc_size)
-			emu_size = EMU_SLIDER_2X_FULL;
-		else if (emu_size)
+		// Restore the previous slider position if the selected size does not fit.
+		if (emmc_upgraded)
 		{
-			if (prev_emu_double)
-				emu_size /= 2;
-			emu_size -= EMU_RSVD_MB;
-			emu_size /= 1024;
-			emu_size -= EMU_SLIDER_OFFSET;
+			if (emu_size == EMU_32GB_FULL)
+				new_slider_val = EMU_SLIDER_UPGRADED_1X_32GB;
+			else if (emu_size == EMU_64GB_FULL)
+				new_slider_val = EMU_SLIDER_UPGRADED_1X_64GB;
+			else if (emu_size == 2 * EMU_32GB_FULL)
+				new_slider_val = EMU_SLIDER_UPGRADED_2X_32GB;
+			else if (emu_size == 2 * EMU_64GB_FULL)
+				new_slider_val = EMU_SLIDER_UPGRADED_2X_64GB;
+			else if (emu_size)
+			{
+				if (prev_emu_double)
+					emu_size /= 2;
 
-			if (prev_emu_double)
-				emu_size += EMU_SLIDER_2X_MIN;
+				emu_size -= EMU_RSVD_MB;
+				emu_size /= 1024;
+				emu_size -= EMU_SLIDER_OFFSET;
+
+				new_slider_val = emu_size;
+
+				if (prev_emu_double)
+					new_slider_val += EMU_SLIDER_UPGRADED_1X_64GB;
+			}
+		}
+		else
+		{
+			if (emu_size == max_emmc_size)
+				new_slider_val = EMU_SLIDER_1X_FULL;
+			else if (emu_size == 2 * max_emmc_size)
+				new_slider_val = EMU_SLIDER_2X_FULL;
+			else if (emu_size)
+			{
+				if (prev_emu_double)
+					emu_size /= 2;
+				emu_size -= EMU_RSVD_MB;
+				emu_size /= 1024;
+				emu_size -= EMU_SLIDER_OFFSET;
+
+				new_slider_val = emu_size;
+
+				if (prev_emu_double)
+					new_slider_val += EMU_SLIDER_2X_MIN;
+			}
 		}
 
-		int new_slider_val = emu_size;
-		part_info.emu_double = prev_emu_double ? true : false;
+		part_info.emu_double = prev_emu_double;
 
 		lv_slider_set_value(slider, new_slider_val);
 	}
@@ -3128,11 +3204,12 @@ lv_res_t create_window_partition_manager(bool emmc)
 	// Set initial HOS partition size, so the correct cluster size can be selected.
 	part_info.hos_size = (part_info.total_sct >> 11) - 16; // Important if there's no slider change.
 
-	// Check if eMMC should be 64GB (Aula).
-	part_info.emmc_is_64gb = fuse_read_hw_type() == FUSE_NX_HW_TYPE_AULA;
-
 	// Set actual eMMC size.
 	part_info.emmc_size_mb = emmc_size;
+
+	// Select the default emuMMC size from the installed eMMC capacity.
+	// This also supports 32 GB and 64 GB eMMC replacements between models.
+	part_info.emmc_is_64gb = emmc_size > EMU_32GB_FULL;
 
 	// Set HOS FAT or USER minimum size.
 	part_info.hos_min_size = !emmc? HOS_FAT_MIN_SIZE_MB : HOS_USER_MIN_SIZE_MB;
@@ -3242,7 +3319,9 @@ lv_res_t create_window_partition_manager(bool emmc)
 		// Create emuMMC size slider.
 		slider_emu = lv_slider_create(h1, NULL);
 		lv_obj_set_size(slider_emu, LV_DPI * 7, LV_DPI / 3);
-		lv_slider_set_range(slider_emu, EMU_SLIDER_MIN, EMU_SLIDER_MAX);
+
+		// Add separate 29 GiB and 58 GiB options for upgraded eMMC.
+		lv_slider_set_range(slider_emu, EMU_SLIDER_MIN, part_info.emmc_size_mb > EMU_64GB_FULL ? EMU_SLIDER_UPGRADED_MAX : EMU_SLIDER_MAX);
 		lv_slider_set_value(slider_emu, EMU_SLIDER_MIN);
 		lv_slider_set_style(slider_emu, LV_SLIDER_STYLE_BG, &bar_emu_bg);
 		lv_slider_set_style(slider_emu, LV_SLIDER_STYLE_INDIC, &bar_emu_ind);

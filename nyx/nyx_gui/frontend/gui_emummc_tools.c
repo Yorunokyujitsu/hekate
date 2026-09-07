@@ -46,10 +46,29 @@ typedef struct _mbr_ctxt_t
 	u32 sector_start;
 } mbr_ctxt_t;
 
+#define FILE_EMUMMC_MIN_GIB           4
+#define FILE_EMUMMC_RECOMMENDED_GIB   12
+#define FILE_EMUMMC_32GB_GIB          29
+#define FILE_EMUMMC_64GB_GIB          58
+#define FILE_EMUMMC_SECTORS_PER_GIB   0x200000
+
+// Exact usable sizes of the standard 32 GB and 64 GB eMMC.
+#define FILE_EMUMMC_32GB_FULL_MB      29856
+#define FILE_EMUMMC_64GB_FULL_MB      59680
+#define FILE_EMUMMC_32GB_FULL_SECTORS (FILE_EMUMMC_32GB_FULL_MB << 11)
+#define FILE_EMUMMC_64GB_FULL_SECTORS (FILE_EMUMMC_64GB_FULL_MB << 11)
+
 static bool emummc_backup;
 static mbr_ctxt_t mbr_ctx;
 static lv_obj_t *emummc_manage_window;
 static lv_res_t (*emummc_tools)(lv_obj_t *btn);
+
+static bool file_emmc_upgraded;
+static u32 file_emmc_size_mb;
+static u32 file_max_size_gib;
+static u32 file_resized_count;
+static u32 file_size_gib;
+static lv_obj_t *file_size_label;
 
 static lv_res_t _action_emummc_window_close(lv_obj_t *btn)
 {
@@ -143,7 +162,7 @@ static void _create_window_emummc()
 	emmc_tool_gui_ctxt.label_finish = label_finish;
 
 	if (!mbr_ctx.part_idx)
-		dump_emummc_file(&emmc_tool_gui_ctxt);
+		dump_emummc_file(&emmc_tool_gui_ctxt, file_resized_count);
 	else
 		dump_emummc_raw(&emmc_tool_gui_ctxt, mbr_ctx.part_idx, mbr_ctx.sector_start, mbr_ctx.resized_cnt[mbr_ctx.part_idx - 1]);
 
@@ -204,6 +223,217 @@ static lv_res_t _create_emummc_raw_action(lv_obj_t * btns, const char * txt)
 	nyx_mbox_action(btns, txt);
 
 	return LV_RES_INV;
+}
+
+static bool _get_file_emummc_size()
+{
+	file_emmc_size_mb = 0;
+	file_emmc_upgraded = false;
+	file_max_size_gib = FILE_EMUMMC_32GB_GIB;
+
+	// Detect the currently installed eMMC capacity.
+	if (emmc_initialize(false))
+		return false;
+
+	emmc_set_partition(EMMC_GPP);
+	file_emmc_size_mb = emmc_storage.sec_cnt >> 11;
+	emmc_end();
+
+	// Standard 32 GB eMMC only supports up to the 29 GiB default size.
+	if (file_emmc_size_mb <= FILE_EMUMMC_32GB_FULL_MB)
+		file_max_size_gib = FILE_EMUMMC_32GB_GIB;
+	else
+		file_max_size_gib = FILE_EMUMMC_64GB_GIB;
+
+	// Upgraded eMMC allows both standard full-size options.
+	file_emmc_upgraded = file_emmc_size_mb > FILE_EMUMMC_64GB_FULL_MB;
+
+	return true;
+}
+
+static lv_res_t _action_slider_file_size(lv_obj_t *slider)
+{
+	char lbl_text[64];
+
+	file_size_gib = lv_slider_get_value(slider);
+
+	// Mark 12 GiB as recommended and standard NAND sizes as default.
+	if (file_size_gib == FILE_EMUMMC_RECOMMENDED_GIB)
+		s_printf(lbl_text, "#C7EA46 %d 권장#", file_size_gib);
+	else if (file_size_gib == FILE_EMUMMC_32GB_GIB || file_size_gib == FILE_EMUMMC_64GB_GIB)
+		s_printf(lbl_text, "#C7EA46 %d 기본#", file_size_gib);
+	else
+		s_printf(lbl_text, "#C7EA46 %d GiB#", file_size_gib);
+
+	lv_label_set_text(file_size_label, lbl_text);
+
+	return LV_RES_OK;
+}
+
+static lv_res_t _create_emummc_file_size_action(lv_obj_t *btns, const char *txt)
+{
+	int btn_idx = lv_btnm_get_pressed(btns);
+
+	nyx_mbox_action(btns, txt);
+
+	if (!btn_idx)
+	{
+		// Use exact standard eMMC sizes for the 29 and 58 default options.
+		if (file_size_gib == FILE_EMUMMC_32GB_GIB)
+			file_resized_count = FILE_EMUMMC_32GB_FULL_SECTORS;
+		else if (file_size_gib == FILE_EMUMMC_64GB_GIB)
+			file_resized_count = FILE_EMUMMC_64GB_FULL_SECTORS;
+		else
+			file_resized_count = file_size_gib * FILE_EMUMMC_SECTORS_PER_GIB;
+
+		_create_window_emummc();
+	}
+
+	return LV_RES_INV;
+}
+
+static void _create_mbox_emummc_file_size()
+{
+	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
+	lv_obj_set_style(dark_bg, &mbox_darken);
+	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
+
+	static const char *mbox_btn_map[] = { "\222계속", "\222취소", "" };
+
+	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
+	lv_mbox_set_recolor_text(mbox, true);
+	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
+	lv_mbox_set_text(mbox, "#008EED 파일 에뮤낸드#\n\n생성 크기를 지정하세요.");
+
+	file_size_gib = FILE_EMUMMC_RECOMMENDED_GIB;
+
+	// Create a container to keep the slider and label on the same row.
+	lv_obj_t *size_row = lv_cont_create(mbox, NULL);
+	lv_obj_set_style(size_row, &lv_style_transp);
+	lv_cont_set_layout(size_row, LV_LAYOUT_OFF);
+	lv_cont_set_fit(size_row, false, false);
+	lv_obj_set_size(size_row, LV_DPI * 6, LV_DPI / 2);
+
+	lv_obj_t *slider = lv_slider_create(size_row, NULL);
+	lv_obj_set_size(slider, LV_DPI * 4, LV_DPI / 3);
+	lv_slider_set_range(slider, FILE_EMUMMC_MIN_GIB, file_max_size_gib);
+	lv_slider_set_value(slider, FILE_EMUMMC_RECOMMENDED_GIB);
+	lv_slider_set_action(slider, _action_slider_file_size);
+
+	// Keep the slider fixed at the center of the row.
+	lv_obj_align(slider, size_row, LV_ALIGN_CENTER, -55, 0);
+
+	file_size_label = lv_label_create(size_row, NULL);
+	lv_label_set_recolor(file_size_label, true);
+
+	// Update and place the size label to the right of the slider.
+	_action_slider_file_size(slider);
+	lv_obj_align(file_size_label, slider, LV_ALIGN_OUT_RIGHT_MID, LV_DPI / 2.5, 0);
+	lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_file_size_action);
+	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_top(mbox, true);
+}
+
+static lv_res_t _create_emummc_file_full_size_action(lv_obj_t *btns, const char *txt)
+{
+	int btn_idx = lv_btnm_get_pressed(btns);
+
+	nyx_mbox_action(btns, txt);
+
+	switch (btn_idx)
+	{
+	case 0:
+		// Create a standard 32 GB file emuMMC.
+		file_resized_count = FILE_EMUMMC_32GB_FULL_SECTORS;
+		_create_window_emummc();
+		break;
+	case 1:
+		// Create a standard 64 GB file emuMMC.
+		file_resized_count = FILE_EMUMMC_64GB_FULL_SECTORS;
+		_create_window_emummc();
+		break;
+	default:
+		break;
+	}
+
+	return LV_RES_INV;
+}
+
+static void _create_mbox_emummc_file_full_size()
+{
+	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
+	lv_obj_set_style(dark_bg, &mbox_darken);
+	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
+
+	static const char *mbox_btn_map[] = { "\22229 GiB", "\22258 GiB", "\222취소", "" };
+
+	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
+	lv_mbox_set_recolor_text(mbox, true);
+	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 5);
+	lv_mbox_set_text(mbox, "#008EED 파일 에뮤낸드#\n\n생성 크기를 선택하세요.");
+
+	lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_file_full_size_action);
+
+	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_top(mbox, true);
+}
+
+static lv_res_t _create_emummc_file_mode_action(lv_obj_t *btns, const char *txt)
+{
+	int btn_idx = lv_btnm_get_pressed(btns);
+	lv_obj_t *bg = lv_obj_get_parent(lv_obj_get_parent(btns));
+
+	switch (btn_idx)
+	{
+	case 0:
+		if (file_emmc_upgraded)
+		{
+			// Let upgraded eMMC users select a standard full size.
+			_create_mbox_emummc_file_full_size();
+		}
+		else
+		{
+			// Use the complete size of a standard 32 GB or 64 GB eMMC.
+			file_resized_count = 0;
+			lv_obj_set_style(bg, &lv_style_transp);
+			_create_window_emummc();
+		}
+		break;
+	case 1:
+		_create_mbox_emummc_file_size();
+		break;
+	default:
+		break;
+	}
+
+	nyx_mbox_action(btns, txt);
+
+	return LV_RES_INV;
+}
+
+static void _create_mbox_emummc_file()
+{
+	// Refresh the installed eMMC capacity before creating the menu.
+	if (!_get_file_emummc_size())
+		return;
+
+	lv_obj_t *dark_bg = lv_obj_create(lv_scr_act(), NULL);
+	lv_obj_set_style(dark_bg, &mbox_darken);
+	lv_obj_set_size(dark_bg, LV_HOR_RES, LV_VER_RES);
+
+	static const char *mbox_btn_map[] = { "\222전체", "\222지정", "\222취소", "" };
+
+	lv_obj_t *mbox = lv_mbox_create(dark_bg, NULL);
+	lv_mbox_set_recolor_text(mbox, true);
+	lv_obj_set_width(mbox, LV_HOR_RES / 9 * 6);
+	lv_mbox_set_text(mbox,
+		"#008EED 파일 에뮤낸드#\n\n"
+		"#C7EA46 전체#: eMMC 기본 크기로 생성합니다.\n"
+		"#C7EA46 지정#: 사용자 지정 크기로 생성합니다.");
+
+	lv_mbox_add_btns(mbox, mbox_btn_map, _create_emummc_file_mode_action);
+	lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_top(mbox, true);
 }
 
 static void _create_mbox_emummc_raw()
@@ -323,7 +553,6 @@ static void _create_mbox_emummc_raw()
 static lv_res_t _create_emummc_action(lv_obj_t * btns, const char * txt)
 {
 	int btn_idx = lv_btnm_get_pressed(btns);
-	lv_obj_t *bg = lv_obj_get_parent(lv_obj_get_parent(btns));
 
 	mbr_ctx.part_idx = 0;
 	mbr_ctx.sector_start = 0;
@@ -331,8 +560,7 @@ static lv_res_t _create_emummc_action(lv_obj_t * btns, const char * txt)
 	switch (btn_idx)
 	{
 	case 0:
-		lv_obj_set_style(bg, &lv_style_transp);
-		_create_window_emummc();
+		_create_mbox_emummc_file();
 		break;
 	case 1:
 		_create_mbox_emummc_raw();
