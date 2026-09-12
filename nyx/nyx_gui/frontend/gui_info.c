@@ -853,7 +853,10 @@ lv_res_t _create_window_hw_info_status(lv_obj_t *btn)
 		strcpy(fuses_hos_version, "21.0.0 - 21.2.0");
 		break;
 	case 23:
-		strcpy(fuses_hos_version, "22.0.0 - 22.5.0+");
+		strcpy(fuses_hos_version, "22.0.0 - 22.5.0");
+		break;
+	case 24:
+		strcpy(fuses_hos_version, "23.0.0+");
 		break;
 	case 255:
 		strcpy(fuses_hos_version, "#FFBA00 과 다  소 모#");

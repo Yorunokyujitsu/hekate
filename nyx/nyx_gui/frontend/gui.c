@@ -7483,16 +7483,17 @@ void refresh_nand_info_label(void)
 		case 20250206151829ULL: fusee_ver = "20.0.0 - 20.5.0"; prev_ver = "19.0.1"; break;
 		case 20251009153823ULL: fusee_ver = "21.0.0 - 21.2.0"; prev_ver = "20.5.0"; break;
 		case 20260123111804ULL: fusee_ver = "22.0.0 - 22.5.0"; prev_ver = "21.2.0"; break;
-		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "22.5.0"; break;
+		case 20260730135415ULL: fusee_ver = "23.0.0+"; prev_ver = "22.5.0"; break;
+		default:				fusee_ver = "미지원 펌웨어";	prev_ver = "23.0.0"; break;
 	}
 
 	if (!id) {
 		if (!emu_info.enabled) {
-			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s, %s 다운그레이드 혹은 최신 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
 		} else if (emu_info.sector) {
-			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s, %s 다운그레이드 혹은 최신 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
 		} else {
-			s_printf(info_buf, "\n안내: #FF8800 %s 설치됨, %s 다운그레이드 혹은 최신 버전 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
+			s_printf(info_buf, "\n안내: #FF8800 %s, %s 다운그레이드 혹은 최신 Ｌ 업데이트 필요#", fusee_ver, prev_ver);
 		}
 		strcat(txt_buf, info_buf);
 	}
