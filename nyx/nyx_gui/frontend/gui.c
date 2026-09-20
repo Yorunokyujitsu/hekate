@@ -797,6 +797,7 @@ console:
 
 	// B button action
 	static bool jc_b_last = false;
+	static bool jc_b_long_armed = false;
 	static bool jc_b_long_fired = false;
 	static u32 jc_b_press_time = 0;
 	static u32 jc_b_repeat_timeout = 0;
@@ -809,22 +810,23 @@ console:
 		{
 			jc_b_press_time = now;
 			jc_b_long_fired = false;
+			jc_b_long_armed = nyx_jc_b_long_action != NULL;
 
-			if (nyx_jc_b_action)
+			if (!jc_b_long_armed && nyx_jc_b_action)
 				nyx_jc_b_action();
 
 			jc_b_repeat_timeout = now + 300;
 		}
 		else
 		{
-			if (!jc_b_long_fired && nyx_jc_b_long_action &&
+			if (jc_b_long_armed && !jc_b_long_fired && nyx_jc_b_long_action &&
 				(u32)(now - jc_b_press_time) >= 1000)
 			{
 				jc_b_long_fired = true;
 				nyx_jc_b_long_action();
 				close_btn = NULL;
 			}
-			else if (nyx_jc_kb_repeat && nyx_jc_b_action &&
+			else if (!jc_b_long_armed && nyx_jc_kb_repeat && nyx_jc_b_action &&
 				(s32)(now - jc_b_repeat_timeout) >= 0)
 			{
 				nyx_jc_b_action();
@@ -834,8 +836,12 @@ console:
 	}
 	else
 	{
+		if (jc_b_last && jc_b_long_armed && !jc_b_long_fired && nyx_jc_b_action)
+			nyx_jc_b_action();
+
 		jc_b_press_time = 0;
 		jc_b_repeat_timeout = 0;
+		jc_b_long_armed = false;
 		jc_b_long_fired = false;
 	}
 

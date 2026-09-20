@@ -74,6 +74,7 @@ typedef struct _file_manager_t
 } file_manager_t;
 
 static file_manager_t fm;
+static lv_obj_t *fm_close_btn = NULL;
 static u64 fm_progress_total = 0;
 static u64 fm_progress_done = 0;
 static u32 fm_progress_last = 101;
@@ -489,6 +490,7 @@ static void _fm_set_view_input(void)
 	nyx_jc_dpad_action = _fm_view_dpad;
 	nyx_jc_a_action    = _fm_view_a;
 	nyx_jc_b_action    = _fm_b_action;
+	nyx_jc_b_long_action = NULL;
 
 	nyx_jc_plus_action  = _fm_view_dummy;
 	nyx_jc_minus_action = _fm_view_dummy;
@@ -560,6 +562,7 @@ static void _fm_mbox_lock_input(void)
 	nyx_jc_dpad_action = _fm_mbox_dpad;
 	nyx_jc_a_action = _fm_mbox_a;
 	nyx_jc_b_action = _fm_msg_b;
+	nyx_jc_b_long_action = NULL;
 
 	// Block all other inputs.
 	nyx_jc_plus_action  = _fm_view_dummy;
@@ -1606,6 +1609,9 @@ static void _fm_view_dpad(int dir)
 
 static lv_res_t _fm_close(lv_obj_t *btn)
 {
+	fm_close_btn = NULL;
+	fm.win = NULL;
+
 	_fm_clear_input_actions();
 	nyx_jc_dpad_mode = false;
 
@@ -3521,6 +3527,7 @@ static void _fm_open_keyboard(const char *title, const char *prefill, u32 op)
 	nyx_jc_minus_action = _fm_kb_cancel_action;
 	nyx_jc_a_action     = _fm_view_a;
 	nyx_jc_b_action     = _fm_b_action;
+	nyx_jc_b_long_action = NULL;
 	nyx_jc_x_action     = _fm_view_space_action;
 	nyx_jc_y_action     = _fm_view_mode_action;
 	nyx_jc_l_action     = _fm_cursor_left;
@@ -3685,12 +3692,10 @@ static void _fm_b_action(void)
 
 static void _fm_b_long_action(void)
 {
-	if (fm_view_ta || fm.kb_ta || fm_mbox_btnm || fm_progress_bg || !close_btn)
+	if (fm_view_ta || fm.kb_ta || fm_mbox_btnm || fm_progress_bg || !fm_close_btn)
 		return;
 
-	lv_obj_t *btn = close_btn;
-	fm.win = NULL;
-	_fm_close(btn);
+	_fm_close(fm_close_btn);
 }
 
 static lv_res_t _fm_newfolder_action(lv_obj_t *btn)
@@ -4299,6 +4304,7 @@ lv_res_t create_file_browser(lv_obj_t *btn)
 	fm.has_clip = false;
 
 	lv_obj_t *win = nyx_create_file_browser_window(fm.cwd, _fm_close);
+	fm_close_btn = close_btn;
 	lv_win_add_btn(win, NULL, SYMBOL_REBOOT, _fm_refresh_action);
 	lv_win_add_btn(win, NULL, "Ｕ", action_ums_sd);
 	fm.win = win;
