@@ -227,7 +227,7 @@ void config_exosphere(launch_ctxt_t *ctxt, u32 warmboot_base)
 						exo_cfg->uart_invert = atoi(kv->val);
 					else if (!strcmp("log_baud_rate", kv->key))
 						exo_cfg->uart_baudrate = atoi(kv->val);
-					else if (!strcmp("enable_8gb_mem_mode", kv->key))
+					else if (!strcmp("enable_mem_mode", kv->key))
 						bc_mem_mode = atoi(kv->val);
 					else if (emu_cfg.enabled && !h_cfg.emummc_force_disable)
 					{

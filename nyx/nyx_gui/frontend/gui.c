@@ -4975,7 +4975,7 @@ static bool is_current_ram_mode(void)
 
 				LIST_FOREACH_ENTRY(ini_kv_t, kv, &sec->kvs, link)
 				{
-					if (!strcmp(kv->key, "enable_8gb_mem_mode"))
+					if (!strcmp(kv->key, "enable_mem_mode"))
 					{
 						enable_mem_mode = (atoi(kv->val) != 0);
 						found = true;
@@ -5093,10 +5093,9 @@ static bool set_exosphere_mem_mode(int mode)
 			strcat(out, "\n");
 
 		strcat(out, "[exosphere]\n");
-		strcat(out, "enable_40mb_mem_mode=0\n");
 
 		char tmp[64];
-		s_printf(tmp, "enable_8gb_mem_mode=%d\n", mode);
+		s_printf(tmp, "enable_mem_mode=%d\n", mode);
 		strcat(out, tmp);
 	}
 	else
@@ -5110,8 +5109,7 @@ static bool set_exosphere_mem_mode(int mode)
 
 		strcat(out, "[exosphere]\n");
 
-		bool has40 = false;
-		bool has8  = false;
+		bool has_mem = false;
 
 		char *line = strchr(sec, '\n');
 		if (line)
@@ -5127,17 +5125,15 @@ static bool set_exosphere_mem_mode(int mode)
 
 			size_t len = next - line;
 
-			if (!strncmp(line, "enable_40mb_mem_mode=", strlen("enable_40mb_mem_mode=")))
+			if (!strncmp(line, "enable_mem_mode=", strlen("enable_mem_mode=")))
 			{
-				strcat(out, "enable_40mb_mem_mode=0\n");
-				has40 = true;
-			}
-			else if (!strncmp(line, "enable_8gb_mem_mode=", strlen("enable_8gb_mem_mode=")))
-			{
-				char tmp[64];
-				s_printf(tmp, "enable_8gb_mem_mode=%d\n", mode);
-				strcat(out, tmp);
-				has8 = true;
+				if (!has_mem)
+				{
+					char tmp[64];
+					s_printf(tmp, "enable_mem_mode=%d\n", mode);
+					strcat(out, tmp);
+					has_mem = true;
+				}
 			}
 			else if (len)
 			{
@@ -5151,13 +5147,10 @@ static bool set_exosphere_mem_mode(int mode)
 			line = next;
 		}
 
-		if (!has40)
-			strcat(out, "enable_40mb_mem_mode=0\n");
-
-		if (!has8)
+		if (!has_mem)
 		{
 			char tmp[64];
-			s_printf(tmp, "enable_8gb_mem_mode=%d\n", mode);
+			s_printf(tmp, "enable_mem_mode=%d\n", mode);
 			strcat(out, tmp);
 		}
 
